@@ -138,8 +138,9 @@ void Slave<TaskT, AggregatorT>::load_graph(const char* inpath)
 }
 
 template <class TaskT,  class AggregatorT>
-void Slave<TaskT, AggregatorT>::grow_tasks()
+void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
 {
+	TidMapper::GetInstance().Register(tid);
 	TaskVec tasks;
 	VertexT* v = local_table_.next();
 	while(v)
@@ -191,8 +192,100 @@ void Slave<TaskT, AggregatorT>::dump_tasks(TaskVec& tasks)
 }
 
 template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::thread_demo_str_init()
+{
+	thread_demo_files_.resize(threadpool_size_);
+
+	for(int i = 0; i < threadpool_size_; i++)
+	{
+		if(DEMO_LOG_PATH.size() > 0)
+		{
+			string file_name = DEMO_LOG_PATH + "demo_node_" + to_string(_my_rank) + "_thread_" + to_string(i) + "_part_" + to_string(filename_part_) + ".log";
+			thread_demo_files_[i].first = fopen(file_name.c_str(), "w");
+		}
+
+		pthread_spin_init(&thread_demo_files_[i].second, 0);
+	}
+}
+
+template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::thread_demo_str_period()
+{
+	//switch filename periodically
+
+	bool need_to_switch = false;
+	int single_file_max_sync = 5;
+
+	if((filename_part_ + 1) * single_file_max_sync == sys_sync_time_)
+	{
+		filename_part_++;
+		//for example, sys_sync_time = 5, filename_part_ 0 -> 1
+		need_to_switch = true;
+	}
+
+	int i = 0;
+	for(auto & v : thread_demo_files_)
+	{
+		pthread_spin_lock(&(v.second));
+
+		if(v.first)
+		{
+			fflush(v.first);
+
+			if(need_to_switch)
+			{
+				fclose(v.first);
+				string file_name = DEMO_LOG_PATH + "demo_node_" + to_string(_my_rank) + "_thread_" + to_string(i) + "_part_" + to_string(filename_part_) + ".log";
+				v.first = fopen(file_name.c_str(), "w");
+			}
+		}
+
+		pthread_spin_unlock(&(v.second));
+		i++;
+	}
+
+	if(need_to_switch)
+	{
+		//write a flag file indicates that switch complete
+		string file_name = DEMO_LOG_PATH + "demo_node_" + to_string(_my_rank) + "_part_" + to_string(filename_part_ - 1) + "_finish.log";
+		FILE* f = fopen(file_name.c_str(), "w");
+		fprintf(f, "2333\n");
+		fclose(f);
+	}
+}
+
+template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::thread_demo_str_compute(const string& demo_str)
+{
+	int tid = TidMapper::GetInstance().GetTid();
+	pthread_spin_lock(&(thread_demo_files_[tid].second));
+
+	//append
+	//\n in here
+	if(thread_demo_files_[tid].first)
+		fprintf(thread_demo_files_[tid].first, demo_str.c_str());
+
+	pthread_spin_unlock(&(thread_demo_files_[tid].second));
+}
+
+template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::thread_demo_str_finalize()
+{
+	for(auto & v : thread_demo_files_)
+	{
+		pthread_spin_lock(&(v.second));
+
+		if(v.first)
+			fclose(v.first);
+
+		pthread_spin_unlock(&(v.second));
+	}
+}
+
+template <class TaskT,  class AggregatorT>
 TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task)
 {
+	string demo_str;
 	//set frontier for UDF compute
 	vector<VertexT *> frontier;
 	for(int i = 0 ; i < task->to_pull.size(); i++)
@@ -205,7 +298,7 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task)
 	//clear task.to_pull, reset it in compute
 	task->to_pull.clear();
 
-	if(task->compute(task->subG, task->context, frontier))
+	if(task->compute(task->subG, task->context, frontier, demo_str))
 	{
 		task->set_to_request();
 		//if to_request is not empty, add the current task into pque
@@ -225,6 +318,12 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task)
 			agg_lock_.lock();
 			agg->step_partial(task->context);
 			agg_lock_.unlock();
+		}
+		//str
+		if(demo_str.size() != 0)
+		{
+			//write demo str
+			thread_demo_str_compute(demo_str);
 		}
 		delete task;
 		return NULL;
@@ -378,8 +477,9 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 }
 
 template <class TaskT,  class AggregatorT>
-void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf()
+void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 {
+	TidMapper::GetInstance().Register(tid);
 	while(1)
 	{
 		TaskT* t;
@@ -522,6 +622,39 @@ void Slave<TaskT, AggregatorT>::end_report()
 }
 
 template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::sys_sync()
+{
+	QueueMonitorT part;
+
+	part.task_num_in_memory = get_task_num_in_memory();
+	part.task_num_in_disk = get_task_num_in_disk();
+	part.cmq_size = task_pipeline_.cmq_size();
+	part.cpq_size = task_pipeline_.cpq_size();
+	part.taskbuf_size = task_pipeline_.taskbuf_size();
+
+	slave_gather(part);
+
+	//fake agg_sync
+	AggregatorT* agg = (AggregatorT*)get_aggregator();
+	if (agg != NULL)
+	{
+		agg_lock_.lock();
+		PartialT* part = agg->finish_partial();
+		agg_lock_.unlock();
+		//gathering
+		slave_gather(part);
+		//scattering
+		// FinalT final;
+		// slave_bcast(final);
+		// *((FinalT*)global_agg) = final;
+	}
+
+	thread_demo_str_period();
+
+	sys_sync_time_++;
+}
+
+template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::agg_sync()
 {
 	AggregatorT* agg = (AggregatorT*)get_aggregator();
@@ -542,7 +675,8 @@ void Slave<TaskT, AggregatorT>::agg_sync()
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::context_sync()
 {
-	if(SLEEP_TIME == 0)
+	AggregatorT* agg = (AggregatorT*)get_aggregator();
+	if(AGG_SLEEP_TIME == 0.0 && SYS_SLEEP_TIME == 0.0)
 	{
 		//do agg_sync when all the tasks have been processed
 		unique_lock<mutex> lck(end_lock_);
@@ -551,21 +685,68 @@ void Slave<TaskT, AggregatorT>::context_sync()
 			end_cond_.wait(lck);  //block the thread until end_cond is notified.
 		}
 	}
-	else
+	else if(SYS_SLEEP_TIME == 0.0)//just agg_sync
 	{
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
-			agg_sync();
-			sleep(SLEEP_TIME);
+			if(!agg->agg_sync_disabled())
+				agg_sync();
+			this_thread::sleep_for(chrono::nanoseconds(uint64_t(AGG_SLEEP_TIME * (1000 * 1000 * 1000))));
+		}
+	}
+	else if(AGG_SLEEP_TIME == 0.0)
+	{
+		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
+		{
+			sys_sync();
+			this_thread::sleep_for(chrono::nanoseconds(uint64_t(SYS_SLEEP_TIME * (1000 * 1000 * 1000))));
+		}
+	}
+	else
+	{
+		//do both sys_sync and agg_sync
+		//if all worker runs on the same model of CPU, then the sleep_counter counter will be identical
+		double sleep_counter = 0.0;
+		double last_sys_sync = 0.0;
+		double last_agg_sync = 0.0;
+		double time_to_sleep = 0.0;
+
+		while (!all_land(is_end_))
+		{
+			//decide how long to sleep, and which to run
+			if(last_sys_sync - last_agg_sync > AGG_SLEEP_TIME - SYS_SLEEP_TIME)
+			{
+				//run agg
+				last_agg_sync += AGG_SLEEP_TIME;
+
+				time_to_sleep  = last_agg_sync - sleep_counter;
+				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				if(!agg->agg_sync_disabled())
+					agg_sync();
+
+				sleep_counter = last_agg_sync;
+			}
+			else
+			{
+				//run sys
+				last_sys_sync += SYS_SLEEP_TIME;
+
+				time_to_sleep  = last_sys_sync - sleep_counter;
+				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				sys_sync();
+
+				sleep_counter = last_sys_sync;
+			}
 		}
 	}
 	agg_sync();
+	sys_sync();
 }
 
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::end_sync()
 {
-	if(SLEEP_TIME == 0)
+	if(AGG_SLEEP_TIME == 0.0)
 	{
 		end_lock_.lock();
 		is_end_ = true;
@@ -584,22 +765,66 @@ void Slave<TaskT, AggregatorT>::debug()
 {
 	while(!is_end_)
 	{
-		cout << _my_rank << " => Tasks in MEM = " << get_task_num_in_memory() \
-		     << " | Tasks in DISK = " << get_task_num_in_disk() \
-		     << " | CommunQ.size = " << task_pipeline_.cmq_size()*PIPE_POP_NUM \
-		     << " | ComputeQ.size = " << task_pipeline_.cpq_size() \
-		     << " | TaskBuff.size = " << task_pipeline_.taskbuf_size() <<endl;
+		// cout << _my_rank << " => Tasks in MEM = " << get_task_num_in_memory() \
+		//      << " | Tasks in DISK = " << get_task_num_in_disk() \
+		//      << " | CommunQ.size = " << task_pipeline_.cmq_size()*PIPE_POP_NUM \
+		//      << " | ComputeQ.size = " << task_pipeline_.cpq_size() \
+		//      << " | TaskBuff.size = " << task_pipeline_.taskbuf_size() <<endl;
 
-		sleep(1);
+		//printf is more parallel-friendly
+
+		string to_print;
+
+		to_print +=  to_string(_my_rank) + " => Tasks in MEM = " + to_string(get_task_num_in_memory()) \
+		     + " | Tasks in DISK = " + to_string(get_task_num_in_disk()) \
+		     + " | CommunQ.size = " + to_string(task_pipeline_.cmq_size()*PIPE_POP_NUM) \
+		     + " | ComputeQ.size = " + to_string(task_pipeline_.cpq_size()) \
+		     + " | TaskBuff.size = " + to_string(task_pipeline_.taskbuf_size()) + "\n";
+
+		// printf(to_print.c_str());
+
+		sleep(10);
 	}
 }
 
 //PART 1 =======================================================
 //public run
 
+
+template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::WriteSignalFile()
+{
+	bool to_exit = false;
+	slave_bcast(to_exit);
+
+	if(to_exit)
+		exit(0);
+
+	string cmd = "rm " + DEMO_LOG_PATH + "/*";
+	system(cmd.c_str());
+
+	// assert(to_exit /*signal file exists*/);
+
+	int name_len;
+	char hostname[MPI_MAX_PROCESSOR_NAME];
+	MPI_Get_processor_name(hostname, &name_len);
+
+	// printf("my_rank == %d, %s, slave\n", _my_rank, hostname);
+
+	//generate singal file
+
+	string hn_s(hostname);
+
+	slave_gather(hn_s);
+}
+
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 {
+	TidMapper::GetInstance().Register(-1);
+
+	WriteSignalFile();
+
 	bool start = wait_to_start();
 	if(!start)
 	{
@@ -635,6 +860,8 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	cache_table_.init(cache_size_);
 	task_sorter_.init(global_sign_size, slave_all_sum(local_table_.size()));
 	task_pipeline_.init(PQUE_DIR, global_file_size);
+
+	get_running_wtime();
 	//=======================================================
 
 	//========================= RUN =========================
@@ -653,9 +880,11 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	//seeding tasks in parallel
 	local_table_.load();
 
+	thread_demo_str_init();
+
 	ResetTimer(WORKER_TIMER);
 	for( unsigned i = 0; i < threadpool_size_; ++i )
-		threadpool_.emplace_back(std::thread(&Slave::grow_tasks, this));
+		threadpool_.emplace_back(std::thread(&Slave::grow_tasks, this, i));
 	for( auto &t : threadpool_ ) t.join();
 	threadpool_.clear();
 	StopTimer(WORKER_TIMER);
@@ -671,7 +900,7 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	thread reqThread(&Slave::pull_PQ_to_CMQ, this);
 	thread respThread(&Slave::pull_CMQ_to_CPQ, this);
 	for( unsigned i = 0; i < threadpool_size_; ++i )
-		threadpool_.emplace_back(std::thread(&Slave::pull_CPQ_to_taskbuf, this));
+		threadpool_.emplace_back(std::thread(&Slave::pull_CPQ_to_taskbuf, this, i));
 	run_to_no_task();
 	cout << _my_rank << ": Regular Work Pipeline is Done, Start Task Stealing Stage." << endl;
 
@@ -742,6 +971,8 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	recver.join();
 	reporter.join();
 	sync.join();
+
+	thread_demo_str_finalize();
 
 	//join the debugger threads
 	debugger.join();

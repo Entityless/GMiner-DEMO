@@ -1,0 +1,53 @@
+body {
+  width: 100%;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar nav"
+    "sidebar stuff"
+    "sidebar stuff";
+}
+
+/* --- grid layout --- */
+#header {
+  width: 100%;
+  grid-area: header;
+  text-align: center;
+}
+
+#header h1 
+{
+  font-size: 50px;
+  margin-top: 30px;
+  margin-left: 10px;
+}
+
+#config {
+  grid-area: nav;
+  display: flex;
+  justify-content: space-around;
+  margin: 15px;
+  box-sizing: border-box;
+}
+
+#content {
+  grid-area: stuff;
+}
+
+#side {
+  grid-area: sidebar;
+  background-color: #404040;
+}
+
+#box1 {
+  height: 60em;
+  box-sizing: border-box;
+  margin-left: 15px;
+  margin-right: 15px;
+  margin-bottom: 10px;
+}
+

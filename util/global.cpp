@@ -7,6 +7,21 @@
 int _my_rank;
 int _num_workers;
 
+double get_running_wtime()
+{
+	static int cnt = 0;
+	static double ini_wtime;
+
+	if(cnt == 0)
+	{
+		MPI_Barrier(MPI_COMM_WORLD);
+		ini_wtime = MPI_Wtime();
+		cnt++;
+	}
+
+	return MPI_Wtime() - ini_wtime;
+}
+
 void init_worker(int * argc, char*** argv)
 {
 	int provided;
@@ -222,7 +237,12 @@ int SUBG_SIZE_T=30;
 double LOCAL_RATE=0.5;
 
 // #of seconds for sleep in thread context_sync
-int SLEEP_TIME=0;
+double AGG_SLEEP_TIME=0;
+double SYS_SLEEP_TIME=0;
+
+
+//==========================DEMO Parameters==========================
+string DEMO_LOG_PATH;
 
 
 void load_hdfs_config()
@@ -238,11 +258,19 @@ void load_hdfs_config()
 		exit(-1);
 	}
 	string conf_path(GMINER_HOME);
-	conf_path.append("/gminer-conf.ini");
+
+	const char* GMINER_INI_NAME = getenv("GMINER_INI_NAME");
+	string ini_name;
+	if(GMINER_INI_NAME == NULL)
+		ini_name = "gminer-conf.ini";
+	else
+		ini_name = GMINER_INI_NAME;
+
+	conf_path.append("/" + ini_name);
 	ini = iniparser_load(conf_path.c_str());
 	if(ini == NULL)
 	{
-		fprintf(stderr, "can not open %s. exits.\n", "gminer-conf.ini");
+		fprintf(stderr, "can not open %s. exits.\n", ini_name.c_str());
 		exit(-1);
 	}
 
@@ -313,6 +341,20 @@ void load_system_parameters(WorkerParams& param)
 		exit(-1);
 	}
 
+	str = iniparser_getstring(ini,"PATH:DEMO_LOG_PATH", str_not_found);
+	if(strcmp(str, str_not_found)!=0)
+	{
+		DEMO_LOG_PATH = str;
+		string cmd = "mkdir -p ";
+		cmd += DEMO_LOG_PATH;
+
+		system(cmd.c_str());
+	}
+	else
+	{
+		DEMO_LOG_PATH = "";
+	}
+
 	val = iniparser_getboolean(ini, "", val_not_found);
 	if(val!=val_not_found) param.force_write = bool(val);
 
@@ -339,8 +381,12 @@ void load_system_parameters(WorkerParams& param)
 	if(val!=val_not_found) LOCAL_RATE=val;
 
 	// [CONTEXT SYNC]
-	val = iniparser_getint(ini, "SYNC:SLEEP_TIME", val_not_found);
-	if(val!=val_not_found) SLEEP_TIME=val;
+	val = iniparser_getdouble(ini, "SYNC:AGG_SLEEP_TIME", val_not_found);
+	if(val!=val_not_found) AGG_SLEEP_TIME=val;
+
+	// [SYSTEM SYNC]
+	val = iniparser_getdouble(ini, "SYNC:SYS_SLEEP_TIME", val_not_found);
+	if(val!=val_not_found) SYS_SLEEP_TIME=val;
 
 
 	iniparser_freedict(ini);

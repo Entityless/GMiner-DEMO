@@ -1,0 +1,66 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible"content="ie=edge">
+    <meta name="viewport"content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./semantic/semantic.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
+    <title>GMiner playgroud</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header">
+        <h1 style="margin-top:30px">GMiner</h1>
+        <h3 class="center" style="margin: 15px">CUHK</h3>
+      </div>
+      <div id="config">
+        <div class="ui dropdown selection">
+          <input type="hidden" name="app">
+          <i class="dropdown icon"></i>
+          <div class="default text">Application</div>
+          <div class="menu">
+            {% for item in apps %}
+              {% for k, v in item.items() %}
+                <div data-value="{{ k }}" class="item"> {{ v["name"] }} </div>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="ui dropdown selection">
+          <input type="hidden" name="dataset">
+          <i class="dropdown icon"></i>
+          <div class="default text">Dataset</div>
+          <div class="menu">
+            {% for item in datasets %}
+              <div data-value="{{ item }}" class="item"> {{ item }} </div>
+            {% endfor %}
+          </div>
+        </div>
+        <button class="ui teal button"> Run </button>
+      </div>
+      <div id="side">
+      </div>
+      <div id="content">
+        <div id="box1">
+          <div class="ui two attached buttons">
+            <div class="ui button one switch active">One</div>
+            <div class="ui button two">Two</div>
+          </div>
+          <div class="ui attached segment one">
+              <p></p>
+          </div>
+          <div class="ui attached segment two" style="visibility:hidden;">
+          </div>
+        </div>
+        <div id="box2">
+        </div>
+      </div>
+      <div id="footer">
+      </div>
+    </div>
+    <!-- scripts -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='common.js') }}"></script>
+  </body>
+</html>

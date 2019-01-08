@@ -13,6 +13,7 @@
 #include <string.h>
 #include <thread>
 #include <vector>
+#include <chrono>
 
 #include "util/aggregator.hpp"
 #include "util/communication.hpp"
@@ -42,6 +43,7 @@ public:
 	Master();
 
 	void agg_sync();
+	void sys_sync();
 	void context_sync();
 	void end_sync();
 
@@ -53,6 +55,7 @@ public:
 
 	void task_steal();
 
+	void WriteSignalFile();
 	void run(const WorkerParams& params);
 
 private:

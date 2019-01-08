@@ -46,7 +46,7 @@ public:
 
 	virtual ~Task() {}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier) = 0;
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref) = 0;
 
 	// to be used by users in UDF compute(.)
 	void pull(const AdjVertex & v);

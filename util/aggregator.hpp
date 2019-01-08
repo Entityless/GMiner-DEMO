@@ -21,6 +21,11 @@ public:
 	virtual void step_final(PartialT* part) = 0;
 	virtual PartialT* finish_partial() = 0;
 	virtual FinalT* finish_final() = 0;
+
+	virtual string demo_str(const vector<PartialT>& parts){return string();}
+	virtual string app_name(){return "Nameless";}
+	virtual string sys_print_header(){return "GMiner agg_str: ";} // if "", then do not print when 
+	virtual bool agg_sync_disabled(){return false;}
 };
 
 

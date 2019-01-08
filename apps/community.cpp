@@ -312,7 +312,7 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
 	{
 		int max_size = 0;
 		ComAttrSet& com_attr_set = this->context.com_attr_set;

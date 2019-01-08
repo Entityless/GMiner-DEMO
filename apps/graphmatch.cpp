@@ -74,6 +74,37 @@ public:
 		return &count_;
 	}
 
+	string demo_str(const vector<unsigned long long>& parts) override
+	{
+		unsigned long long total_parts = 0;
+
+		for(auto v : parts)
+		{
+			total_parts += v;
+		}
+
+		char c[64];
+
+		sprintf(c, "%ld", total_parts);
+
+		return string(c);
+	}
+
+	string app_name() override
+	{
+		return "GM";
+	}
+
+	string sys_print_header() override
+	{
+		return "Current matched subgraph: ";
+	}
+
+	bool agg_sync_disabled() override
+	{
+		return true;
+	}
+
 private:
 	unsigned long long count_;
 };
@@ -104,7 +135,7 @@ public:
 		cout << endl;
 	}
 
-	void back_track(int level, SubgraphT & g, vector<VertexID> & Q, vector<VertexID> & nodes, unsigned long long & count)
+	void back_track(int level, SubgraphT & g, vector<VertexID> & Q, vector<VertexID> & nodes, unsigned long long & count, string& demo_str)
 	{
 		level++;
 		if (level == 1)
@@ -133,7 +164,7 @@ public:
 							Q.push_back(n);
 							vector<VertexID> out_b = b_vec;
 							out_b.erase(out_b.begin() + j);
-							back_track(level, g, Q, out_b, count);
+							back_track(level, g, Q, out_b, count, demo_str);
 							Q.pop_back();
 						}
 					}
@@ -155,6 +186,21 @@ public:
 					{
 						Q.push_back(adj[j].id);
 						//print_Q(Q);
+						
+						//append string
+						if(count % 5000 == 0)
+						{
+							string to_append = "{\"Q\":[";
+							for(int i = 0; i < Q.size(); i++)
+							{
+								to_append += to_string(Q[i]);
+								if(i != Q.size() - 1)
+									to_append += ",";
+							}
+							to_append += "]}\n";
+							demo_str += to_append;
+						}
+
 						count++;
 						Q.pop_back();
 					}
@@ -164,7 +210,7 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
 	{
 		int & round = context.round;
 		round++;
@@ -358,7 +404,7 @@ public:
 			Q.push_back(a);
 			unsigned long long & count = context.count;
 
-			back_track(0, g, Q, c_nodes, count);
+			back_track(0, g, Q, c_nodes, count, str_ref);
 
 			return false;
 		}

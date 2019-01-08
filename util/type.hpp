@@ -53,6 +53,37 @@ struct ktpair
 };
 
 
+struct QueueMonitorT
+{
+	unsigned long long task_num_in_memory;
+	unsigned long long task_num_in_disk;
+	unsigned long long cmq_size;
+	unsigned long long cpq_size;
+	unsigned long long taskbuf_size;
+};
+
+
+static inline ibinstream& operator << (ibinstream& m, const QueueMonitorT& v)
+{
+	m << v.task_num_in_memory;
+	m << v.task_num_in_disk;
+	m << v.cmq_size;
+	m << v.cpq_size;
+	m << v.taskbuf_size;
+	return m;
+}
+
+static inline obinstream& operator >> (obinstream& m, QueueMonitorT& v)
+{
+	m >> v.task_num_in_memory;
+	m >> v.task_num_in_disk;
+	m >> v.cmq_size;
+	m >> v.cpq_size;
+	m >> v.taskbuf_size;
+	return m;
+}
+
+
 #include "type.tpp"
 
 #endif /* TYPE_HPP_ */

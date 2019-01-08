@@ -18,6 +18,7 @@
 #include <queue>
 #include <thread>
 #include <vector>
+#include <chrono>
 
 #include "util/aggregator.hpp"
 #include "util/communication.hpp"
@@ -34,6 +35,8 @@
 #include "core/task_sorter.hpp"
 #include "core/vertex.hpp"
 #include "core/vertex_table.hpp"
+
+#include "util/tid_mapper.hpp"
 
 using namespace std;
 
@@ -87,6 +90,7 @@ public:
 		rm_dir(MERGE_DIR);
 	}
 
+	void WriteSignalFile();
 	void run(const WorkerParams& params);
 
 	//PART 2 =======================================================
@@ -115,7 +119,7 @@ private:
 
 	void load_graph(const char* inpath);
 
-	void grow_tasks();
+	void grow_tasks(int tid);
 
 	void dump_tasks(TaskVec& tasks);
 
@@ -125,7 +129,7 @@ private:
 
 	void pull_CMQ_to_CPQ();
 
-	void pull_CPQ_to_taskbuf();
+	void pull_CPQ_to_taskbuf(int tid);
 
 	void run_to_no_task();
 
@@ -140,12 +144,18 @@ private:
 	void end_report();
 
 	void agg_sync();
+	void sys_sync();
 
 	void context_sync();
 
 	void end_sync();
 
 	void debug();
+
+	void thread_demo_str_init();
+	void thread_demo_str_period();//call in sys_sync, to switch file name
+	void thread_demo_str_compute(const string& demo_str);
+	void thread_demo_str_finalize();
 
 	//PART 5 =======================================================
 	//members
@@ -179,11 +189,22 @@ private:
 
 	mutex agg_lock_;
 
-	static const int VTX_REQ_MAX_GAP=10;
+	static const int VTX_REQ_MAX_GAP = 10;
 	atomic_int vtx_req_count_, vtx_resp_count_;
 	mutex vtx_req_lock_;
 	condition_variable vtx_req_cond_;
 
+	struct DemoFile
+	{
+		FILE* first = NULL;
+		pthread_spinlock_t second;
+	} __attribute__((aligned(128))); //act as pair<FILE*, pthread_spinlock_t>, in case of false sharing
+
+	static_assert(sizeof(DemoFile) == (128), "DemoFile struct not aligned to 128B");
+
+	vector<DemoFile> thread_demo_files_;
+	int filename_part_ = 0;
+	int sys_sync_time_ = 0;
 };
 
 

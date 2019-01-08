@@ -159,7 +159,7 @@ class FocusTask :public Task<VertexID, FocusContext, Attribute<AttrValueT> >
 {
 public:
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
 	{
 		vector<VertexID>& cluster = context.cluster;
 		VtxIdSet& outlier = context.outlier;
