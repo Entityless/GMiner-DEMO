@@ -1,15 +1,11 @@
 import flask
+from gminer_infos import *
 app = flask.Flask(__name__)
+
 
 @app.route('/')
 def main():
-    apps = [
-            {'tc': {'name':'Triangle Counting', 'param':None}} , 
-            {'mc': {'name':'Max Clique', 'param':None}} , 
-            {'gm': {'name':'Graph Matching', 'param':None}} , 
-            {'cd': {'name': 'Community Detection', 'param': None}}, 
-            {'fco': {'name': 'Graph Clustering', 'param': None}}
-            ]
-    datasets = ['youtube', 'skitter', 'orkut']
-    return flask.render_template('index.html', apps=apps, datasets=datasets)
+    return flask.render_template('index.html', apps=gminer_apps,
+            datasets=gminer_datasets, sysconfigs0=gminer_sysconfig[:3],
+            sysconfigs1=gminer_sysconfig[3:])
 

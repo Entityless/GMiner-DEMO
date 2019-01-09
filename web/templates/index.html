@@ -9,50 +9,118 @@
   </head>
   <body>
     <div class="container">
-      <div id="header">
-        <h1 style="margin-top:30px">GMiner</h1>
-        <h3 class="center" style="margin: 15px">CUHK</h3>
-      </div>
       <div id="config">
-        <div class="ui dropdown selection">
-          <input type="hidden" name="app">
-          <i class="dropdown icon"></i>
-          <div class="default text">Application</div>
-          <div class="menu">
-            {% for item in apps %}
-              {% for k, v in item.items() %}
-                <div data-value="{{ k }}" class="item"> {{ v["name"] }} </div>
-              {% endfor %}
-            {% endfor %}
-          </div>
-        </div>
-        <div class="ui dropdown selection">
-          <input type="hidden" name="dataset">
-          <i class="dropdown icon"></i>
-          <div class="default text">Dataset</div>
-          <div class="menu">
-            {% for item in datasets %}
-              <div data-value="{{ item }}" class="item"> {{ item }} </div>
-            {% endfor %}
-          </div>
-        </div>
-        <button class="ui teal button"> Run </button>
+        <form class="ui form">
+          <div class="two fields">
+            <!-- system configuration -->
+            <div class="field" id="sysConfig">
+              <h3 class="ui dividing header"> System Configuration </h4>
+              <div class="three fields">
+                {% for param in sysconfigs0 %}
+                  <div class="field popup" data-content="{{ param['help'] }}">
+                    <label for="{{ param['name'] }}">{{ param['name'] }}</label>
+                    <input type="text" placeholder="{{ param['default'] }}" id="{{ param['name'] }}" name="{{ param['name'] }}">
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="two fields">
+                {% for param in sysconfigs1 %}
+                  <div class="field popup" data-content="{{ param['help'] }}">
+                    <label for="{{ param['name'] }}">{{ param['name'] }}</label>
+                    <input type="text" placeholder="{{ param['default'] }}" id="{{ param['name'] }}" name="{{ param['name'] }}">
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <!-- Application Configuration -->
+            <div class="field" id="appConfig">
+              <h3 class="ui dividing header"> Application Configuration </h4>
+              <div class="two fields">
+                <div class="field">
+                  <label for="apps">Application</label>
+                  <select class="ui dropdown" name="apps" id="apps">
+                    <option value=""></option>
+                    {% for item in apps %}
+                      {% for k, v in item.items() %}
+                        <option value="{{ k }}"> {{ v["name"] }} </option>
+                      {% endfor %}
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="dataset">Dataset</label>
+                  <select class="ui dropdown" name="dataset" id="dataset">
+                    <option value=""></option>
+                    {% for item in datasets %}
+                      <option value="{{ item }}"> {{ item }} </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="ui modal" id="param-modal">
+                <i class="close icon"></i>
+                <div class="header">xxx Parameters </div>
+                <div class="content">
+                  <div class="fields">
+                    {% for item in apps %}
+                      {% for k, v in item.items() %}
+                        {% if v['param']: %}
+                          {% for param in v['param'] %}
+                          <div class="field param {{ k }} popup" data-content="{{ param['help'] }}">
+                            <label for="{{ param['name'] }}">{{ param['name'] }}</label>
+                            <input type="text" placeholder="{{ param['default'] }}" id="{{ param['name'] }}" name="{{ param['name'] }}" data-type="{{ param['type'] }}">
+                          </div>
+                          {% endfor %}
+                        {% endif %}
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+              <div class="fields" id="buttons">
+                <div class="field">
+                  <label style="visibility:hidden">zzz</label>
+                  <button type="button" class="ui teal button" id="runButton"> Run </button>
+                </div>
+                <div class="field">
+                  <label style="visibility:hidden">zzz</label>
+                  <button type="button" class="ui disabled button" id="stopButton"> Stop </button>
+                </div>
+                <div class="field" id="param-button">
+                  <label style="visibility:hidden">zzz</label>
+                  <button type="button" class="circular ui icon button"> <i class="icon settings"></i> </button>
+                </div>
+              </div> <!-- button fields -->
+              <div>
+              </div>
+            </div> <!-- appConfig fields -->
+          </div> <!-- two fields -->
+        </form>
       </div>
       <div id="side">
-      </div>
-      <div id="content">
-        <div id="box1">
-          <div class="ui two attached buttons">
-            <div class="ui button one switch active">One</div>
-            <div class="ui button two">Two</div>
-          </div>
-          <div class="ui attached segment one">
-              <p></p>
-          </div>
-          <div class="ui attached segment two" style="visibility:hidden;">
+        <div id="gminer-header">
+          <h1 class="ui grey inverted header" style="margin-top:30px">GMiner</h1>
+          <h3 class="ui grey dividing inverted header" style="margin: 15px">CUHK</h3>
+        </div>
+        <div id="queues">
+          <div class="ui blue inverted progress">
+            <div class="bar">
+            </div>
+            <div class="label"> CMQ </div>
           </div>
         </div>
-        <div id="box2">
+      </div>
+      <div id="content">
+        <h4 class="ui horizontal divider header">
+          <i class="thumbtack icon"></i>
+        </h4>
+        <div>
+          <div class="ui raised segment" id="visual">
+            <h5> Visualization </h5>
+          </div>
+          <div class="ui raised segment" id="console">
+            <h5> Console </h5>
+          </div>
         </div>
       </div>
       <div id="footer">
@@ -60,7 +128,9 @@
     </div>
     <!-- scripts -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="http://static.runoob.com/assets/jquery-validation-1.14.0/dist/jquery.validate.min.js"></script>
     <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
     <script src="{{ url_for('static', filename='common.js') }}"></script>
+    <script src="{{ url_for('static', filename='validate_form.js') }}"></script>
   </body>
 </html>
