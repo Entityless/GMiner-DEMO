@@ -62,16 +62,44 @@ var has_default_fields = {
   iter: gc_iter_field,
   cand: gc_cand_field
 }
+function changeComponents(data){
+  console.log(data);
+  if(data.status === "ok"){
+    $('#content .segment').removeClass('loading');
+    $('#stopButton').removeClass('disabled');
+    $('#queues .progress').removeClass('disabled').addClass('blue');
+  }
+  else{
+    alert('Run command fail, please reset parameters and try again!');
+    throw "changeComponents error";
+  }
+}
+function submitRunForm(e, fields){
+  console.log('start submit');
+  var url = '/runrequest';
+  var data = JSON.stringify(fields);
+  console.log(data);
+  fetch(url, {
+    method: 'POST',
+    body: data,
+    headers: new Headers({
+      'Content-Type': 'application/json'
+    })
+  })
+  .then(resp => resp.json())
+  .then(changeComponents)
+  .catch(error => console.error(error));
+  $('#runButton').addClass('disabled');
+  $('#content .segment').addClass('loading');
+}
 $(document).ready(function(){
   /* initialize */
-  $('.ui.form').form(
-    {fields:
-      { 
-        apps: 'empty',
-        dataset: 'empty'
-      },
-      inline: true,
-      on: 'blur'
+  $('.ui.form').form({
+    fields: {
+      apps: 'empty',
+      dataset: 'empty'
+    },
+    onSuccess: submitRunForm
   });
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */

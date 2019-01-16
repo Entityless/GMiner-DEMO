@@ -95,6 +95,7 @@
               </div>
             </div> <!-- appConfig fields -->
           </div> <!-- two fields -->
+          <div class="ui error message"></div>
         </form>
       </div>
       <div id="side">
@@ -103,10 +104,23 @@
           <h3 class="ui grey dividing inverted header" style="margin: 15px">CUHK</h3>
         </div>
         <div id="queues">
-          <div class="ui blue inverted progress">
+          <div id="pq" class="ui indicating inverted disabled progress">
             <div class="bar">
+              <div class="label"></div>
+            </div>
+            <div class="label"> PQ </div>
+          </div>
+          <div id="cmq" class="ui indicating disabled inverted progress">
+            <div class="bar">
+              <div class="label"></div>
             </div>
             <div class="label"> CMQ </div>
+          </div>
+          <div id="cpq" class="ui indicating disabled inverted progress">
+            <div class="bar">
+              <div class="label"></div>
+            </div>
+            <div class="label"> CPQ </div>
           </div>
         </div>
       </div>
@@ -117,9 +131,11 @@
         <div>
           <div class="ui raised segment" id="visual">
             <h5> Visualization </h5>
+            <p></p>
           </div>
           <div class="ui raised segment" id="console">
             <h5> Console </h5>
+            <p></p>
           </div>
         </div>
       </div>

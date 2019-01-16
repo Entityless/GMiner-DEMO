@@ -1,12 +1,13 @@
-$(document).ready(function(){
 
+
+$(document).ready(function(){
   /* init */
   $('.dimmer.param').dimmer('hide');
   $('select.ui.dropdown').dropdown();
   $('#param-button').hide();
   $('.ui.modal').modal({detachable:false});
   $('.container').css('max-height', window.screen.availHeight);
-  $('#queues .progress').progress({percent: 0});
+  $('#queues .progress').progress({ percent: 0, value: 0 });
   /* config */
   $('#apps').change(function(){
     var data_value = $('#apps option:selected').attr('value');
@@ -31,4 +32,5 @@ $(document).ready(function(){
   $('#config .popup').popup({ /* popupnote */
     on: 'click'
   });
+
 });

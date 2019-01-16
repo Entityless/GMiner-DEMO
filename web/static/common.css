@@ -64,6 +64,11 @@ body {
   min-width: 400px;
   text-align: center;
 }
+#visual>p,#console>p{
+  overflow: scroll;
+  height: 100%;
+  width: 100%;
+}
 /* --- side --- */
 #queues {
   width: 95%;
