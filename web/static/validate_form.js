@@ -68,6 +68,11 @@ function changeComponents(data){
     $('#content .segment').removeClass('loading');
     $('#stopButton').removeClass('disabled');
     $('#queues .progress').removeClass('disabled').addClass('blue');
+
+    ENV.key = data.key;
+    ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
+    ENV.stdpt = 0;
+    return;
   }
   else{
     alert('Run command fail, please reset parameters and try again!');

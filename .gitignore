@@ -5,3 +5,7 @@ web/backend-log
 /build/
 __pycache__/
 /auto-test.sh
+/*.sh
+/*machines.cfg
+/*signal*
+/*.ini

@@ -228,13 +228,11 @@ if __name__ == "__main__":
             my_info_dic['mem'] = (1.0 * used_mem) / mem
             my_info_dic['network'] = em1_usage
 
-
         host_info = comm.gather(my_info_dic, root = master_rank)
 
         my_info_dic['cpu'] = 0.0
         my_info_dic['mem'] = 0.0
         my_info_dic['network'] = 0.0
-
         if my_rank == master_rank:
             #print the info
             #flush the stdout

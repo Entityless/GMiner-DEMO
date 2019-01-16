@@ -2,12 +2,12 @@
 
 $(document).ready(function(){
   /* init */
+  $('.body').css('height', window.innerHeight).css('width', window.innerWidth);
   $('.dimmer.param').dimmer('hide');
   $('select.ui.dropdown').dropdown();
   $('#param-button').hide();
   $('.ui.modal').modal({detachable:false});
-  $('.container').css('max-height', window.screen.availHeight);
-  $('#queues .progress').progress({ percent: 0, value: 0 });
+
   /* config */
   $('#apps').change(function(){
     var data_value = $('#apps option:selected').attr('value');

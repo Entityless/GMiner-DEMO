@@ -254,22 +254,26 @@ def PostProcessing(signal_dic):
             if(node_counter > node_max_q):
                 break
 
-            # break
+    if(signal_dic['app_name'] == 'MC'):
+        #
+        #given: {"count" : 2, "size" : 3, "group1" : [1,2,3], "group2" : [2,4,5]}
+        #ori: {"mc" : 3, "count" : 2, "0" : [786496, 945665, 945664], "1" : [983073, 1012607, 989527]}
+        slaves_path = args['localdir'] + "/slaves.json"
+        # print("if(signal_dic['app_name'] == 'MC'):")
+        # just read info from master_5q.log
+        if(len(master_5q_log_last_line) > 1):
+            pln = json.loads(master_5q_log_last_line)['agg_str']
+            # print(pln)
+            pln['size'] = pln.pop('mc')
 
-        while(len(post_processing_history[hostname]) > node_max_q):
-            post_processing_history[hostname].pop()
+            for i in range(pln['count']):
+                ori_key = str(i)
+                new_key = 'group' + str(i + 1)
+                pln[new_key] = pln.pop(ori_key)
 
-        node_id += 1
-
-    with open(slaves_path, 'w') as f:
-        f.write(json.dumps(post_processing_history) + '\n')
-        f.close()
-
-    #输出每个节点每个线程最近挖出来的东西
-    #注意，可能为空
-    #可以在这里维护一个dic。如果为空的话就
-    global_post_processing_history = post_processing_history
-
+            with open(slaves_path, 'w') as f:
+                f.write(json.dumps(pln) + '\n')
+                f.close()
     #cp file
     return 0
 
