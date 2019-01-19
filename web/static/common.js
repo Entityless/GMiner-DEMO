@@ -2,11 +2,10 @@
 
 $(document).ready(function(){
   /* init */
-  $('.body').css('height', window.innerHeight).css('width', window.innerWidth);
-  $('.dimmer.param').dimmer('hide');
-  $('select.ui.dropdown').dropdown();
-  $('#param-button').hide();
-  $('.ui.modal').modal({detachable:false});
+
+  $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
+  let tmp_console_h = $('#content').height() - $('#content>.menu').height() - 45;
+  $('#console').height(tmp_console_h);
 
   /* config */
   $('#apps').change(function(){

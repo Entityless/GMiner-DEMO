@@ -1,83 +1,80 @@
 body {
+  width: 100%;
   font-size: 16px;
+  background-color: #EFEFEF; 
   overflow: scroll;
 }
-.ui.form .field>label {
-  font-size: 1rem;
-  font-weight: normal;
-}
-.container {
-  display: grid;
-  width: 100%;
-  height: 100%;
-  grid-template-columns: 1fr 3fr;
-  grid-template-areas:
-    "sidebar main"
-}
-
-/* --- grid layout --- */
-#main-body {
-  grid-area: main;
-  height: 100%;
-}
-
-#config {
-  padding: 30px 20px 0px 20px;
-}
-
-#side {
-  grid-area: sidebar;
-  background-color: #EFEFEF;
-}
-
-/* --- nav --- */
-#param-modal .field {
-  width: 150px;
-  overflow: visible;
-}
-/* --- stuff --- */
-#content>div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  margin: 5px;
-  min-height: 400px;
-}
-
-#content .divider {
-  width: 97%;
-  margin: auto;
-}
-
-#visual,#console {
-  width: 48%;
-  margin: 0.5%;
-  text-align: center;
-  height: 45%;
-}
-#console>p{
-  overflow: scroll;
-  width: 100%;
-  text-align: left;
-  font-size: 8px;
-}
-
-#console>p::-webkit-scrollbar {
+html::-webkit-scrollbar {
   display: none;
 }
-
-/* --- side --- */
+/* --- grid layout --- */
 #gminer-header {
   width: 100%;
   text-align: center;
+  border-style: solid;
+  border-width: 1px 0 1px 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-color: #c7c7c7;
+  background-color: white;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  font-family: "Rockwell";
+  margin-bottom:0;
+}
+
+#main-page {
+  padding-left: 7rem;
+}
+
+.block {
+  box-shadow: 0 5px 5px rgba(0,0,0,0.1);
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0;
+  border-color: #c7c7c7;
+}
+
+
+#main-grid {
+  margin-top: 1.2rem;
+  display: flex;
+  height: 84%;
+  align-items: stretch;
+  padding: 0 auto 0 auto;
+}
+
+#content {
+  flex-grow: 1;
+}
+#console {
+  padding: 1.5rem;
+}
+
+
+#graph-col {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  align-content: center; 
+  width: 30%;
+  margin-left:1.2rem;
 }
 
 #queues {
-  width: 90%;
-  margin: auto;
+  margin-bottom: 1rem;
+  flex-grow: 1.5;
+  padding: 1.5rem;
+  background-color: white;
 }
 
-#queues .label {
-  color: #767676 !important;
+#timeline {
+  padding: auto;
+  margin-top: 1rem;
+  flex-grow: 1;
+  background-color: white;
 }
 
+#side {
+  display: flex;
+}
