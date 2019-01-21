@@ -1,8 +1,8 @@
 # G-Miner
 
-G-Miner is a general distributed system aimed at general graph mining.
+G-Miner is a general distributed system aimed at graph mining over large-scale graphs.
 
-G-Miner, a distributed toolkit, a popular framework for large-scale graph processing. G-Miner adopts a number of state-of-art graph based algorithms and formulates a set of key operations in graph processing related fields. We implement these operations as the APIs of G-Miner, which provide strong performance guarantees due to the bounds on computation and memory. Over and above them, G-Miner itself has a high parallelism with both CPU and network as well.
+Graph mining is one of the most important areas in data mining. However, scalable solutions for graph mining are still lacking as existing studies focus on sequential algorithms. While many distributed graph processing systems have been proposed in recent years, most of them were designed to parallelize computations such as PageRank and Breadth-First Search that keep states on individual vertices and propagate updates along edges. Graph mining, on the other hand, may generate many subgraphs whose number can far exceed the number of vertices. This inevitably leads to much higher computational and space complexity rendering existing graph systems inefficient. We propose G-Miner, a distributed system with a new architecture designed for general graph mining. G-Miner adopts a unified programming framework for implementing a wide range of graph mining algorithms. We model subgraph processing as independent tasks, and design a novel task pipeline to streamline task processing for better CPU, network and I/O utilization.
 
 
 ## Feature Highlights
