@@ -18,9 +18,10 @@ def get_timestamp():
 
 @app.route('/')
 def main():
+    image = [1,2,3,4,5,6,7,8,9]
     return flask.render_template('index.html', apps=gminer_apps,
             datasets=gminer_datasets, sysconfigs0=gminer_sysconfig[:3],
-            sysconfigs1=gminer_sysconfig[3:])
+            sysconfigs1=gminer_sysconfig[3:], slideimages = image)
 
 @app.route('/load_json/<folder>/<path>')
 def return_cpu_info(folder, path):

@@ -6,37 +6,39 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./semantic/semantic.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
     <title>GMiner playgroud</title>
   </head>
   <body>
     <div id="side" class="ui left vertical inverted sidebar labeled icon menu visible">
-      <a class="item">
+      <a class="item" id='configOpen'>
         <i class="settings icon"></i>
         Config
       </a>
-      <a class="item">
+      <a class="item" id='run'>
         <i class="outline circle icon"></i>
         Run
       </a>
-      <a class="item">
+      <a class="item" id='stop'>
         <i class="pause outline circle icon"></i>
         Stop
       </a>
       <div style="flex-grow: 1;"></div>
       
-      <a class="item">
+      <a class="item" id='aboutOpen'>
         <i class="info circle icon"></i>
         About
       </a>
-      <a class="item">
+      <a class="item" href="http://www.cse.cuhk.edu.hk/~jcheng/papers/gminer_eurosys18.pdf" target="_blank">
         <i class="file outline icon"></i>
         Paper
       </a>
-      <a class="item">
+      <a class="item" id='compareOpen'>
         <i class="balance scale icon"></i>
         Compare
       </a>
-      <a class="item">
+      <a class="item" id='teamOpen'>
         <i class="users icon"></i>
         Team
       </a>
@@ -68,9 +70,32 @@
         </div>
       </div>
     </div>
+    <div class='ui modal' id='aboutModal'>
+      <i class="close icon"></i>
+      <div class='header'>About</div>
+      <div class='content'>About text</div>
+    </div>
+    <div class='ui modal' id='configModal'>
+      <div class='header'>Config</div>
+    </div>
+    <div class='ui basic modal' id='compareModal'>
+      <div class='slider'>
+        {% for image in slideimages %}
+        <div class='slider-item image'>
+          <img data-lazy="{{ url_for('static', filename='images/{}.svg'.format(image)) }}">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class='ui modal' id='teamModal'>
+      <div class='header'>Team</div>
+    </div>
+
     <!-- scripts -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="http://static.runoob.com/assets/jquery-validation-1.14.0/dist/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
     <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
     <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.1/dist/g2.min.js"></script>
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>

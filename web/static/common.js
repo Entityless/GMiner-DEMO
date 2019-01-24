@@ -7,6 +7,18 @@ $(document).ready(function(){
   let tmp_console_h = $('#content').height() - $('#content>.menu').height() - 45;
   $('#console').height(tmp_console_h);
 
+  $('.ui.modal').modal();
+
+  $('.slider').on('lazyLoaded', function(e, slick, image, imageSource){
+    console.log(image);
+    // $(image[0].offsetParent).removeClass('active').addClass('disabled');
+  });
+  $('#compareModal .slider').slick({
+    dots: true,
+    infinite: true,
+    centerMode: true,
+    draggable: false,
+  });
   /* config */
   $('#apps').change(function(){
     var data_value = $('#apps option:selected').attr('value');
@@ -31,5 +43,29 @@ $(document).ready(function(){
   $('#config .popup').popup({ /* popupnote */
     on: 'click'
   });
+
+  $('#aboutOpen').click(
+    function(){
+      $('#aboutModal').modal('show');
+    });
+  $('#configOpen').click(
+    function(){
+      $('#configModal').modal('show');
+    });
+  $('#aboutOpen').click(
+    function(){
+      $('#aboutModal').modal('show');
+    });
+  $('#compareOpen').click(
+    function(){
+      $('#compareModal .slider').slick('slickGoTo', 1);
+      $('#compareModal').modal('show');
+    });
+  $('#teamOpen').click(
+    function(){
+      $('#teamModal').modal('show');
+    }
+  );
+  
 
 });

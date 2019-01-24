@@ -1,18 +1,18 @@
 $(document).ready(function(){
     const jsonPath = "load_json/runtime-infos/monitor-data.json";
     const refreshInterval = 500; //In ms
-    const numOfType = 3;         //Number of type to display
-    const maxItem   = 60;        //Maximun number of item in each json file
-    const chartColors = ['#70ad47', '#ed7d31', '#5b9bd5'];
-    var chartheight = $('#timeline').height() * 0.7;
-    var chartwidth = $('#timeline').width() * 0.8;
+    const numOfType = 4;         //Number of type to display
+    const maxItem   = 283;        //Maximun number of item in each json file
+    const chartColors = ['#70ad47', '#ed7d31', '#5b9bd5', '#c93939'];
+    var chartheight = $('#timeline').height() * 0.9;
+    var chartwidth = $('#timeline').width()*0.9;
     var chart = new G2.Chart({
           container: 'chartView',
           forceFit: false,
           width: chartwidth,
           height: chartheight,
           animate: false,
-          padding: ["10", '10', '16%', '20%']
+          padding: ["7", '18', '30', '50']
         });
     chart.scale('time', {
             tickInterval: maxItem
@@ -38,7 +38,7 @@ $(document).ready(function(){
                 }
         });
     chart.tooltip(false);
-    chart.line().position('time*value').color('type', chartColors);
+    chart.line().position('time*value').color('type', chartColors).size(1);
 
     var items = {};
     chart.legend({
@@ -62,8 +62,8 @@ $(document).ready(function(){
     var updateChart = function(){
         $.getJSON(jsonPath, function(data){
             index = 0;
-            for(i = 0; i < data.length / numOfType; i++){
-                for(j = 0; j < numOfType; j ++){
+            for(let i = 0; i < data.length / numOfType; i++){
+                for(let j = 0; j < numOfType; j++){
                     data[index].time = i;
                     index ++;
                 }

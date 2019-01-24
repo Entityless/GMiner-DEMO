@@ -78,3 +78,20 @@ html::-webkit-scrollbar {
 #side {
   display: flex;
 }
+
+.slider {
+  margin: 20% auto 20% auto;
+  background-color: white;
+}
+
+.slider-item {
+  margin: auto;
+  padding: 2rem;
+  min-height: 280px;
+}
+
+.slider-item img {
+  margin: auto;
+  height: 240px;
+}
+
