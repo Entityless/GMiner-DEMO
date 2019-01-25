@@ -50,15 +50,15 @@
       <div id="main-grid">
         <div id="content" class="block">
           <div class="ui top attached menu">
-              <a class="active item">
-                Visualization
-              </a>
-              <a class="item">
-                Console
-              </a>
-            </div>
-            <div class="ui attached segment" id="console">
-            </div>
+            <a class="active item">
+              Visualization
+            </a>
+            <a class="item">
+              Console
+            </a>
+          </div>
+          <div class="ui attached segment" id="console">
+          </div>
         </div>
         <div id="graph-col" >
           <div id="queues" class="block">
@@ -72,7 +72,21 @@
     <div class='ui modal' id='aboutModal'>
       <i class="close icon"></i>
       <div class='header'>About</div>
-      <div class='content'>About text</div>
+      <div class='content'>
+        <p>G-Miner is a general distributed system aimed at graph mining over large-scale graphs.</p>
+        <p>
+          Graph mining is one of the most important areas in data mining. 
+          However, scalable solutions for graph mining are still lacking as existing studies focus on sequential algorithms. 
+          While many distributed graph processing systems have been proposed in recent years, most of them were designed to 
+          parallelize computations such as PageRank and Breadth-First Search that keep states on individual vertices and 
+          propagate updates along edges. Graph mining, on the other hand, may generate many subgraphs whose number can far 
+          exceed the number of vertices. This inevitably leads to much higher computational and space complexity rendering 
+          existing graph systems inefficient. We propose G-Miner, a distributed system with a new architecture designed for 
+          general graph mining. G-Miner adopts a unified programming framework for implementing a wide range of graph mining 
+          algorithms. We model subgraph processing as independent tasks, and design a novel task pipeline to streamline task 
+          processing for better CPU, network and I/O utilization.
+        </p>
+      </div>
     </div>
     <div class='ui modal' id='configModal'>
       <div class='header'>Config</div>

@@ -2,10 +2,9 @@
 
 $(document).ready(function(){
   /* init */
-
   $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
-  let tmp_console_h = $('#content').height() - $('#content>.menu').height() - 45;
-  $('#console').height(tmp_console_h);
+  // let tmp_console_h = $('#content').height() - $('#content>.menu').height() - 45;
+  // $('#console').height(tmp_console_h);
 
   $('.ui.modal').modal({'useFlex':false});
 
