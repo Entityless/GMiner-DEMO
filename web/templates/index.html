@@ -46,7 +46,6 @@
     <div id="main-page">
       <div id="gminer-header" class="ui grey header">
         <h1>GMiner</h1>
-        
       </div>
       <div id="main-grid">
         <div id="content" class="block">
@@ -77,6 +76,64 @@
     </div>
     <div class='ui modal' id='configModal'>
       <div class='header'>Config</div>
+      <div id="config" class="content">
+        <form class="ui form">
+          <div class="two fields">
+            <div class="field" id="sysConfig">
+              <h4 class="ui dividing header"> System Configuration </h4>
+              <div class="three fields">
+                {% for param in sysconfigs0 %}
+                  <div class="field popup" data-content="{{ param['help'] }}">
+                    <label for="{{ param['name'] }}">{{ param['name'] }}</label>
+                    <input type="text" placeholder="{{ param['default'] }}" id="{{ param['name'] }}" name="{{ param['name'] }}">
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="three fields">
+                {% for param in sysconfigs1 %}
+                  <div class="field popup" data-content="{{ param['help'] }}">
+                    <label for="{{ param['name'] }}">{{ param['name'] }}</label>
+                    <input type="text" placeholder="{{ param['default'] }}" id="{{ param['name'] }}" name="{{ param['name'] }}">
+                  </div>
+                {% endfor %}
+                <div class="field">
+                  <div class="ui checkbox" style="padding-top: 25%">
+                    <input type="checkbox" tabindex="0" class="hidden" id="ib" name="ib" value="ib">
+                    <label for="ib">Infiniband</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="field" id="appConfig">
+              <h4 class="ui dividing header"> Application Configuration </h4>
+              <div class="two fields">
+                <div class="field">
+                  <label for="apps">Application</label>
+                  <select class="ui dropdown" name="apps" id="apps">
+                    <option value=""></option>
+                    {% for item in apps %}
+                      {% for k, v in item.items() %}
+                        <option value="{{ k }}"> {{ v["name"] }} </option>
+                      {% endfor %}
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="dataset">Dataset</label>
+                  <select class="ui dropdown" name="dataset" id="dataset">
+                    <option value=""></option>
+                    {% for item in datasets %}
+                      <option value="{{ item }}"> {{ item }} </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ui error message"></div>
+        </form>
+      </div -->
+      </div>
     </div>
     <div class='ui basic modal' id='compareModal'>
       <div class='slider'>

@@ -2,7 +2,7 @@ $(document).ready(function(){
     const jsonPath = "load_json/runtime-infos/monitor-data.json";
     const refreshInterval = 500; //In ms
     const numOfType = 4;         //Number of type to display
-    const maxItem   = 283;        //Maximun number of item in each json file
+    const maxItem   = 120;        //Maximun number of item in each json file
     const chartColors = ['#70ad47', '#ed7d31', '#5b9bd5', '#c93939'];
     var chartheight = $('#timeline').height() * 0.9;
     var chartwidth = $('#timeline').width()*0.9;

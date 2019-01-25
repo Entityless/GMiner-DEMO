@@ -7,7 +7,7 @@ $(document).ready(function(){
   let tmp_console_h = $('#content').height() - $('#content>.menu').height() - 45;
   $('#console').height(tmp_console_h);
 
-  $('.ui.modal').modal();
+  $('.ui.modal').modal({'useFlex':false});
 
   $('.slider').on('lazyLoaded', function(e, slick, image, imageSource){
     console.log(image);
@@ -58,7 +58,7 @@ $(document).ready(function(){
     });
   $('#compareOpen').click(
     function(){
-      $('#compareModal .slider').slick('slickGoTo', 1);
+      $('#compareModal .slider').slick('slickGoTo', 0);
       $('#compareModal').modal('show');
     });
   $('#teamOpen').click(
