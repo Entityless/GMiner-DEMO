@@ -84,6 +84,9 @@ gminer_apps = [
             {'fco': {'name': 'Graph Clustering', 'param': [min_weight, min_core_size, min_result_size, diff_ratio, iter_round_max, cand_max_time]}}
             ]
 
+gminer_persons = [
+    {'name': 'xxx', 'img': 'husky.jpg', 'info': 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}    
+    ]
 gminer_sysconfig = [
     cache_size, num_comp_th, pipe_pop_num, pop_num, subg_size_t 
 ]
