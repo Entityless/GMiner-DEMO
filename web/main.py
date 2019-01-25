@@ -46,7 +46,11 @@ def runApplication():
     manager_table[timestamp] = proc
     # 2. run gminer
     cmd, ini_str = utils.ini_generator.gminer_ini_gen(data)
+    tmpf_dir = os.path.join(myenv['GMINER_HOME'], 'tmp')
+    if not os.path.exists(tmpf_dir):
+        os.mkdir(tmpf_dir)
     myenv['GMINER_INI_NAME'] = os.path.join(myenv['GMINER_HOME'], 'tmp', str(timestamp)+'.ini')
+
     myenv['GMINER_START_TIMESTAMP'] = timestamp
     with open(myenv['GMINER_INI_NAME'], 'w') as f:
         f.write(ini_str)
