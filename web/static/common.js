@@ -3,15 +3,7 @@
 $(document).ready(function(){
   /* init */
   $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
-  // let tmp_console_h = $('#content').height() - $('#content>.menu').height() - 45;
-  // $('#console').height(tmp_console_h);
-
   $('.ui.modal').modal({'useFlex':false});
-
-  $('.slider').on('lazyLoaded', function(e, slick, image, imageSource){
-    console.log(image);
-    // $(image[0].offsetParent).removeClass('active').addClass('disabled');
-  });
   $('#compareModal .slider').slick({
     dots: true,
     infinite: true,

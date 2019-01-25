@@ -5,7 +5,7 @@ $(document).ready(function(){
     const maxItem   = 120;        //Maximun number of item in each json file
     const chartColors = ['#70ad47', '#ed7d31', '#5b9bd5', '#c93939'];
     var chartheight = $('#timeline').height() * 0.9;
-    var chartwidth = $('#timeline').width()*0.9;
+    var chartwidth = $('#timeline').width() * 0.95;
     var chart = new G2.Chart({
           container: 'chartView',
           forceFit: false,
@@ -78,4 +78,10 @@ $(document).ready(function(){
       });
     };
     setInterval(updateChart, refreshInterval);
+
+    $('#timeline').resize(function() {
+      var chartheight = $('#timeline').height() * 0.9;
+      var chartwidth = $('#timeline').width() * 0.9; 
+      var chart = $('#timeline canvas').height(chartheight).width(chartwidth);
+    });
 });

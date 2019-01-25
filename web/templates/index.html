@@ -74,7 +74,7 @@
       <div class='header'>About</div>
       <div class='content'>
         <p>G-Miner is a general distributed system aimed at graph mining over large-scale graphs.</p>
-        <p>
+        <p style="text-align:justify;"> <!-- 两端对齐 -->
           Graph mining is one of the most important areas in data mining. 
           However, scalable solutions for graph mining are still lacking as existing studies focus on sequential algorithms. 
           While many distributed graph processing systems have been proposed in recent years, most of them were designed to 
@@ -153,13 +153,30 @@
       <div class='slider'>
         {% for image in slideimages %}
         <div class='slider-item image'>
-          <img data-lazy="{{ url_for('static', filename='images/{}.svg'.format(image)) }}">
+          <img data-lazy="{{ url_for('static', filename='images/{}.svg'.format(image)) }}" alt="loading...">
         </div>
         {% endfor %}
       </div>
     </div>
-    <div class='ui modal' id='teamModal'>
-      <div class='header'>Team</div>
+    <div class='ui longer modal' id='teamModal'>
+      <div class="ui two column divided grid">
+        {% for row in teammembers %}
+        <div class="row">
+          {% for person in row %}
+          <div class="column">
+            <div style="float:left; margin-right: 1rem">
+              <img src="{{ url_for('static',filename='images/{}'.format(person['img'])) }}" height="128" width="128">
+            </div>
+            <p>
+              <span class="personName">{{ person['name'] }}</span>
+              <br>
+              <span>{{ person['info'] }}</span>
+            </p>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
     </div>
 
     <!-- scripts -->
