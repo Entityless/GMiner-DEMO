@@ -1,0 +1,97 @@
+body {
+  width: 100%;
+  font-size: 16px;
+  background-color: #EFEFEF; 
+  overflow: scroll;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+/* --- grid layout --- */
+#gminer-header {
+  width: 100%;
+  text-align: center;
+  border-style: solid;
+  border-width: 1px 0 1px 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-color: #c7c7c7;
+  background-color: white;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  font-family: "Rockwell";
+  margin-bottom:0;
+}
+
+#main-page {
+  padding-left: 7rem;
+}
+
+.block {
+  box-shadow: 0 5px 5px rgba(0,0,0,0.1);
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0;
+  border-color: #c7c7c7;
+}
+
+
+#main-grid {
+  margin-top: 1.2rem;
+  display: flex;
+  height: 84%;
+  align-items: stretch;
+  padding: 0 auto 0 auto;
+}
+
+#content {
+  flex-grow: 1;
+}
+#console {
+  padding: 1.5rem;
+}
+
+
+#graph-col {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  align-content: center; 
+  width: 30%;
+  margin-left:1.2rem;
+}
+
+#queues {
+  margin-bottom: 1rem;
+  flex-grow: 1.5;
+  padding: 1.5rem;
+  background-color: white;
+}
+
+#timeline {
+  padding: auto;
+  margin-top: 1rem;
+  flex-grow: 1;
+  background-color: white;
+}
+
+#side {
+  display: flex;
+}
+
+.slider {
+  margin: 15% auto 20% auto;
+  background-color: white;
+}
+
+.slider-item {
+  margin: auto;
+  padding: 2rem;
+  min-height: 280px;
+}
+
+.slider-item img {
+  margin: auto;
+  height: 240px;
+}
+

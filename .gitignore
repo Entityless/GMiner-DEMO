@@ -1,1 +1,11 @@
 # Add any directories, files, or patterns you don't want to be tracked by version control
+web/backend-log
+/release/
+/logs/
+/build/
+__pycache__/
+/auto-test.sh
+/*.sh
+/*machines.cfg
+/*signal*
+/*.ini

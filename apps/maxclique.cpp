@@ -9,8 +9,54 @@ using namespace std;
 
 typedef map<VertexID, set<VertexID>> Graph;
 
+// typedef int maxCliqueContext;
 
-class CountAgg :public Aggregator<int, int, int>  //Context = int
+// typedef int MaxCliquePartialT;
+
+struct MaxCliquePartialT
+{
+	int mc;
+	// vector<int> counts;
+	int mcount = 0;
+	vector<vector<int>> track;
+};
+
+typedef MaxCliquePartialT maxCliqueContext;
+
+ibinstream& operator << (ibinstream& m, const MaxCliquePartialT& v)
+{
+	m << v.mc;
+	m << v.mcount;
+	m << v.track;
+	return m;
+}
+
+obinstream& operator >> (obinstream& m, MaxCliquePartialT& v)
+{
+	m >> v.mc;
+	m >> v.mcount;
+	m >> v.track;
+	return m;
+}
+
+ifbinstream& operator << (ifbinstream& m, const MaxCliquePartialT& v)
+{
+	m << v.mc;
+	m << v.mcount;
+	m << v.track;
+	return m;
+}
+
+ofbinstream& operator >> (ofbinstream& m, MaxCliquePartialT & v)
+{
+	m >> v.mc;
+	m >> v.mcount;
+	m >> v.track;
+	return m;
+}
+
+
+class CountAgg :public Aggregator<maxCliqueContext, MaxCliquePartialT, int>
 {
 public:
 
@@ -18,35 +64,121 @@ public:
 
 	virtual void init()
 	{
-		count_ = 0;
+		partial_.mc = 0;
 	}
 
-	virtual void step_partial(int & v)
+	virtual void step_partial(maxCliqueContext & v)
 	{
-		if (v > count_)
-			count_ = v;
+		if (v.mc > partial_.mc)
+		{
+			// mc_ = v;
+			partial_.mc = v.mc;
+			partial_.mcount = v.mcount;
+			partial_.track = v.track;//move?
+		}
+		else if(v.mc == partial_.mc)
+		{
+			partial_.mcount += v.mcount;
+			for(auto vv : v.track)
+			{
+				partial_.track.push_back(vv);
+			}
+		}
 	}
 
-	virtual void step_final(int* part)
+	virtual void step_final(MaxCliquePartialT* part)
 	{
-		if (*part > count_)
-			count_ = *part;
+		if (part->mc > partial_.mc)
+		{
+			partial_.mc = part->mc;
+			partial_.mcount = part->mcount;
+			partial_.track = part->track;
+		}
+		else if(part->mc == partial_.mc)
+		{
+			partial_.mcount += part->mcount;
+
+			for(auto vv : part->track)
+			{
+				partial_.track.push_back(vv);
+			}
+		}
 	}
 
-	virtual int* finish_partial()
+	virtual MaxCliquePartialT* finish_partial()
 	{
-		return &count_;
+		 return &partial_;
 	}
+
 	virtual int* finish_final()
 	{
-		return &count_;
+		return &partial_.mc;
+	}
+
+	string demo_str(const vector<MaxCliquePartialT>& parts) override
+	{
+		int max_parts = 0;
+		int max_part_cnt = 0;
+		vector<vector<int>> track;
+
+		for(auto v : parts)
+		{
+			assert(v.track.size() == v.mcount);
+			if(v.mc > max_parts)
+			{
+				max_parts = v.mc;
+				max_part_cnt = 0;
+				track.resize(0);
+			}
+			if(v.mc == max_parts)
+			{
+				max_part_cnt += v.mcount;
+				for(auto Q : v.track)
+				{
+					track.push_back(Q);
+				}
+			}
+		}
+
+		string list;
+		int tmp_counter = 0;
+
+		for(auto Q : track)
+		{
+			list += ", \"" + to_string(tmp_counter) + "\" : [";
+			for(int i = 0; i < Q.size(); i++)
+			{
+				if(i != 0)
+					list += ", ";
+				list += to_string(Q[i]);
+			}
+			list += "]";
+
+			tmp_counter++;
+		}
+
+		string ret_str;
+
+		ret_str = "{\"mc\" : " + to_string(max_parts) + ", \"count\" : " + to_string(max_part_cnt) + list + "}";
+
+		return ret_str;
+	}
+
+	string app_name() override
+	{
+		return "MC";
+	}
+
+	string sys_print_header() override
+	{
+		return "Current max clique size: ";
 	}
 
 private:
-	int count_;
+	MaxCliquePartialT partial_;
 };
 
-class CliqueTask :public Task<VertexID, int>   //Context = int
+class CliqueTask :public Task<VertexID, maxCliqueContext>
 {
 public:
 	struct VtxDegree //VertexID with its degree
@@ -135,7 +267,7 @@ public:
 	* Q: the candidates of maxclique calculated before current stage
 	* maxSize: the size of MaxClique mined out currently
 	*/
-	void max_clique(Graph & g, vector<VertexID> & listR, map<VertexID, int> & color, vector<VertexID> & Q, int & max_size)
+	void max_clique(Graph & g, vector<VertexID> & listR, map<VertexID, int> & color, vector<VertexID> & Q, int & max_size, string& str_ref, ContextType & context)
 	{
 		while (!listR.empty())
 		{
@@ -165,11 +297,41 @@ public:
 
 					get_listR(subg, listR);
 					color_sort(subg, listR, color);
-					max_clique(subg, listR, color, Q, max_size);
+					max_clique(subg, listR, color, Q, max_size, str_ref, context);
 				}
-				else if (Q.size() > max_size)
+				else if (Q.size() >= max_size)
 				{
+					if(Q.size() > max_size)
+					{
+						//clear the context
+						context.mc = Q.size();
+						context.mcount = 1;
+						context.track.resize(0);
+						context.track.push_back(Q);
+					}
+					else//==
+					{
+						context.mcount++;
+						context.track.push_back(Q);
+					}
+
 					max_size = Q.size();
+					// if(max_size == 17)
+					// {
+					// 	int tid = TidMapper::GetInstance().GetTid();
+					// 	printf("Siri: wo zhi zai hu ni %d %d\n", _my_rank, tid);
+					// 	fflush(stdout);
+					// }
+
+					// string to_append;
+					// // to_append += "max_size" + to_string(max_size);
+					// to_append += to_string(max_size);
+					// for(auto v : Q)
+					// {
+					// 	to_append += " " + to_string(v);
+					// }
+					// to_append += "\n";
+					// str_ref += to_append;
 				}
 				Q.pop_back();
 			}
@@ -180,7 +342,7 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
 	{
 		int  max_size = *(int*)get_agg();
 		vector<VertexID> Q;
@@ -209,14 +371,41 @@ public:
 
 			get_listR(tempG, listR);
 			color_sort(tempG, listR, color);
-			max_clique(tempG, listR, color, Q, max_size);
+			max_clique(tempG, listR, color, Q, max_size, str_ref, context);
 		}
-		else if (Q.size() > max_size)
+		else if (Q.size() >= max_size)
 		{
 			max_size = Q.size();
+
+			// any graph with at least one edge, the max_size > 1.
+			// this application is not designed to run on a "graph" without any edge.
+
+			// string to_append;
+			// to_append += to_string(max_size);
+			// for(auto v : Q)
+			// {
+			// 	to_append += " " + to_string(v);
+			// }
+			// to_append += "\n";
+			// str_ref += to_append;
 		}
 		//get the maxClique in current task
-		context = max_size;
+		// context = max_size;
+
+		//do not need it at all
+		// for(auto QQ : context.track)
+		// {
+		// 	string to_append;
+		// 	to_append += to_string(context.mc);
+		// 	for(auto v : QQ)
+		// 	{
+		// 		to_append += " " + to_string(v);
+		// 	}
+		// 	to_append += "\n";
+		// 	str_ref += to_append;
+		// }
+
+		assert(context.track.size() == context.mcount);
 
 		return false;
 	}
@@ -245,7 +434,9 @@ public:
 			NodeT node;
 			v->set_node(node);
 			task->subG.add_node(node);
-			task->context = 0;
+			task->context.mc = 0;
+			task->context.mcount = 0;
+			task->context.track.resize(0);
 
 			return task;
 		}

@@ -21,6 +21,7 @@
 #include <string.h>
 #include <iostream>
 #include <mutex>
+#include <cstdlib>
 
 #include "util/hdfs_core.hpp"
 
@@ -232,11 +233,18 @@ extern int SUBG_SIZE_T;
 extern double LOCAL_RATE;
 
 // #of seconds for sleep in thread context_sync
-extern int SLEEP_TIME;
+extern double AGG_SLEEP_TIME;
+extern double SYS_SLEEP_TIME;
+
+
+//==========================DEMO Parameters==========================
+extern string DEMO_LOG_PATH;
 
 
 void load_hdfs_config();
 void load_system_parameters(WorkerParams& param);
+
+extern double get_running_wtime();
 
 //=====================================================================
 

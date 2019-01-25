@@ -11,12 +11,15 @@ struct TriangleContext
 {
 	int count;
 	VertexID last_id;
+
+	VertexID creator_id;
 };
 
 ibinstream& operator << (ibinstream& m, const TriangleContext& v)
 {
 	m << v.count;
 	m << v.last_id;
+	m << v.creator_id;
 	return m;
 }
 
@@ -24,6 +27,7 @@ obinstream& operator >> (obinstream& m, TriangleContext& v)
 {
 	m >> v.count;
 	m >> v.last_id;
+	m >> v.creator_id;
 	return m;
 }
 
@@ -31,6 +35,7 @@ ifbinstream& operator << (ifbinstream& m, const TriangleContext& v)
 {
 	m << v.count;
 	m << v.last_id;
+	m << v.creator_id;
 	return m;
 }
 
@@ -38,6 +43,7 @@ ofbinstream& operator >> (ofbinstream& m, TriangleContext & v)
 {
 	m >> v.count;
 	m >> v.last_id;
+	m >> v.creator_id;
 	return m;
 }
 
@@ -72,6 +78,38 @@ public:
 		return &count_;
 	}
 
+	string demo_str(const vector<unsigned long long>& parts) override
+	{
+		unsigned long long total_parts = 0;
+
+		for(auto v : parts)
+		{
+			total_parts += v;
+		}
+
+		char c[64];
+
+		sprintf(c, "%ld", total_parts);
+
+		return string(c);
+	}
+
+	string app_name() override
+	{
+		return "TC";
+	}
+
+	bool agg_sync_disabled() override
+	{
+		return true;
+	}
+
+	string sys_print_header() override
+	{
+		return "Current triangle count: ";
+	}
+
+
 private:
 	unsigned long long count_;
 };
@@ -81,7 +119,7 @@ class TriangleTask :public Task<VertexID, TriangleContext>
 {
 public:
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
 	{
 		VertexT last_v;
 		last_v.id = context.last_id;
@@ -100,8 +138,22 @@ public:
 					size_i++;
 				if (size_i >= size_j)
 					break;
+
+				//my neighbor is my neighbor's neighbor
 				if (adj[size_i].id == id_j)
 				{
+					if(context.count % 100 == 0)
+					{
+						string to_append = "{\"Q\":[";
+						to_append += to_string(frontier[i]->id) + ",";
+						to_append += to_string(context.creator_id) + ",";
+						to_append += to_string(id_j);
+						to_append += "]}\n";
+						str_ref += to_append;
+					}
+
+					//the triangle is: frontier[i], context.creator_id, id_j
+
 					context.count++;
 					size_i++;
 				}
@@ -134,7 +186,6 @@ public:
 
 	virtual TriangleTask * create_task(VertexT * v)
 	{
-
 		AdjVtxList & adjlist = v->get_adjlist();
 		if (adjlist.size() <= 1)
 			return NULL;
@@ -152,6 +203,7 @@ public:
 			task->pull(candidates);
 			task->context.count = 0;
 			task->context.last_id = adjlist[adjlist.size() - 1].id;
+			task->context.creator_id = v->id;
 
 			return task;
 		}

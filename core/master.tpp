@@ -9,6 +9,66 @@ Master<AggregatorT>::Master()
 }
 
 template <class AggregatorT>
+void Master<AggregatorT>::sys_sync()
+{
+	vector<QueueMonitorT> parts(get_num_workers());
+
+	master_gather(parts);
+
+	//write to file
+	string file_name = DEMO_LOG_PATH + "master_5q.log";
+	FILE* f = fopen(file_name.c_str(), "a");
+	if(f)
+	{
+		fprintf(f, "{\"nodes\":");
+
+		fprintf(f, "%d", parts.size() - 1);
+
+		fprintf(f, ", \"compute_time\":");
+
+		fprintf(f, "%f", get_running_wtime());
+
+		int cnt = 0;
+
+		for(auto v : parts)
+		{
+			if(cnt == parts.size() - 1)
+				break;//the last one is always empty
+			fprintf(f, ", \"%d\" : [%ld, %ld, %ld, %ld, %ld]", cnt, 
+					v.task_num_in_memory, v.task_num_in_disk, v.cmq_size, v.cpq_size, v.taskbuf_size);
+			cnt++;
+		}
+	}
+
+	//fake agg_sync
+	AggregatorT* agg = (AggregatorT*)get_aggregator();
+	if (agg != NULL)
+	{
+		vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
+		master_gather(parts);
+
+		string agg_str = agg->demo_str(parts);
+		if(agg_str.size() != 0)
+		{
+			// printf("void Master<AggregatorT>::sys_sync(), %s\n", agg_str.c_str());
+			if(f)
+			{
+				fprintf(f, ", \"agg_str\" : %s", agg_str.c_str());
+			}
+
+			printf("time = %.2f seconds, %s%s\n", get_running_wtime(), agg->sys_print_header().c_str(), agg_str.c_str());
+		}
+	}
+
+	if(f)
+	{
+		fprintf(f, "}\n");
+		fflush(f);
+		fclose(f);
+	}
+}
+
+template <class AggregatorT>
 void Master<AggregatorT>::agg_sync()
 {
 	AggregatorT* agg = (AggregatorT*)get_aggregator();
@@ -34,7 +94,8 @@ void Master<AggregatorT>::agg_sync()
 template <class AggregatorT>
 void Master<AggregatorT>::context_sync()
 {
-	if(SLEEP_TIME == 0)
+	AggregatorT* agg = (AggregatorT*)get_aggregator();
+	if(AGG_SLEEP_TIME == 0.0 && SYS_SLEEP_TIME == 0.0)
 	{
 		//do agg_sync when all the tasks have been processed
 		unique_lock<mutex> lck(end_lock_);
@@ -43,22 +104,79 @@ void Master<AggregatorT>::context_sync()
 			end_cond_.wait(lck);  //block the thread until end_cond is notified.
 		}
 	}
-	else
+	else if(SYS_SLEEP_TIME == 0.0)//just agg_sync
 	{
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
-			sleep(SLEEP_TIME);
-			agg_sync();
+			this_thread::sleep_for(chrono::nanoseconds(uint64_t(AGG_SLEEP_TIME * (1000 * 1000 * 1000))));
+			if(!agg->agg_sync_disabled())
+				agg_sync();
+		}
+	}
+	else if(AGG_SLEEP_TIME == 0.0)
+	{
+		//clear sys file
+
+		string file_name = DEMO_LOG_PATH + "master_5q.log";
+		FILE* f = fopen(file_name.c_str(), "w");
+		if(f)fclose(f);
+		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
+		{
+			this_thread::sleep_for(chrono::nanoseconds(uint64_t(SYS_SLEEP_TIME * (1000 * 1000 * 1000))));
+			sys_sync();
+		}
+	}
+	else
+	{
+		//clear sys file
+		string file_name = DEMO_LOG_PATH + "master_5q.log";
+		FILE* f = fopen(file_name.c_str(), "w");
+		if(f)fclose(f);
+
+		//do both sys_sync and agg_sync
+		//if all worker runs on the same model of CPU, then the sleep_counter counter will be identical
+		double sleep_counter = 0.0;
+		double last_sys_sync = 0.0;
+		double last_agg_sync = 0.0;
+		double time_to_sleep = 0.0;
+
+		while (!all_land(is_end_))
+		{
+			//decide how long to sleep, and which to run
+			if(last_sys_sync - last_agg_sync > AGG_SLEEP_TIME - SYS_SLEEP_TIME)
+			{
+				//run agg
+				last_agg_sync += AGG_SLEEP_TIME;
+
+				time_to_sleep  = last_agg_sync - sleep_counter;
+				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				if(!agg->agg_sync_disabled())
+					agg_sync();
+
+				sleep_counter = last_agg_sync;
+			}
+			else
+			{
+				//run sys
+				last_sys_sync += SYS_SLEEP_TIME;
+
+				time_to_sleep  = last_sys_sync - sleep_counter;
+				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				sys_sync();
+
+				sleep_counter = last_sys_sync;
+			}
 		}
 	}
 	agg_sync();
+	sys_sync();
 	print_result();
 }
 
 template <class AggregatorT>
 void Master<AggregatorT>::end_sync()
 {
-	if(SLEEP_TIME == 0 )
+	if(AGG_SLEEP_TIME == 0.0)
 	{
 		end_lock_.lock();
 		is_end_ = true;
@@ -69,6 +187,10 @@ void Master<AggregatorT>::end_sync()
 	{
 		is_end_ = true;
 	}
+
+	//remove signal file
+	const char* rm_signal_cmd = "mv signal-file-gminer.233 233.signal-file-gminer";
+	system(rm_signal_cmd);
 }
 
 template <class AggregatorT>
@@ -140,8 +262,77 @@ void Master<AggregatorT>::task_steal()
 }
 
 template <class AggregatorT>
+void Master<AggregatorT>::WriteSignalFile()
+{
+	const char* signal_name = "signal-file-gminer.233";
+	bool to_exit = false;
+	//check if signal file exists
+	if(fopen(signal_name, "r"))
+	{
+		//signal exists
+		to_exit = true;
+
+		printf("file \"signal-file-gminer.233\" found, maybe some G-Miner is running is this directory, exit now.\n");
+	}
+
+	master_bcast(to_exit);
+
+	if(to_exit)
+		exit(0);
+	// assert(to_exit /*signal file exists*/);
+
+	string cmd = "rm " + DEMO_LOG_PATH + "/*";
+	system(cmd.c_str());
+
+	int name_len;
+	char hostname[MPI_MAX_PROCESSOR_NAME];
+	MPI_Get_processor_name(hostname, &name_len);
+
+	// printf("my_rank == %d, %s, master\n", _my_rank, hostname);
+
+	//generate signal file
+
+	vector<string> hostnames(get_num_workers());
+	master_gather(hostnames);
+
+	string hn_list = "[";
+
+	for(int i = 0; i < get_num_workers(); i++)
+	{
+		if(hostnames[i].size() > 0)
+			hn_list += "\"" + hostnames[i] + "\"";
+		if(i < get_num_workers() - 2)
+			hn_list += ", ";
+	}
+
+	hn_list += "]";
+
+	// printf("gathered slaves: %s\n", hn_list.c_str());
+	// fflush(stdout);
+
+	FILE* f = fopen(signal_name, "w");
+
+	if(f)
+	{
+		string signal_str = "{\"master\" : \"" + string(hostname) + "\", \"slaves\" : " + hn_list;
+
+		signal_str += ", \"DEMO_LOG_PATH\" : \"" + DEMO_LOG_PATH + "\"";
+
+		AggregatorT* agg = (AggregatorT*)get_aggregator();
+		signal_str += ", \"app_name\" : \"" + agg->app_name() + "\"";
+		signal_str += ", \"nthreads\" : " + to_string(NUM_COMP_THREAD);
+
+		signal_str += "}\n";
+		fprintf(f, signal_str.c_str());
+		fclose(f);
+	}
+}
+
+template <class AggregatorT>
 void Master<AggregatorT>::run(const WorkerParams& params)
 {
+	WriteSignalFile();
+
 	if (dir_check(params.input_path.c_str(), params.output_path.c_str(), true, params.force_write) == -1)
 	{
 		terminate();
@@ -155,6 +346,8 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 	AggregatorT* agg = (AggregatorT*)get_aggregator();
 	if (agg != NULL)
 		agg->init();
+
+	get_running_wtime();
 
 	//============================ RUN ============================
 	thread sync(&Master::context_sync, this);
