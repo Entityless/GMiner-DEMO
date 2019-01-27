@@ -9,3 +9,7 @@ __pycache__/
 /*machines.cfg
 /*signal*
 /*.ini
+/*.log
+web/runtime-infos
+machines.cfg
+tmp/

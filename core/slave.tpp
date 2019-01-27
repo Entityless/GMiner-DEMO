@@ -140,7 +140,6 @@ void Slave<TaskT, AggregatorT>::load_graph(const char* inpath)
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
 {
-	TidMapper::GetInstance().Register(tid);
 	TaskVec tasks;
 	VertexT* v = local_table_.next();
 	while(v)
@@ -152,7 +151,7 @@ void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
 			t->set_to_request();
 			if(t->is_request_empty())
 			{
-				t = recursive_compute(t);
+				t = recursive_compute(t, tid);
 			}
 			if(t != NULL)
 			{
@@ -255,11 +254,9 @@ void Slave<TaskT, AggregatorT>::thread_demo_str_period()
 }
 
 template <class TaskT,  class AggregatorT>
-void Slave<TaskT, AggregatorT>::thread_demo_str_compute(const string& demo_str)
+void Slave<TaskT, AggregatorT>::thread_demo_str_compute(const string& demo_str, int tid)
 {
-	int tid = TidMapper::GetInstance().GetTid();
 	pthread_spin_lock(&(thread_demo_files_[tid].second));
-
 	//append
 	//\n in here
 	if(thread_demo_files_[tid].first)
@@ -283,7 +280,7 @@ void Slave<TaskT, AggregatorT>::thread_demo_str_finalize()
 }
 
 template <class TaskT,  class AggregatorT>
-TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task)
+TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 {
 	string demo_str;
 	//set frontier for UDF compute
@@ -305,7 +302,7 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task)
 		if(task->to_request.empty())
 		{
 			//continue to compute until find remote vertexes needed to pull
-			return recursive_compute(task);
+			return recursive_compute(task, tid);
 		}
 		return task;
 	}
@@ -319,11 +316,11 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task)
 			agg->step_partial(task->context);
 			agg_lock_.unlock();
 		}
-		//str
+		//for demo
 		if(demo_str.size() != 0)
 		{
 			//write demo str
-			thread_demo_str_compute(demo_str);
+			thread_demo_str_compute(demo_str, tid);
 		}
 		delete task;
 		return NULL;
@@ -479,7 +476,6 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 {
-	TidMapper::GetInstance().Register(tid);
 	while(1)
 	{
 		TaskT* t;
@@ -494,7 +490,7 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 			refs.push_back(nbs[reqs[j]]);
 		}
 		t->to_request.clear();
-		t = recursive_compute(t);
+		t = recursive_compute(t, tid);
 
 		commun_lock_.lock();
 		//clear the items in cache with refs
@@ -800,9 +796,6 @@ void Slave<TaskT, AggregatorT>::WriteSignalFile()
 	if(to_exit)
 		exit(0);
 
-	string cmd = "rm " + DEMO_LOG_PATH + "/*";
-	system(cmd.c_str());
-
 	// assert(to_exit /*signal file exists*/);
 
 	int name_len;
@@ -821,8 +814,6 @@ void Slave<TaskT, AggregatorT>::WriteSignalFile()
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 {
-	TidMapper::GetInstance().Register(-1);
-
 	WriteSignalFile();
 
 	bool start = wait_to_start();

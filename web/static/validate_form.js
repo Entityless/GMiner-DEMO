@@ -62,15 +62,22 @@ var has_default_fields = {
   iter: gc_iter_field,
   cand: gc_cand_field
 }
-var ENV = { stdpt: 0 , key: undefined, timeid: undefined}; // global environment
+var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined}; // global environment
 
 function stopAll(data = 0) {
   $('#runButton').removeClass('disabled');
   $('#stopButton').removeClass('red').addClass('disabled');
   $('#queues .progress').removeClass('blue').addClass('disabled');
+  $('#finish-label').addClass('disabled');
   if(typeof(ENV.timeid) != "undefined"){
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
+  }
+  if(typeof(ENV.chart) != "undefined") {
+    ENV.chart.scale('time', {
+      tickInterval: 120
+    });
+    ENV.chart.render();
   }
 }
 
@@ -79,22 +86,30 @@ function renderComponents(data){
   let stdout = data['text'];
   let text = $('#console>p').html();
   $('#console>p').html(text + stdout);
+  $('#console').scrollTop($('#console')[0].scrollHeight);
   data['text'] = '';
   console.log(data);
   ENV.stdpt = data.stdpt;
+
+  arrow_label_suffix = ' Tasks/sec';
   // 2. flush queues
   $('#pq').progress({
     text: {percent: String(data['task_num_in_disk']) },
     percent: Number(data['task_num_in_disk_float']) * 100
   });
+  $('#pq .arrow-label').text(String(data['task_transfer_1']) + arrow_label_suffix);
+
   $('#cmq').progress({
     text: {percent: String(data['cmq_size'])},
     percent: Number(data['cmq_size_float']) * 100
   });
+  $('#cmq .arrow-label').text(String(data['task_transfer_2']) + arrow_label_suffix);
+
   $('#cpq').progress({
     text: {percent: String(data['cpq_size'])},
     percent: Number(data['cpq_size_float']) * 100
   });
+  $('#cpq .arrow-label').text(String(data['task_transfer_3']) + arrow_label_suffix);
   return data['end'];  
 }
 
@@ -126,9 +141,14 @@ function changeComponents(data){
     $('#content .segment').removeClass('loading');
     $('#stopButton').removeClass('disabled').addClass('red');
     $('#queues .progress').removeClass('disabled').addClass('blue');
+    $('#finish-label').removeClass('disabled');
     ENV.key = data.key;
     ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
     ENV.stdpt = 0;
+    ENV.chart.scale('time', {
+      tickInterval: 300
+    });
+    ENV.chart.render();
     return;
   }
   stopAll();
@@ -167,7 +187,8 @@ $(document).ready(function(){
       apps: 'empty',
       dataset: 'empty'
     },
-    onSuccess: submitRunForm
+    onSuccess: submitRunForm,
+    onFailure: function(formerrors, fields){alert('Please fill valid values in "Config" page! More tips please refer to "Config"');}
   });
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */
@@ -200,8 +221,8 @@ $(document).ready(function(){
         body: JSON.stringify(stop_req),
         headers: new Headers({'Content-Type': 'application/json'})
       })
-      .then(stopAll)
       .catch(error => {console.log('stop failed'); throw error;});
+      stopAll();
     }
   });
 

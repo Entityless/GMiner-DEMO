@@ -11,12 +11,20 @@ import numpy as np
 parser = argparse.ArgumentParser()
 
 #recognized by pssh
-# parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/home/cghuan/merge-gminer/')
+parser.add_argument('-l', '-logpath', '--logpath', help='Local path of unmerged outputs', default = '/home/cghuan/gminer_demo_log/')
 parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/dev/shm/chhuang/merge-gminer/')
+parser.add_argument('-b', '-bkpdir', '--bkpdir', help='Merged output backup', default = '/home/cghuan/bkp_gm/')
 parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.5')
-parser.add_argument('-s', '-slave_interval', '--slave_interval', help='Howmany times is the interval of slaves than the master', default='4')
+parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='4')
+parser.add_argument('-t', '-timestamp', '--timestamp', help = 'the timestamp when GMiner application was launched', required = True)
 
 args = vars(parser.parse_args())
+
+args['localdir'] += '/' + args['timestamp'] + '/'
+args['bkpdir'] += '/' + args['timestamp'] + '/'
+args['logpath'] += '/' + args['timestamp'] + '/'
+
+signal_file_name = args['logpath'] + 'signal-file-gminer.' + args['timestamp']
 
 space_strs = []
 for i in range(1000):
@@ -40,6 +48,28 @@ global_post_processing_history = {}
 global_master_dic_list = []
 global_post_processing_len = 0
 
+def OnAppStart():
+    #write some file that needed by the frontend
+    os.system("mkdir -p " + args['localdir'])
+
+    master_5q_path = args['localdir'] + "/master_5q.json"
+    dic_to_write = {}
+    dic_to_write['task_num_in_memory'] = 0
+    dic_to_write['task_num_in_disk'] = 0
+    dic_to_write['cmq_size'] = 0
+    dic_to_write['cpq_size'] = 0
+    dic_to_write['taskbuf_size'] = 0
+
+    dic_to_write['task_num_in_memory_float'] = 0.0
+    dic_to_write['task_num_in_disk_float'] = 0.0
+    dic_to_write['cmq_size_float'] = 0.0
+    dic_to_write['cpq_size_float'] = 0.0
+    dic_to_write['taskbuf_size_float'] = 0.0
+    
+    with open(master_5q_path, 'w') as f:
+        f.write(json.dumps(dic_to_write) + '\n')
+        f.close()
+
 #begin
 def OnSignalAppear():
     global global_post_processing_history
@@ -49,37 +79,18 @@ def OnSignalAppear():
     global_master_dic_list = []
     global_post_processing_len = 0
 
-    f = open('signal-file-gminer.233', 'r')
+    f = open(signal_file_name, 'r')
     ln = f.readline()
     f.close()
     local_signal_dic = json.loads(ln)
     print("OnSignalAppear ", local_signal_dic)
 
-    bkp_path = "/home/cghuan/bkp_gm"
-
-    cmd = 'rm -rf ' + bkp_path
-    print(cmd)
-    os.system(cmd)
-
-    cmd = 'cp -r ' + args['localdir'] + " " + bkp_path
-    print(cmd)
-    os.system(cmd)
-
-    # cmd = 'rm -rf ' + args['localdir'] + "/*"
-    cmd = 'rm -rf ' + args['localdir'] + "/worker*" #just for HDL cluster; do not remove the json files
-    print(cmd)
-    os.system(cmd)
-
-    master_append_path = args['localdir'] + "/master_append.json"
-    cmd = 'rm ' + master_append_path #just for HDL cluster; do not remove the json files
-    print(cmd)
-    os.system(cmd)
-
     for hostname in local_signal_dic['slaves']:
-        os.system("mkdir " + args['localdir'] + "/" + hostname)
+        os.system("mkdir -p " + args['localdir'] + "/" + hostname)
         global_post_processing_history[hostname] = []
 
-    os.system("mkdir " + local_signal_dic['master'])
+    os.system("mkdir -p " + args['localdir'] + "/" + local_signal_dic['master'])
+    os.system("mkdir -p " + local_signal_dic['master'])
 
     return local_signal_dic
 
@@ -87,7 +98,7 @@ procs = []
 
 #running
 def RunningMaster(signal_dic):
-    print("RunningMaster")
+    # print("RunningMaster")
     command = "rsync -avzP --delete " + signal_dic['master'] + ":" + signal_dic['DEMO_LOG_PATH'] + " " + args['localdir'] + "/" + signal_dic['master']
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     # procs.append(proc)
@@ -95,7 +106,7 @@ def RunningMaster(signal_dic):
     return 0
 
 def RunningSlave(signal_dic):
-    print("RunningSlave")
+    # print("RunningSlave")
     for hostname in signal_dic['slaves']:
         ib_name = 'ib' + hostname[6:]
         command = "rsync -avzP --delete " + ib_name + ":" + signal_dic['DEMO_LOG_PATH'] + " " + args['localdir'] + "/" + hostname
@@ -114,7 +125,6 @@ def EvilMapping(x):
         return 0.0
     return 0.2 * UglyTanh(x, 1) + 0.175 * UglyTanh(x, 10) + 0.175 * UglyTanh(x, 100) + 0.175 * UglyTanh(x, 1000) + 0.175 * UglyTanh(x, 10000) + 0.1 * UglyTanh(x, 100000)
 
-
 def PostProcessing(signal_dic):
     #ramdom pick
 
@@ -128,8 +138,10 @@ def PostProcessing(signal_dic):
 
     global global_master_dic_list
 
+    master_5q_log_last_line = ""
+
     if(os.path.isfile(args['localdir'] + '/' + signal_dic['master'] + '/master_5q.log')):
-        print("os.path.isfile(args['localdir'] + '/' + signal_dic['master'] + '/master_5q.log')")
+        # print("os.path.isfile(args['localdir'] + '/' + signal_dic['master'] + '/master_5q.log')")
         with open(args['localdir'] + '/' + signal_dic['master'] + '/master_5q.log') as f:
             #
             lns = f.readlines()
@@ -140,12 +152,18 @@ def PostProcessing(signal_dic):
             tmp_len = len(global_master_dic_list)
             for i in range(tmp_len, len(lns)):
                 ln = lns[i]
+                master_5q_log_last_line = ln
+                if(len(ln) < 2):
+                    break
+                if(not (ln[-1] == '\n' or ln[-1] == '}')):
+                    continue
                 # print(ln)
+                # no rsync bug because the master rsync process is finished, see function RunningMaster
                 # if(not ln[-1] == '\n'):
                 #     print('break')
                 #     break
                 global_master_dic_list.append(json.loads(ln))
-                print('global_master_dic_list.append ', global_master_dic_list[-1])
+                # print('global_master_dic_list.append ', global_master_dic_list[-1])
     #dump master_5q.json
 
     #或许需要处理文件短暂为空的逻辑
@@ -173,7 +191,12 @@ def PostProcessing(signal_dic):
         dic_to_write['cpq_size_float'] = EvilMapping(dic_to_write['cpq_size'])
         dic_to_write['taskbuf_size_float'] = EvilMapping(dic_to_write['taskbuf_size'])
 
-        print(json.dumps(dic_to_write))
+        dic_to_write['task_transfer_1'] = dic_to_write['task_num_in_disk']
+        dic_to_write['task_transfer_2'] = dic_to_write['cmq_size']
+        dic_to_write['task_transfer_3'] = dic_to_write['cpq_size']
+        dic_to_write['task_transfer_4'] = dic_to_write['cpq_size']
+
+        # print(json.dumps(dic_to_write))
         f.write(json.dumps(dic_to_write) + '\n')
         f.close()
 
@@ -182,39 +205,59 @@ def PostProcessing(signal_dic):
             f2.write(json.dumps(dic_to_write) + '\n')
             f2.close()
 
-    ##### slaves.json
-    ## this cound be somehow complex; random pick
-    ## multiple file need to be processed
-    if(signal_dic['app_name'] == 'MC'):
-        #do nothing
-        return 0
-
     global global_post_processing_history
     global global_post_processing_len
 
-    slaves_path = args['localdir'] + "/slaves.json"
-    post_processing_history = global_post_processing_history
+    ##### slaves.json
+    ## this cound be somehow complex; random pick
+    ## multiple file need to be processed
+    if(signal_dic['app_name'] == 'GM' or signal_dic['app_name'] == 'TC'):
+        
 
-    #post_processing_history[worker_name][tid]可以得到某个节点的某个线程最新挖出来的行。数量可以指定，默认为1
+        slaves_path = args['localdir'] + "/slaves.json"
+        post_processing_history = global_post_processing_history
 
-    node_id = 0
-    for hostname in signal_dic['slaves']:
-        local_path = args['localdir'] + '/' + hostname + '/'
-        lns = run_bg_cmd("ls -l " + local_path + "| grep 'finish'") #somehow wasting
+        #post_processing_history[worker_name][tid]可以得到某个节点的某个线程最新挖出来的行。数量可以指定，默认为1
 
-        # print(hostname + ', len(lns) = ', len(lns))
+        node_id = 0
+        for hostname in signal_dic['slaves']:
+            local_path = args['localdir'] + '/' + hostname + '/'
+            lns = run_bg_cmd("ls -l " + local_path + "| grep 'finish'") #somehow wasting
 
-        fs = os.listdir(args['localdir'] + "/" + hostname)
-        # print(lns) len(lns)就是现在的某个节点有多少个输出part
+            # print(hostname + ', len(lns) = ', len(lns))
 
-        #e.g., demo_node_5_thread_0_part_0.log
+            fs = os.listdir(args['localdir'] + "/" + hostname)
+            # print(lns) len(lns)就是现在的某个节点有多少个输出part
 
-        node_counter = 0
+            #e.g., demo_node_5_thread_0_part_0.log
 
-        #check if to scan for the history
-        if(len(lns) != global_post_processing_len):
+            node_counter = 0
+
+            #check if to scan for the history
+            if(len(lns) != global_post_processing_len):
+                for tid in range(signal_dic['nthreads']):
+                    newest_possible_fn = 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(global_post_processing_len) + '.log'
+
+                    cmd = 'tail -n ' + str(node_max_q) + " " + local_path + newest_possible_fn
+
+                    if(os.path.isfile(local_path + newest_possible_fn)):
+                        
+                        # print(cmd)
+                        tail_ret = run_bg_cmd(cmd)
+
+                        for ln in tail_ret:
+                            # print('pln = json.loads ', ln)
+                            if(ln[-1] == '}'):
+                                pln = json.loads(ln)
+                                post_processing_history[hostname].insert(0, pln['Q'])
+                                node_counter += 1
+
+                    if(node_counter > node_max_q):
+                        break
+                global_post_processing_len = len(lns)
+
             for tid in range(signal_dic['nthreads']):
-                newest_possible_fn = 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(global_post_processing_len) + '.log'
+                newest_possible_fn = 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(len(lns)) + '.log'
 
                 cmd = 'tail -n ' + str(node_max_q) + " " + local_path + newest_possible_fn
 
@@ -232,27 +275,19 @@ def PostProcessing(signal_dic):
 
                 if(node_counter > node_max_q):
                     break
-            global_post_processing_len = len(lns)
 
-        for tid in range(signal_dic['nthreads']):
-            newest_possible_fn = 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(len(lns)) + '.log'
+                # break
 
-            cmd = 'tail -n ' + str(node_max_q) + " " + local_path + newest_possible_fn
+            while(len(post_processing_history[hostname]) > node_max_q):
+                post_processing_history[hostname].pop()
 
-            if(os.path.isfile(local_path + newest_possible_fn)):
-                
-                # print(cmd)
-                tail_ret = run_bg_cmd(cmd)
+            node_id += 1
 
-                for ln in tail_ret:
-                    # print('pln = json.loads ', ln)
-                    if(ln[-1] == '}'):
-                        pln = json.loads(ln)
-                        post_processing_history[hostname].insert(0, pln['Q'])
-                        node_counter += 1
+        with open(slaves_path, 'w') as f:
+            f.write(json.dumps(post_processing_history) + '\n')
+            f.close()
 
-            if(node_counter > node_max_q):
-                break
+        global_post_processing_history = post_processing_history
 
     if(signal_dic['app_name'] == 'MC'):
         #
@@ -274,6 +309,7 @@ def PostProcessing(signal_dic):
             with open(slaves_path, 'w') as f:
                 f.write(json.dumps(pln) + '\n')
                 f.close()
+
     #cp file
     return 0
 
@@ -284,6 +320,26 @@ def OnSignalDisappear(signal_dic):
     # global global_master_dic_list
     # global_post_processing_history = {}
     # global_master_dic_list = []
+    # 
+
+    bkp_path = args['bkpdir']
+
+    cmd = 'mkdir -p ' + bkp_path
+    print(cmd)
+    os.system(cmd)
+
+    cmd = 'cp -r ' + args['localdir'] + "/* " + bkp_path
+    print(cmd)
+    os.system(cmd)
+
+    # cmd = 'rm -rf ' + args['localdir'] + "/*"
+    # just remove slave folders
+    for hostname in signal_dic['slaves']:
+        cmd = 'rm -r ' + args['localdir'] + "/" + hostname
+        print(cmd)
+        os.system(cmd)
+
+    #todo: remove slaves' folders
     return 0
 
 
@@ -303,14 +359,16 @@ if __name__ == "__main__":
         print("bad argument slave_interval")
         exit(0)
 
+    OnAppStart()
+
     sleep_cnt = 0
     gminer_running = False
     while True:
 
         #暂时不考虑突然连续两次启动的情况
         run_bg_cmd("ls -al .")
-        if(os.path.isfile('signal-file-gminer.233')):
-            # print("os.path.isfile('signal-file-gminer.233')")
+        if(os.path.isfile(signal_file_name)):
+            # print("os.path.isfile(signal_file_name)")
             if(not gminer_running):
                 signal_dic = OnSignalAppear()
                 gminer_running = True
@@ -338,8 +396,14 @@ if __name__ == "__main__":
                 #always performs the last sync
                 RunningMaster(signal_dic)
                 RunningSlave(signal_dic)
-                OnSignalDisappear(signal_dic)
+
+                for proc in procs:
+                    proc.wait()
+                procs = []
+
                 PostProcessing(signal_dic)
+                OnSignalDisappear(signal_dic)
                 gminer_running = False
+                exit(0)
 
         time.sleep(master_interval)

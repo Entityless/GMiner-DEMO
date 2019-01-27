@@ -11,18 +11,20 @@ import numpy as np
 parser = argparse.ArgumentParser()
 
 #recognized by pssh
-# parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/home/cghuan/merge-gminer/')
+parser.add_argument('-l', '-logpath', '--logpath', help='Local path of unmerged outputs', default = '/home/cghuan/gminer_demo_log/')
 parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/dev/shm/chhuang/merge-gminer/')
 parser.add_argument('-b', '-bkpdir', '--bkpdir', help='Merged output backup', default = '/home/cghuan/bkp_gm/')
 parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.5')
-parser.add_argument('-s', '-slave_interval', '--slave_interval', help='Howmany times is the interval of slaves than the master', default='4')
+parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='4')
 parser.add_argument('-t', '-timestamp', '--timestamp', help = 'the timestamp when GMiner application was launched', required = True)
 
 args = vars(parser.parse_args())
 
 args['localdir'] += '/' + args['timestamp'] + '/'
 args['bkpdir'] += '/' + args['timestamp'] + '/'
-signal_file_name = 'signal-file-gminer.' + args['timestamp']
+args['logpath'] += '/' + args['timestamp'] + '/'
+
+signal_file_name = args['logpath'] + 'signal-file-gminer.' + args['timestamp']
 
 space_strs = []
 for i in range(1000):
@@ -63,6 +65,11 @@ def OnAppStart():
     dic_to_write['cmq_size_float'] = 0.0
     dic_to_write['cpq_size_float'] = 0.0
     dic_to_write['taskbuf_size_float'] = 0.0
+    
+    dic_to_write['task_transfer_1'] = 0
+    dic_to_write['task_transfer_2'] = 0
+    dic_to_write['task_transfer_3'] = 0
+    dic_to_write['task_transfer_4'] = 0
     
     with open(master_5q_path, 'w') as f:
         f.write(json.dumps(dic_to_write) + '\n')
@@ -189,6 +196,11 @@ def PostProcessing(signal_dic):
         dic_to_write['cpq_size_float'] = EvilMapping(dic_to_write['cpq_size'])
         dic_to_write['taskbuf_size_float'] = EvilMapping(dic_to_write['taskbuf_size'])
 
+        dic_to_write['task_transfer_1'] = dic_to_write['task_num_in_disk']
+        dic_to_write['task_transfer_2'] = dic_to_write['cmq_size']
+        dic_to_write['task_transfer_3'] = dic_to_write['cpq_size']
+        dic_to_write['task_transfer_4'] = dic_to_write['cpq_size']
+
         # print(json.dumps(dic_to_write))
         f.write(json.dumps(dic_to_write) + '\n')
         f.close()
@@ -283,14 +295,24 @@ def PostProcessing(signal_dic):
         global_post_processing_history = post_processing_history
 
     if(signal_dic['app_name'] == 'MC'):
+        #
+        #given: {"count" : 2, "size" : 3, "group1" : [1,2,3], "group2" : [2,4,5]}
+        #ori: {"mc" : 3, "count" : 2, "0" : [786496, 945665, 945664], "1" : [983073, 1012607, 989527]}
         slaves_path = args['localdir'] + "/slaves.json"
         # print("if(signal_dic['app_name'] == 'MC'):")
         # just read info from master_5q.log
         if(len(master_5q_log_last_line) > 1):
-            pln = json.loads(master_5q_log_last_line)
+            pln = json.loads(master_5q_log_last_line)['agg_str']
+            # print(pln)
+            pln['size'] = pln.pop('mc')
+
+            for i in range(pln['count']):
+                ori_key = str(i)
+                new_key = 'group' + str(i + 1)
+                pln[new_key] = pln.pop(ori_key)
 
             with open(slaves_path, 'w') as f:
-                f.write(json.dumps(pln['agg_str']) + '\n')
+                f.write(json.dumps(pln) + '\n')
                 f.close()
 
     #cp file

@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='arrows.css') }}">
     <title>GMiner playgroud</title>
   </head>
   <body>
@@ -16,11 +17,11 @@
         <i class="settings icon"></i>
         Config
       </a>
-      <a class="item" id='run'>
+      <a class="item" id='runButton'>
         <i class="outline circle icon"></i>
         Run
       </a>
-      <a class="item" id='stop'>
+      <a class="disabled item" id='stopButton'>
         <i class="pause outline circle icon"></i>
         Stop
       </a>
@@ -49,19 +50,54 @@
       </div>
       <div id="main-grid">
         <div id="content" class="block">
-          <div class="ui top attached menu">
-            <a class="active item">
+          <div class="ui top attached menu" id='contentMenu'>
+            <a class="active item" group="visual">
               Visualization
             </a>
-            <a class="item">
-              Console
+            <a class="item" group="std">
+              Console Output
             </a>
           </div>
           <div class="ui attached segment" id="console">
+            <p group="std"></p>
+            <div group="visual"> 
+            </div>
           </div>
         </div>
         <div id="graph-col" >
           <div id="queues" class="block">
+            <div id="pq" class="ui indicating disabled progress queue">
+              <div class="bar">
+                <div class="progress"></div>
+              </div>
+              <div class="label">
+                Task Store
+              </div>
+              <div class="arrow-label"> 0 Tasks/sec</div>
+              <div class="arrow arrow1"></div>
+              <div class="arrow arrow2"></div>
+            </div>
+            <div id="cmq" class="ui indicating disabled progress queue">
+              <div class="bar">
+                <div class="progress"></div>
+              </div>
+              <div class="label">Candidate Retriever </div>
+              <div class="arrow-label"> 0 Tasks/sec</div>
+              <div class="arrow arrow1"></div>
+              <div class="arrow arrow2"></div>
+            </div>
+            <div id="cpq" class="ui indicating disabled progress queue">
+              <div class="bar">
+                <div class="progress"></div>
+              </div>
+              <div class="label">Task Executor</div>
+              <div class="arrow-label"> 0 Tasks/sec</div>
+              <div class="arrow arrow1"></div>
+              <div class="arrow arrow2"></div>
+            </div>
+            <div class="disabled" id="finish-label">
+              Finish Status
+            </div>
           </div>
           <div id="timeline" class="block">
             <div id="chartView"></div>
@@ -144,9 +180,25 @@
               </div>
             </div>
           </div>
+          <div id="appParam">
+            <h4 class="ui dividing header"> XXX parameters </h4>
+            <div class="fields">
+              {% for item in apps %}
+                {% for k, v in item.items() %}
+                  {% if v['param']: %}
+                    {% for param in v['param'] %}
+                    <div class="field param {{ k }} popup" data-content="{{ param['help'] }}">
+                      <label for="{{ param['name'] }}">{{ param['name'] }}</label>
+                      <input type="text" placeholder="{{ param['default'] }}" id="{{ param['name'] }}" name="{{ param['name'] }}" data-type="{{ param['type'] }}">
+                    </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+            </div>
+          </div>
           <div class="ui error message"></div>
         </form>
-      </div -->
       </div>
     </div>
     <div class='ui basic modal' id='compareModal'>
