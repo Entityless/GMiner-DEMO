@@ -58,6 +58,7 @@ $(document).ready(function(){
                 }
         });
     chart.render();
+    ENV.chart = chart;
 
     var updateChart = function(){
         $.getJSON(jsonPath, function(data){
@@ -78,6 +79,4 @@ $(document).ready(function(){
       });
     };
     setInterval(updateChart, refreshInterval);
-
-    
 });

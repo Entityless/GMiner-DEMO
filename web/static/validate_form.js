@@ -62,7 +62,7 @@ var has_default_fields = {
   iter: gc_iter_field,
   cand: gc_cand_field
 }
-var ENV = { stdpt: 0 , key: undefined, timeid: undefined}; // global environment
+var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined}; // global environment
 
 function stopAll(data = 0) {
   $('#runButton').removeClass('disabled');
@@ -72,6 +72,12 @@ function stopAll(data = 0) {
   if(typeof(ENV.timeid) != "undefined"){
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
+  }
+  if(typeof(ENV.chart) != "undefined") {
+    ENV.chart.scale('time', {
+      tickInterval: 120
+    });
+    ENV.chart.render();
   }
 }
 
@@ -139,6 +145,10 @@ function changeComponents(data){
     ENV.key = data.key;
     ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
     ENV.stdpt = 0;
+    ENV.chart.scale('time', {
+      tickInterval: 300
+    });
+    ENV.chart.render();
     return;
   }
   stopAll();
