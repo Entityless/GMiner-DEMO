@@ -4,6 +4,7 @@ $(document).ready(function(){
   /* init */
   $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
   $('#appParam').hide();
+  $('p[group=std]').hide();
   $('.ui.modal').modal({'useFlex':false});
   $('#compareModal .slider').slick({
     dots: true,
@@ -54,4 +55,30 @@ $(document).ready(function(){
       $('#teamModal').modal('show');
     }
   );
+
+  /* content block */
+  $('#contentMenu>.item').click(function(){
+    if($(this).hasClass('active')){
+      return;
+    }
+    // reset past active
+    let orig_active = $('#contentMenu>.item.active');
+    let group = orig_active.attr('group');
+    let selector = '#console [group=' + group + ']';
+    $(selector).hide();
+    orig_active.removeClass('active');
+
+    // activate this item
+    group = $(this).attr('group');
+    selector = '#console [group=' + group + ']';
+    $(selector).show();
+    $(this).addClass('active');
+
+    if(group === "std") {
+      $('#console').css('overflow-y', 'scroll');
+    }
+    else {
+      $('#console').css('overflow-y', 'unset');
+    }
+  });
 });

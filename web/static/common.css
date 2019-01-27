@@ -54,13 +54,20 @@ html::-webkit-scrollbar {
   position: relative;
 }
 
+#content #contentMenu{
+  z-index: 2;
+  position: relative;
+}
+
 #console {
   position: absolute;
   padding: 1.5rem;
   bottom: 0;
   right: 0;
-  z-index: -1;
+  /*overflow-y: scroll; show when console option is activate*/
+  z-index: 1;
 }
+#std { display: none; }
 
 #graph-col {
   display: inline-flex;

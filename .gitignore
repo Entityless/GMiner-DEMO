@@ -11,3 +11,5 @@ __pycache__/
 /*.ini
 /*.log
 web/runtime-infos
+machines.cfg
+tmp/

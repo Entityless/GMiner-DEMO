@@ -79,6 +79,7 @@ function renderComponents(data){
   let stdout = data['text'];
   let text = $('#console>p').html();
   $('#console>p').html(text + stdout);
+  $('#console').scrollTop($('#console')[0].scrollHeight);
   data['text'] = '';
   console.log(data);
   ENV.stdpt = data.stdpt;
