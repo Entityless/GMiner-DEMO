@@ -79,9 +79,5 @@ $(document).ready(function(){
     };
     setInterval(updateChart, refreshInterval);
 
-    $('#timeline').resize(function() {
-      var chartheight = $('#timeline').height() * 0.9;
-      var chartwidth = $('#timeline').width() * 0.9; 
-      var chart = $('#timeline canvas').height(chartheight).width(chartwidth);
-    });
+    
 });

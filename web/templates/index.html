@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='arrows.css') }}">
     <title>GMiner playgroud</title>
   </head>
   <body>
@@ -59,7 +60,8 @@
           </div>
           <div class="ui attached segment" id="console">
             <p group="std"></p>
-            <div group="visual"></div>
+            <div group="visual"> 
+            </div>
           </div>
         </div>
         <div id="graph-col" >
@@ -68,20 +70,33 @@
               <div class="bar">
                 <div class="progress"></div>
               </div>
-              <div class="label"> PQ tasks</div>
+              <div class="label">
+                Task Store
+              </div>
+              <div class="arrow-label"> 0 Tasks/sec</div>
+              <div class="arrow arrow1"></div>
+              <div class="arrow arrow2"></div>
             </div>
             <div id="cmq" class="ui indicating disabled progress queue">
               <div class="bar">
                 <div class="progress"></div>
               </div>
-              <div class="label"> CMQ tasks</div>
+              <div class="label">Candidate Retriever </div>
+              <div class="arrow-label"> 0 Tasks/sec</div>
+              <div class="arrow arrow1"></div>
+              <div class="arrow arrow2"></div>
             </div>
-            
             <div id="cpq" class="ui indicating disabled progress queue">
               <div class="bar">
                 <div class="progress"></div>
               </div>
-              <div class="label">CPQ tasks</div>
+              <div class="label">Task Executor</div>
+              <div class="arrow-label"> 0 Tasks/sec</div>
+              <div class="arrow arrow1"></div>
+              <div class="arrow arrow2"></div>
+            </div>
+            <div class="disabled" id="finish-label">
+              Finish Status
             </div>
           </div>
           <div id="timeline" class="block">

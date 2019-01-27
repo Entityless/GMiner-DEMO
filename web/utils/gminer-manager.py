@@ -65,11 +65,11 @@ def OnAppStart():
     dic_to_write['cmq_size_float'] = 0.0
     dic_to_write['cpq_size_float'] = 0.0
     dic_to_write['taskbuf_size_float'] = 0.0
-
-    dic_to_write['task_transfer_1'] = 0.0
-    dic_to_write['task_transfer_2'] = 0.0
-    dic_to_write['task_transfer_3'] = 0.0
-    dic_to_write['task_transfer_4'] = 0.0
+    
+    dic_to_write['task_transfer_1'] = 0
+    dic_to_write['task_transfer_2'] = 0
+    dic_to_write['task_transfer_3'] = 0
+    dic_to_write['task_transfer_4'] = 0
     
     with open(master_5q_path, 'w') as f:
         f.write(json.dumps(dic_to_write) + '\n')

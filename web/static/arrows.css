@@ -1,0 +1,66 @@
+#queues .ui.progress>.label {
+  width: unset;
+}
+
+#finish-label {
+  width: 100%;
+  text-align: right;
+}
+
+#finish-label.disabled {
+  color: rgba(136, 136, 136, 0.5);
+}
+.arrow-label {
+  position: absolute;
+  right: 13%;
+  top: 2.1em;
+}
+.arrow {
+  position: absolute;
+  left: 90%;
+  height: 1.5em;
+  width: 1.5em;
+
+  border-bottom-style: solid;
+  border-bottom-width: 3px;
+  border-right-style: solid;
+  border-right-width: 3px;
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+}
+.queue:not(.disabled) .arrow1 {
+  -webkit-animation: arrow-movement 2s ease-in-out infinite;
+          animation: arrow-movement 2s ease-in-out infinite;
+}
+.queue:not(.disabled) .arrow2 {
+  -webkit-animation: arrow-movement 2s 1s ease-in-out infinite;
+          animation: arrow-movement 2s 1s ease-in-out infinite;
+}
+
+@-webkit-keyframes arrow-movement {
+  0% {
+    opacity: 0.1;
+    top: 1.4em;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    top: 2.3em;
+    opacity: 0.1;
+  }
+}
+
+@keyframes arrow-movement {
+  0% {
+    top: 1.4em;
+    opacity: 0.1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    top: 2.3em;
+    opacity: 0.1;
+  }
+}
