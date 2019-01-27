@@ -36,8 +36,6 @@
 #include "core/vertex.hpp"
 #include "core/vertex_table.hpp"
 
-#include "util/tid_mapper.hpp"
-
 using namespace std;
 
 
@@ -123,7 +121,7 @@ private:
 
 	void dump_tasks(TaskVec& tasks);
 
-	TaskT * recursive_compute(TaskT* task);
+	TaskT * recursive_compute(TaskT* task, int tid);
 
 	void pull_PQ_to_CMQ();
 
@@ -154,7 +152,7 @@ private:
 
 	void thread_demo_str_init();
 	void thread_demo_str_period();//call in sys_sync, to switch file name
-	void thread_demo_str_compute(const string& demo_str);
+	void thread_demo_str_compute(const string& demo_str, int tid);
 	void thread_demo_str_finalize();
 
 	//PART 5 =======================================================

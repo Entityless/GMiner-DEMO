@@ -6,6 +6,7 @@
 
 int _my_rank;
 int _num_workers;
+string _given_timestamp_str;
 
 double get_running_wtime()
 {
@@ -20,6 +21,18 @@ double get_running_wtime()
 	}
 
 	return MPI_Wtime() - ini_wtime;
+}
+
+uint64_t get_timestamp()
+{
+	return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
+}
+
+string get_timestamp_str()
+{
+	char c[32];
+	sprintf(c, "%ld", get_timestamp());
+	return string(c);
 }
 
 void init_worker(int * argc, char*** argv)
@@ -257,7 +270,7 @@ void load_hdfs_config()
 		fprintf(stderr, "must conf the ENV: GMINER_HOME. exits.\n");
 		exit(-1);
 	}
-	string conf_path(GMINER_HOME);
+	// string conf_path(GMINER_HOME);
 
 	const char* GMINER_INI_NAME = getenv("GMINER_INI_NAME");
 	string ini_name;
@@ -266,7 +279,7 @@ void load_hdfs_config()
 	else
 		ini_name = GMINER_INI_NAME;
 
-	conf_path.append("/" + ini_name);
+	string conf_path = ini_name;
 	ini = iniparser_load(conf_path.c_str());
 	if(ini == NULL)
 	{
@@ -306,12 +319,22 @@ void load_system_parameters(WorkerParams& param)
 		fprintf(stderr, "must conf the ENV: GMINER_HOME. exits.\n");
 		exit(-1);
 	}
-	string conf_path(GMINER_HOME);
-	conf_path.append("/gminer-conf.ini");
+	// string conf_path(GMINER_HOME);
+
+	const char* GMINER_INI_NAME = getenv("GMINER_INI_NAME");
+	string ini_name;
+	if(GMINER_INI_NAME == NULL)
+		ini_name = "gminer-conf.ini";
+	else
+		ini_name = GMINER_INI_NAME;
+
+	// conf_path.append("/" + ini_name);
+
+	string conf_path = ini_name;
 	ini = iniparser_load(conf_path.c_str());
 	if(ini == NULL)
 	{
-		fprintf(stderr, "can not open %s. exits.\n", "gminer-conf.ini");
+		fprintf(stderr, "can not open %s. exits.\n", ini_name.c_str());
 		exit(-1);
 	}
 
@@ -341,13 +364,29 @@ void load_system_parameters(WorkerParams& param)
 		exit(-1);
 	}
 
+	const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
+	string ts_str = "";
+	if(GMINER_START_TIMESTAMP == NULL)
+	{
+		//assign the timestamp manually
+		ts_str = get_timestamp_str();
+	}
+	else
+	{
+		//convert from env
+		ts_str = string(GMINER_START_TIMESTAMP);
+	}
+	_given_timestamp_str = ts_str;
+
 	str = iniparser_getstring(ini,"PATH:DEMO_LOG_PATH", str_not_found);
 	if(strcmp(str, str_not_found)!=0)
 	{
 		DEMO_LOG_PATH = str;
+
+		DEMO_LOG_PATH += "/" + ts_str + "/";
+
 		string cmd = "mkdir -p ";
 		cmd += DEMO_LOG_PATH;
-
 		system(cmd.c_str());
 	}
 	else

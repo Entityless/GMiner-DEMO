@@ -22,6 +22,7 @@
 #include <iostream>
 #include <mutex>
 #include <cstdlib>
+#include <chrono>
 
 #include "util/hdfs_core.hpp"
 
@@ -245,6 +246,7 @@ void load_hdfs_config();
 void load_system_parameters(WorkerParams& param);
 
 extern double get_running_wtime();
+extern string _given_timestamp_str;
 
 //=====================================================================
 

@@ -188,9 +188,12 @@ void Master<AggregatorT>::end_sync()
 		is_end_ = true;
 	}
 
-	//remove signal file
-	const char* rm_signal_cmd = "mv signal-file-gminer.233 233.signal-file-gminer";
-	system(rm_signal_cmd);
+	//rename signal file
+
+	string signal_name_str = "signal-file-gminer." + _given_timestamp_str;
+	string signal_name_dst_str = _given_timestamp_str + ".signal-file-gminer";
+	string rm_signal_cmd_str = "mv " + signal_name_str + " " + signal_name_dst_str;
+	system(rm_signal_cmd_str.c_str());
 }
 
 template <class AggregatorT>
@@ -264,15 +267,17 @@ void Master<AggregatorT>::task_steal()
 template <class AggregatorT>
 void Master<AggregatorT>::WriteSignalFile()
 {
-	const char* signal_name = "signal-file-gminer.233";
+	string signal_name_str = "signal-file-gminer." + _given_timestamp_str;
+
 	bool to_exit = false;
 	//check if signal file exists
-	if(fopen(signal_name, "r"))
+	if(fopen(signal_name_str.c_str(), "r"))
 	{
 		//signal exists
 		to_exit = true;
 
-		printf("file \"signal-file-gminer.233\" found, maybe some G-Miner is running is this directory, exit now.\n");
+		printf("file \"%s\" found, potential conflict, exit now.\n",
+			   signal_name_str.c_str());
 	}
 
 	master_bcast(to_exit);
@@ -280,9 +285,6 @@ void Master<AggregatorT>::WriteSignalFile()
 	if(to_exit)
 		exit(0);
 	// assert(to_exit /*signal file exists*/);
-
-	string cmd = "rm " + DEMO_LOG_PATH + "/*";
-	system(cmd.c_str());
 
 	int name_len;
 	char hostname[MPI_MAX_PROCESSOR_NAME];
@@ -310,7 +312,7 @@ void Master<AggregatorT>::WriteSignalFile()
 	// printf("gathered slaves: %s\n", hn_list.c_str());
 	// fflush(stdout);
 
-	FILE* f = fopen(signal_name, "w");
+	FILE* f = fopen(signal_name_str.c_str(), "w");
 
 	if(f)
 	{
@@ -338,6 +340,8 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 		terminate();
 		return;
 	}
+	printf("Load data from HDFS...\n");
+	fflush(stdout);
 	start_to_work();
 	//============================================================
 

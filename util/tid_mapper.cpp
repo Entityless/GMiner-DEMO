@@ -19,8 +19,11 @@ void TidMapper::Register(int tid)
 {
     pthread_spin_lock(&lock_);
 
-    unique_tid_map_.insert(make_pair(pthread_self(), unique_tid_map_.size()));
-    manual_tid_map_.insert(make_pair(pthread_self(), tid));
+    // unique_tid_map_.insert(make_pair(pthread_self(), unique_tid_map_.size()));
+    // manual_tid_map_.insert(make_pair(pthread_self(), tid));
+    int last_sz = unique_tid_map_.size();
+    unique_tid_map_[pthread_self()] = last_sz;
+    manual_tid_map_[pthread_self()] = tid;
 
     pthread_spin_unlock(&lock_);
 }
@@ -42,6 +45,7 @@ int TidMapper::GetTid()
     //     RegisterFake();
     // }
     // pthread_spin_unlock(&lock_);
+    //bugs
     assert(manual_tid_map_.count(pthread_self()) != 0 /*maybe you should initial the instance of TidMapper in sequential region*/);
     return manual_tid_map_[pthread_self()];
 }
