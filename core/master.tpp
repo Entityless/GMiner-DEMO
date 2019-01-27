@@ -190,8 +190,8 @@ void Master<AggregatorT>::end_sync()
 
 	//rename signal file
 
-	string signal_name_str = "signal-file-gminer." + _given_timestamp_str;
-	string signal_name_dst_str = _given_timestamp_str + ".signal-file-gminer";
+	string signal_name_str = DEMO_LOG_PATH + "signal-file-gminer." + _given_timestamp_str;
+	string signal_name_dst_str = DEMO_LOG_PATH + _given_timestamp_str + ".signal-file-gminer";
 	string rm_signal_cmd_str = "mv " + signal_name_str + " " + signal_name_dst_str;
 	system(rm_signal_cmd_str.c_str());
 }
@@ -267,7 +267,7 @@ void Master<AggregatorT>::task_steal()
 template <class AggregatorT>
 void Master<AggregatorT>::WriteSignalFile()
 {
-	string signal_name_str = "signal-file-gminer." + _given_timestamp_str;
+	string signal_name_str = DEMO_LOG_PATH + "signal-file-gminer." + _given_timestamp_str;
 
 	bool to_exit = false;
 	//check if signal file exists
