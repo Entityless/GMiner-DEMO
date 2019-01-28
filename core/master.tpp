@@ -15,17 +15,14 @@ void Master<AggregatorT>::sys_sync()
 
 	master_gather(parts);
 
-	//write to file
+	//write queue info to file
 	string file_name = DEMO_LOG_PATH + "master_5q.log";
 	FILE* f = fopen(file_name.c_str(), "a");
 	if(f)
 	{
 		fprintf(f, "{\"nodes\":");
-
 		fprintf(f, "%d", parts.size() - 1);
-
 		fprintf(f, ", \"compute_time\":");
-
 		fprintf(f, "%f", get_running_wtime());
 
 		int cnt = 0;
@@ -34,8 +31,9 @@ void Master<AggregatorT>::sys_sync()
 		{
 			if(cnt == parts.size() - 1)
 				break;//the last one is always empty
-			fprintf(f, ", \"%d\" : [%ld, %ld, %ld, %ld, %ld]", cnt, 
-					v.task_num_in_memory, v.task_num_in_disk, v.cmq_size, v.cpq_size, v.taskbuf_size);
+			fprintf(f, ", \"%d\" : [%ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld]", cnt, 
+					v.task_num_in_memory, v.task_num_in_disk, v.cmq_size, v.cpq_size, v.taskbuf_size,
+					v.task_store_to_cmq, v.cmq_to_cpq, v.cpq_to_task_store, v.cpq_finished);
 			cnt++;
 		}
 	}
@@ -47,7 +45,7 @@ void Master<AggregatorT>::sys_sync()
 		vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
 		master_gather(parts);
 
-		string agg_str = agg->demo_str(parts);
+		string agg_str = agg->get_agg_str(parts);
 		if(agg_str.size() != 0)
 		{
 			// printf("void Master<AggregatorT>::sys_sync(), %s\n", agg_str.c_str());
@@ -55,7 +53,6 @@ void Master<AggregatorT>::sys_sync()
 			{
 				fprintf(f, ", \"agg_str\" : %s", agg_str.c_str());
 			}
-
 			printf("time = %.2f seconds, %s%s\n", get_running_wtime(), agg->sys_print_header().c_str(), agg_str.c_str());
 		}
 	}
@@ -340,7 +337,7 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 		terminate();
 		return;
 	}
-	printf("Load data from HDFS...\n");
+	printf("Loading data from HDFS...\n");
 	fflush(stdout);
 	start_to_work();
 	//============================================================
@@ -376,4 +373,7 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 	sync.join();
 	listen.join();
 	steal.join();
+	
+	printf("G-Miner application finished. Thanks for using.\n");
+	fflush(stdout);
 }

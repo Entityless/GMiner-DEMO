@@ -279,13 +279,13 @@ if __name__ == "__main__":
     last_time = time.time()
     launch_time = last_time
 
-    append_log_name = "monitor-append-{}.log".format(str(get_timestamp()))
+    append_log_name = "{}/{}".format(args['localdir'], 'monitor-append.log')
 
     #clear output to append
-    if my_rank == master_rank:
-        #
-        f = open(append_log_name, 'w')
-        f.close()
+    # if my_rank == master_rank:
+    #     #
+    #     f = open(append_log_name, 'w')
+    #     f.close()
 
     while True:
         #run the command
@@ -333,9 +333,6 @@ if __name__ == "__main__":
                 if(my_info_dic[key] < 0.0001):
                     my_info_dic[key] = 0.0
 
-            print(json.dumps(my_info_dic))
-            sys.stdout.flush()
-
             cur_time = time.time()
             for ele in online_list_of_dic_to_write:
                 ele['time'] -= (cur_time - last_time)
@@ -353,9 +350,11 @@ if __name__ == "__main__":
 
                 #append to offline json
 
-                with open(append_log_name, 'a') as out_f:
-                    out_f.write(json.dumps(dic_to_append) + '\n')
-
+            my_info_dic['time'] = cur_time
+            print(json.dumps(my_info_dic))
+            sys.stdout.flush()
+            with open(append_log_name, 'a') as out_f:
+                out_f.write(json.dumps(my_info_dic) + '\n')
 
             while(len(online_list_of_dic_to_write) > 0):
                 if(online_list_of_dic_to_write[0]['time'] < 0.0):
