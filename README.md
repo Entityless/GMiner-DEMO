@@ -11,14 +11,14 @@ Graph mining is one of the most important areas in data mining. However, scalabl
 
 - **Task Model:** G-Miner supports asynchronous execution of various types of operations (i.e., CPU, network, disk) and efficient load balancing by modeling a graph mining job as a set of independent tasks. A task consists of three fields: sub-graph, candidates and context.
 
-- **Task-Pipeline:** G-Miner provides the task-pipeline, which is designed to asyn-chronously process the following three major operations in G-Miner: (1)CPU computation to process the update operation on each task, (2)network communication to pull candidates from remote machines, and (3)disk writes/reads to buffer intermediate tasks on local disk of every machine.
+- **Task-Pipeline:** G-Miner provides the task-pipeline, which is designed to asyn-chronously process the following three major operations in G-Miner: (1) CPU computation to process the update operation on each task, (2) network communication to pull candidates from remote machines, and (3) disk writes/reads to buffer intermediate tasks on local disk of every machine.
 
 
 ## Getting Started
 
 * **Dependencies Install**
 
-  G-Miner is built with the same dependencies of our previous project [Pregel+](http://www.cse.cuhk.edu.hk/pregelplus/index.html). To install G-Miner's dependencies (e.g., MPI, HDFS), using the instructions in this [guide](http://www.cse.cuhk.edu.hk/pregelplus/documentation.html).
+To install G-Miner's dependencies (G++, MPI, JDK, HDFS), please follow the instructions in our project [webpage](http://www.cse.cuhk.edu.hk/systems/gminer/deploy.html).
 
 * **Build**
 
