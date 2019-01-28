@@ -5,7 +5,7 @@ $(document).ready(function(){
   $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
   $('#appParam').hide();
   $('p[group=std]').hide();
-  $('.ui.modal').modal({'useFlex':false});
+
   $('#compareModal .slider').slick({
     dots: true,
     infinite: true,

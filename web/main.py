@@ -62,7 +62,7 @@ def runApplication():
     proc = subprocess.Popen(final_cmd, shell=True, stdout=subprocess.DEVNULL)
     app_table[timestamp] = proc
 
-    data = {'key': timestamp, 'status': "ok"}
+    data.update({'key': timestamp, 'status': "ok"});
     # except Exception, e:
     #     data = {'key': timestamp, 'status': "stop"}
     #     print(e)

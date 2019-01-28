@@ -45,9 +45,6 @@
       </a>
     </div>
     <div id="main-page">
-      <div id="gminer-header" class="ui grey header">
-        <h1>GMiner</h1>
-      </div>
       <div id="main-grid">
         <div id="content" class="block">
           <div class="ui top attached menu" id='contentMenu'>
@@ -57,11 +54,19 @@
             <a class="item" group="std">
               Console Output
             </a>
+            <a class="item" group="api">
+              API
+            </a>
           </div>
           <div class="ui attached segment" id="console">
             <p group="std"></p>
-            <div group="visual"> 
+            <div group="visual" style="width: 100%; height: 100%;"> 
+              <!-- svg id="gtPattern">
+              </svg>
+              <svg id="visualSvg" width="100%" height="100%">
+              </svg -->
             </div>
+            <div group="api"></div>
           </div>
         </div>
         <div id="graph-col" >
@@ -125,6 +130,7 @@
       </div>
     </div>
     <div class='ui modal' id='configModal'>
+      <i class="close icon"></i>
       <div class='header'>Config</div>
       <div id="config" class="content">
         <form class="ui form">
@@ -200,12 +206,15 @@
           <div class="ui error message"></div>
         </form>
       </div>
+      <div class="actions">
+        <div class="ui green approve button">Confirm</div>
+      </div>
     </div>
     <div class='ui basic modal' id='compareModal'>
       <div class='slider'>
         {% for image in slideimages %}
         <div class='slider-item image'>
-          <img data-lazy="{{ url_for('static', filename='images/{}.svg'.format(image)) }}" alt="loading...">
+          <img src="{{ url_for('static', filename='images/{}.png'.format(image)) }}" alt="loading...">
         </div>
         {% endfor %}
       </div>
@@ -217,7 +226,7 @@
           {% for person in row %}
           <div class="column">
             <div style="float:left; margin-right: 1rem">
-              <img src="{{ url_for('static',filename='images/{}'.format(person['img'])) }}" height="128" width="128">
+              <img src="{{ url_for('static',filename='images/{}'.format(person['img'])) }}" width="128">
             </div>
             <p>
               <span class="personName">{{ person['name'] }}</span>
@@ -238,8 +247,9 @@
     <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
     <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
     <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.1/dist/g2.min.js"></script>
-    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="{{ url_for('static', filename='common.js') }}"></script>
+    <script src="{{ url_for('static', filename='visual.js') }}"></script>
     <script src="{{ url_for('static', filename='validate_form.js') }}"></script>
     <script src="{{ url_for('static', filename='cpumonitor.js') }}"></script>
   </body>

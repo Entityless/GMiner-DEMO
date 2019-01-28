@@ -142,6 +142,10 @@ function changeComponents(data){
     $('#stopButton').removeClass('disabled').addClass('red');
     $('#queues .progress').removeClass('disabled').addClass('blue');
     $('#finish-label').removeClass('disabled');
+    if(data.apps === "gm"){
+    }
+    else {
+    }
     ENV.key = data.key;
     ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
     ENV.stdpt = 0;
@@ -157,7 +161,7 @@ function changeComponents(data){
 }
 
 // life cycle start
-function submitRunForm(e, fields){
+function submitRunForm(fields){
   console.log('start submit');
   $('#console>p').text('');
   var url = '/runrequest';
@@ -172,7 +176,7 @@ function submitRunForm(e, fields){
   })
   .then(resp => resp.json())
   .then(changeComponents)
-  .catch(e => {
+  .catch(function(e) {
     console.error(e);
     $('#content .segment').removeClass('loading');
     $('#runButton').removeClass('disabled');
@@ -180,6 +184,21 @@ function submitRunForm(e, fields){
   });
 }
 
+function validateFormWithDefault() {
+  let now_field_values = $('#config .ui.form').form('get values');
+  console.log(now_field_values);
+  for(let v in has_default_fields){
+    let field = has_default_fields[v];
+    let now_val = now_field_values[field.identifier];
+    if(now_val === ""){
+      let selector = '#' + field.identifier;
+      let val = $(selector).attr('placeholder');
+      $(selector).attr('value', val);
+    }
+  }
+  $('.ui.form').form('validate form');
+  return $('.ui.form').form('is valid');
+}
 $(document).ready(function(){
   /* initialize */
   $('.ui.form').form({
@@ -187,26 +206,25 @@ $(document).ready(function(){
       apps: 'empty',
       dataset: 'empty'
     },
-    onSuccess: submitRunForm,
-    onFailure: function(formerrors, fields){alert('Please fill valid values in "Config" page! More tips please refer to "Config"');}
+    // onSuccess: submitRunForm,
   });
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */
+  $('#configModal').modal({
+    onApprove: validateFormWithDefault
+  });
+
   $('#runButton').click(function(){
     if($(this).hasClass('.disabled')){
       return;
     }
-    let now_field_values = $('.ui.form').form('get values');
-    for(let v in has_default_fields){
-      let field = has_default_fields[v];
-      let now_val = now_field_values[field.identifier];
-      if(now_val === ""){
-        let selector = '#' + field.identifier;
-        let val = $(selector).attr('placeholder');
-        $(selector).attr('value', val);
-      }
+    let res = validateFormWithDefault();
+    if(res === true) {
+      submitRunForm($('#config .ui.form').form('get values'));
     }
-    $('.ui.form').form('validate form');
+    else{
+      $('#configModal').modal('show');
+    }
   });
 
   // bind stop
