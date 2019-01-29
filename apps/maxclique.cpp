@@ -115,7 +115,7 @@ public:
 		return &partial_.mc;
 	}
 
-	string demo_str(const vector<MaxCliquePartialT>& parts) override
+	string get_agg_str(const vector<MaxCliquePartialT>& parts) override
 	{
 		int max_parts = 0;
 		int max_part_cnt = 0;
@@ -267,7 +267,7 @@ public:
 	* Q: the candidates of maxclique calculated before current stage
 	* maxSize: the size of MaxClique mined out currently
 	*/
-	void max_clique(Graph & g, vector<VertexID> & listR, map<VertexID, int> & color, vector<VertexID> & Q, int & max_size, string& str_ref, ContextType & context)
+	void max_clique(Graph & g, vector<VertexID> & listR, map<VertexID, int> & color, vector<VertexID> & Q, int & max_size, string& demo_str, ContextType & context)
 	{
 		while (!listR.empty())
 		{
@@ -297,10 +297,11 @@ public:
 
 					get_listR(subg, listR);
 					color_sort(subg, listR, color);
-					max_clique(subg, listR, color, Q, max_size, str_ref, context);
+					max_clique(subg, listR, color, Q, max_size, demo_str, context);
 				}
 				else if (Q.size() >= max_size)
 				{
+					//by doing this, both MC size and these MC can be retrived
 					if(Q.size() > max_size)
 					{
 						//clear the context
@@ -316,22 +317,6 @@ public:
 					}
 
 					max_size = Q.size();
-					// if(max_size == 17)
-					// {
-					// 	int tid = TidMapper::GetInstance().GetTid();
-					// 	printf("Siri: wo zhi zai hu ni %d %d\n", _my_rank, tid);
-					// 	fflush(stdout);
-					// }
-
-					// string to_append;
-					// // to_append += "max_size" + to_string(max_size);
-					// to_append += to_string(max_size);
-					// for(auto v : Q)
-					// {
-					// 	to_append += " " + to_string(v);
-					// }
-					// to_append += "\n";
-					// str_ref += to_append;
 				}
 				Q.pop_back();
 			}
@@ -342,7 +327,7 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& demo_str)
 	{
 		int  max_size = *(int*)get_agg();
 		vector<VertexID> Q;
@@ -371,39 +356,12 @@ public:
 
 			get_listR(tempG, listR);
 			color_sort(tempG, listR, color);
-			max_clique(tempG, listR, color, Q, max_size, str_ref, context);
+			max_clique(tempG, listR, color, Q, max_size, demo_str, context);
 		}
 		else if (Q.size() >= max_size)
 		{
 			max_size = Q.size();
-
-			// any graph with at least one edge, the max_size > 1.
-			// this application is not designed to run on a "graph" without any edge.
-
-			// string to_append;
-			// to_append += to_string(max_size);
-			// for(auto v : Q)
-			// {
-			// 	to_append += " " + to_string(v);
-			// }
-			// to_append += "\n";
-			// str_ref += to_append;
 		}
-		//get the maxClique in current task
-		// context = max_size;
-
-		//do not need it at all
-		// for(auto QQ : context.track)
-		// {
-		// 	string to_append;
-		// 	to_append += to_string(context.mc);
-		// 	for(auto v : QQ)
-		// 	{
-		// 		to_append += " " + to_string(v);
-		// 	}
-		// 	to_append += "\n";
-		// 	str_ref += to_append;
-		// }
 
 		assert(context.track.size() == context.mcount);
 

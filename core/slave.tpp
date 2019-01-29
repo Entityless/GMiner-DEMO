@@ -316,10 +316,9 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 			agg->step_partial(task->context);
 			agg_lock_.unlock();
 		}
-		//for demo
+		//for demo, or debug usage
 		if(demo_str.size() != 0)
 		{
-			//write demo str
 			thread_demo_str_compute(demo_str, tid);
 		}
 		delete task;
@@ -426,6 +425,7 @@ void Slave<TaskT, AggregatorT>::pull_PQ_to_CMQ()
 		}
 		TaskPackage<TaskT> pkg(tasks, dsts);
 		task_pipeline_.cmq_push_back(pkg);
+		task_to_cmq_count_ += PIPE_POP_NUM;
 		vtx_req_count_++;
 
 		std::unique_lock<std::mutex> lck(vtx_req_lock_);
@@ -463,6 +463,7 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 			}
 		}
 		task_pipeline_.cpq_push_back(pkg.tasks);
+		task_to_cpq_count_ += PIPE_POP_NUM;
 		vtx_resp_count_++;
 
 		if((vtx_req_count_-vtx_resp_count_)<VTX_REQ_MAX_GAP)
@@ -511,10 +512,12 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 		if(t != NULL)
 		{
 			task_pipeline_.taskbuf_push_back(t);
+			task_recycle_count_++;
 		}
 		else
 		{
 			dec_task_num_in_memory(1);
+			task_finished_count_++;
 		}
 		compute_lock_.unlock();
 		compute_cond_.notify_one();
@@ -622,15 +625,26 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 {
 	QueueMonitorT part;
 
+	//basic queue info
 	part.task_num_in_memory = get_task_num_in_memory();
 	part.task_num_in_disk = get_task_num_in_disk();
-	part.cmq_size = task_pipeline_.cmq_size();
+	part.cmq_size = task_pipeline_.cmq_size() * PIPE_POP_NUM;
 	part.cpq_size = task_pipeline_.cpq_size();
 	part.taskbuf_size = task_pipeline_.taskbuf_size();
+	part.task_store_to_cmq = task_to_cmq_count_ - last_task_to_cmq_;
+	part.cmq_to_cpq = task_to_cpq_count_ - last_task_to_cpq_;
+	part.cpq_to_task_store = task_recycle_count_ - last_task_recycle_;
+	part.cpq_finished = task_finished_count_ - last_task_finished_;
+
+	last_task_finished_ = task_finished_count_;
+	last_task_recycle_ = task_recycle_count_;
+	last_task_to_cmq_ = task_to_cmq_count_;
+	last_task_to_cpq_ = task_to_cpq_count_;
 
 	slave_gather(part);
 
 	//fake agg_sync
+	//TODO: if agg_sync just happens, then do not call this again, but utilize the result of gather in agg_sync
 	AggregatorT* agg = (AggregatorT*)get_aggregator();
 	if (agg != NULL)
 	{
@@ -639,10 +653,6 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 		agg_lock_.unlock();
 		//gathering
 		slave_gather(part);
-		//scattering
-		// FinalT final;
-		// slave_bcast(final);
-		// *((FinalT*)global_agg) = final;
 	}
 
 	thread_demo_str_period();

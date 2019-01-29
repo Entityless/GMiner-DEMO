@@ -78,7 +78,7 @@ public:
 		return &count_;
 	}
 
-	string demo_str(const vector<unsigned long long>& parts) override
+	string get_agg_str(const vector<unsigned long long>& parts) override
 	{
 		unsigned long long total_parts = 0;
 
@@ -119,7 +119,7 @@ class TriangleTask :public Task<VertexID, TriangleContext>
 {
 public:
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& demo_str)
 	{
 		VertexT last_v;
 		last_v.id = context.last_id;
@@ -149,7 +149,7 @@ public:
 						to_append += to_string(context.creator_id) + ",";
 						to_append += to_string(id_j);
 						to_append += "]}\n";
-						str_ref += to_append;
+						demo_str += to_append;
 					}
 
 					//the triangle is: frontier[i], context.creator_id, id_j
