@@ -4,10 +4,9 @@
     <meta http-equiv="x-ua-compatible"content="ie=edge">
     <meta name="viewport"content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./semantic/semantic.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='rainbow/github.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
-    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
-    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='arrows.css') }}">
     <title>GMiner playgroud</title>
   </head>
@@ -58,15 +57,47 @@
               API
             </a>
           </div>
-          <div class="ui attached segment" id="console">
-            <p group="std"></p>
-            <div group="visual" style="width: 100%; height: 100%;"> 
-              <!-- svg id="gtPattern">
-              </svg>
-              <svg id="visualSvg" width="100%" height="100%">
-              </svg -->
+          <div class="ui attached segment" id="console" style="padding:0">
+            <div id="stdConsole" group="std">
+              <p group="std"></p>
             </div>
-            <div group="api"></div>
+            <div id="visualConsole" group="visual">
+              <div group="visual" style="width: 100%; height: 100%;"> 
+                <!-- svg id="gtPattern">
+                </svg>
+                <svg id="visualSvg" width="100%" height="100%">
+                </svg -->
+              </div>
+            </div>
+            <div group="api" id="apiConsole">
+              <div group="api">
+                <p> Select an api example of G-Miner to show: </p>
+                <div id='apiradios'>
+                  {% for item in apps %}
+                    {% if loop.index == 1 %}
+                    {% for k, v in item.items() %}
+                    <div>
+                      <input type="radio" value="{{ k }}" name="apiname" checked>
+                      <label for="{{ k }}">{{ v["name"] }}</label>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    {% for k, v in item.items() %}
+                    <div>
+                      <input type="radio" value="{{ k }}" name="apiname" >
+                      <label for="{{ k }}">{{ v["name"] }}</label>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                  {% endfor %}
+                </div>
+                {% for k, v in codes %}
+                  <pre value="{{ k }}"><code data-language="c">
+                    {{ v }}
+                  </code></pre>
+                {% endfor %}
+              </div>
+            </div>
           </div>
         </div>
         <div id="graph-col" >
@@ -127,6 +158,7 @@
           algorithms. We model subgraph processing as independent tasks, and design a novel task pipeline to streamline task 
           processing for better CPU, network and I/O utilization.
         </p>
+        <p><a href="https://github.com/yaobaiwei/GMiner" target="_blank">G-Miner github project</a></p>
       </div>
     </div>
     <div class='ui modal' id='configModal'>
@@ -258,11 +290,12 @@
     <!-- scripts -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="http://static.runoob.com/assets/jquery-validation-1.14.0/dist/jquery.validate.min.js"></script>
-    <script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-    <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
     <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
     <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.1/dist/g2.min.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="{{ url_for('static', filename='rainbow/rainbow.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='rainbow/generic.js') }}"></script>
+    <script src="{{ url_for('static', filename='rainbow/c.js') }}"></script>
     <script src="{{ url_for('static', filename='common.js') }}"></script>
     <script src="{{ url_for('static', filename='visual.js') }}"></script>
     <script src="{{ url_for('static', filename='validate_form.js') }}"></script>

@@ -8,7 +8,23 @@ body {
 html::-webkit-scrollbar {
   display: none;
 }
-
+.block {
+  box-shadow: 0 5px 5px rgba(0,0,0,0.1);
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0;
+  border-color: #c7c7c7;
+}
+#main-grid {
+  display: flex;
+  /* occupy remain place */
+  position: absolute;
+  left: 7rem; /* left sidebar */
+  top: 1rem;
+  bottom: 1rem;
+  right: 1rem;
+  align-items: stretch;
+}
 /* ----- Modal ----- */
 #configModal,#aboutModal,#teamModal,#compareModal {
   height: calc(100% - 6rem);
@@ -40,43 +56,36 @@ html::-webkit-scrollbar {
   font-size: 2rem;
 }
 /* ------------------ */
-.block {
-  box-shadow: 0 5px 5px rgba(0,0,0,0.1);
-  border-style: solid;
-  border-width: 1px;
-  border-radius: 0;
-  border-color: #c7c7c7;
-}
 
-
-#main-grid {
-  display: flex;
-  /* occupy remain place */
-  position: absolute;
-  left: 7rem; /* left sidebar */
-  top: 1rem;
-  bottom: 1rem;
-  right: 1rem;
-  align-items: stretch;
-}
 /* ------------- console --------------- */
 #content {
   flex-grow: 1;
   height: 100%;
+  max-width: 70%;
 }
 #content #contentMenu{
   height: 3em;
 }
-#content #console {
+#apiConsole,#visualConsole,#stdConsole {
   padding: 1.5rem;
   height: calc(100% - 3em);
 }
-#std { display: none; }
-#visual {
-  height: 100%;
-  width: 100%;
+#apiConsole, #stdConsole {
+  overflow-y: scroll;
 }
 /* ------------------- */
+/* ------------- api --------------- */
+#apiradios {
+  display: flex;
+  width: calc(100% - 3rem);
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+div[group=api] pre{
+  width: calc(100%-3rem);
+  overflow-x: scroll;
+}
+/*---------*/
 .compare-item {
   text-align: center;
   overflow-y: scroll;

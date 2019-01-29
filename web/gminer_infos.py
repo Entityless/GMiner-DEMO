@@ -90,3 +90,15 @@ gminer_persons = [
 gminer_sysconfig = [
     cache_size, num_comp_th, pipe_pop_num, pop_num, subg_size_t 
 ]
+
+def get_gminer_codes():
+    keys = ['tc','mc','gm','cd','fco']
+    filen = ['trianglecount.cpp','maxclique.cpp','graphmatch.cpp','community.cpp','focusCO.cpp']
+    res = []
+    for k, name in zip(keys, filen):
+        with open('./apps/' + name) as f:
+            a = f.read()
+            res.append((k, a))
+    return res
+
+gminer_codes = get_gminer_codes()

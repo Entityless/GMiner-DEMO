@@ -2,7 +2,9 @@ $(document).ready(function(){
   /* init */
   $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
   $('#appParam').hide();
-  $('p[group=std]').hide();
+  $('div[group=std],div[group=api]').hide();
+  $('pre').hide().first().show();
+
   $('.compare-item').height(window.innerHeight * 0.7).first().addClass('active').show();
   $('.compare-item').css('bottom', window.innerHeight - $('#compareModal .actions').height() - $('#compreModal .actions').css('bottom'));
 
@@ -66,6 +68,22 @@ $(document).ready(function(){
       $('#appParam').fadeOut();
     }
   });
+  /* code */
+  var radio_checked = $('#apiradios input[type=radio]:first-of-type');
+  var changeCodes = function(now){
+    let value = radio_checked.attr('value');
+    let new_value = now.attr('value');
+    let selector = 'pre[value='+value+']';
+    let new_selector = 'pre[value='+new_value+']';
+    console.log(selector, new_selector);
+    if (new_value != value){
+      $(selector).fadeOut(300, function() {
+        $(new_selector).fadeIn();
+      });
+    }
+    radio_checked = now;
+  }
+  $('#apiradios input').click(function(){changeCodes($(this));});
 
 
   $('#aboutOpen').click(
@@ -85,7 +103,6 @@ $(document).ready(function(){
     });
   $('#compareOpen').click(
     function(){
-      $('#compareModal .slider').slick('slickGoTo', 0);
       $('#compareModal').modal('show');
     });
   $('#teamOpen').click(
@@ -111,12 +128,5 @@ $(document).ready(function(){
     selector = '#console [group=' + group + ']';
     $(selector).show();
     $(this).addClass('active');
-
-    if(group === "std") {
-      $('#console').css('overflow-y', 'scroll');
-    }
-    else {
-      $('#console').css('overflow-y', 'unset');
-    }
   });
 });

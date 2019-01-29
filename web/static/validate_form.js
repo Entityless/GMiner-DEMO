@@ -84,9 +84,11 @@ function stopAll(data = 0) {
 function renderComponents(data){
   // 1. flush console
   let stdout = data['text'];
-  let text = $('#console>p').html();
-  $('#console>p').html(text + stdout);
-  $('#console').scrollTop($('#console')[0].scrollHeight);
+  let text = $('#stdConsole>p').html();
+  $('#stdConsole>p').html(text + stdout);
+  if($('#contentMenu>.item.active').attr('group') === 'std'){
+    $('#stdConsole').scrollTop($('#stdConsole')[0].scrollHeight);
+  }
   data['text'] = '';
   console.log(data);
   ENV.stdpt = data.stdpt;
@@ -163,7 +165,7 @@ function changeComponents(data){
 // life cycle start
 function submitRunForm(fields){
   console.log('start submit');
-  $('#console>p').text('');
+  $('#stdConsole>p').text('');
   var url = '/runrequest';
   var data = JSON.stringify(fields);
   console.log(data);
