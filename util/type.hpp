@@ -60,6 +60,11 @@ struct QueueMonitorT
 	unsigned long long cmq_size;
 	unsigned long long cpq_size;
 	unsigned long long taskbuf_size;
+
+	unsigned long long task_store_to_cmq;
+	unsigned long long cmq_to_cpq;
+	unsigned long long cpq_to_task_store;
+	unsigned long long cpq_finished;
 };
 
 
@@ -70,6 +75,10 @@ static inline ibinstream& operator << (ibinstream& m, const QueueMonitorT& v)
 	m << v.cmq_size;
 	m << v.cpq_size;
 	m << v.taskbuf_size;
+	m << v.task_store_to_cmq;
+	m << v.cmq_to_cpq;
+	m << v.cpq_to_task_store;
+	m << v.cpq_finished;
 	return m;
 }
 
@@ -80,6 +89,10 @@ static inline obinstream& operator >> (obinstream& m, QueueMonitorT& v)
 	m >> v.cmq_size;
 	m >> v.cpq_size;
 	m >> v.taskbuf_size;
+	m >> v.task_store_to_cmq;
+	m >> v.cmq_to_cpq;
+	m >> v.cpq_to_task_store;
+	m >> v.cpq_finished;
 	return m;
 }
 

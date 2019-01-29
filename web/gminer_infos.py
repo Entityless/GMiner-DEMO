@@ -74,7 +74,7 @@ subg_size_t = {
         'default': 30
         }
 
-gminer_datasets = ['youtube', 'skitter', 'orkut']
+gminer_datasets = ['youtube', 'skitter', 'orkut', 'friendster']
 
 gminer_apps = [
             {'tc': {'name':'Triangle Counting', 'param':None}} , 
@@ -85,8 +85,26 @@ gminer_apps = [
             ]
 
 gminer_persons = [
-    {'name': 'xxx', 'img': 'husky.jpg', 'info': 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}    
+    {'name': 'Hongzhi Cheng', 'img': 'chz.jpg', 'info': ' is a PhD student in the Department of Computer Science and Engineering, The Chinese University of Hong Kong. His research interests cover the broad area of distributed systems and databases, with special emphasis on large-scale graph processing systems, distributed data analytics systems.'},
+    {'name': 'Xiaoxi Wang', 'img': 'noimage.jpg', 'info': ' is working as a research assistant in CUHK. She is interested in distributed machine learning'},
+    {'name': 'Chenghuan Huang', 'img': 'hch.jpg', 'info': ' is a Research Assistant in the Department of Computer Science and Engineering, Chinese University of Hong Kong. He is familiar with parallel programming.'},
+    {'name': 'Juncheng Fang', 'img': 'jc.jpg', 'info': ' is an undergraduate in the Department of Computer Science and Engineering, The Chinese University of Hong Kong. He is now interested in distributed system.'},
+    {'name': 'Yifan Hou', 'img': 'hyf.jpg', 'info': ' is working toward the MPhil degree in the Department of Computer Science and Engineering, Chinese University of Hong Kong. He is interested in large-scale graph processing and graph embedding'},
+    {'name': 'Changji Li', 'img': 'lcj.jpg', 'info': ' is currently a Master student in Department of Computer Science and Engineering, Chinese University of Hong Kong. He will pursue MPhil degree in CSE, CUHK as well whose research interests are about distributed computing system and large-scale graph processing.'},
+    {'name': 'Jian Zhang', 'img': 'zj.jpg', 'info': ' is a PhD student in the Department of Computer Science and Engineering, The Chinese University of Hong Kong. He is now interested in distributed systems and high-performanced computation.'},
     ]
 gminer_sysconfig = [
     cache_size, num_comp_th, pipe_pop_num, pop_num, subg_size_t 
 ]
+
+def get_gminer_codes():
+    keys = ['tc','mc','gm','cd','fco']
+    filen = ['trianglecount.cpp','maxclique.cpp','graphmatch.cpp','community.cpp','focusCO.cpp']
+    res = []
+    for k, name in zip(keys, filen):
+        with open('./apps/' + name) as f:
+            a = f.read()
+            res.append((k, a))
+    return res
+
+gminer_codes = get_gminer_codes()

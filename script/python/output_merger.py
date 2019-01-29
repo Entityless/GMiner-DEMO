@@ -17,9 +17,11 @@ parser.add_argument('-b', '-bkpdir', '--bkpdir', help='Merged output backup', de
 parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.5')
 parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='4')
 parser.add_argument('-t', '-timestamp', '--timestamp', help = 'the timestamp when GMiner application was launched', required = True)
+parser.add_argument('-m', '-maxmonitoritem', '--maxmonitoritem', help = 'Maximum count for web cluster monitor', default='300')
 
 args = vars(parser.parse_args())
 
+merger_dir = args['localdir']
 args['localdir'] += '/' + args['timestamp'] + '/'
 args['bkpdir'] += '/' + args['timestamp'] + '/'
 args['logpath'] += '/' + args['timestamp'] + '/'
@@ -65,7 +67,12 @@ def OnAppStart():
     dic_to_write['cmq_size_float'] = 0.0
     dic_to_write['cpq_size_float'] = 0.0
     dic_to_write['taskbuf_size_float'] = 0.0
-    
+
+    dic_to_write['task_transfer_1'] = 0.0
+    dic_to_write['task_transfer_2'] = 0.0
+    dic_to_write['task_transfer_3'] = 0.0
+    dic_to_write['task_transfer_4'] = 0.0
+
     with open(master_5q_path, 'w') as f:
         f.write(json.dumps(dic_to_write) + '\n')
         f.close()
@@ -91,6 +98,29 @@ def OnSignalAppear():
 
     os.system("mkdir -p " + args['localdir'] + "/" + local_signal_dic['master'])
     os.system("mkdir -p " + local_signal_dic['master'])
+
+    #get the latest timestamp from runtime-infos/monitor-data.json
+    # global_monitor_data_fn = "{}/{}".format(merger_dir, 'monitor-data.json')
+    global_monitor_append_data_fn = "{}/{}".format(merger_dir, 'monitor-append.log')
+    lns = run_bg_cmd('tail -n 4 {}'.format(global_monitor_append_data_fn))
+    for ln in lns:
+        lns_content = ln
+        if(lns_content[-1] == '\n'):
+            lns_content = lns_content[:-1]
+
+        if(lns_content[-1] == ','):
+            lns_content = lns_content[:-1]
+
+        if(not lns_content[-1] == '}'):
+            continue
+
+        # print(lns_content)
+        pln = json.loads(lns_content)
+        if('time' in pln):
+            local_signal_dic['time'] = pln['time']
+
+    if(not 'time' in local_signal_dic):
+        local_signal_dic['time'] = time.time()
 
     return local_signal_dic
 
@@ -125,8 +155,101 @@ def EvilMapping(x):
         return 0.0
     return 0.2 * UglyTanh(x, 1) + 0.175 * UglyTanh(x, 10) + 0.175 * UglyTanh(x, 100) + 0.175 * UglyTanh(x, 1000) + 0.175 * UglyTanh(x, 10000) + 0.1 * UglyTanh(x, 100000)
 
+dedicated_monitor_history = []
+def GenDedicatedMonitorData(signal_dic):
+    global dedicated_monitor_history
+    #
+    global_monitor_data_fn = "{}/{}".format(merger_dir, 'monitor-data.json')
+    global_monitor_append_data_fn = "{}/{}".format(merger_dir, 'monitor-append.log')
+
+    local_monitor_data_fn = "{}/{}/{}".format(merger_dir, args['timestamp'], 'monitor-data.json')
+
+    time_to_append_min = signal_dic['time']
+    if(len(dedicated_monitor_history) > 0):
+        time_to_append_min = dedicated_monitor_history[-1]['time']
+
+    # print("time_to_append_min = ", time_to_append_min)
+
+    # tmp_timestamp_counter = {} #[<TS>] = [<monitor items>], pop atomically
+
+    #if the history list is empty, load them all
+    with open(global_monitor_data_fn, 'r') as in_f:
+        in_f.close() #test
+        # lns = in_f.readlines()
+        lns = run_bg_cmd("tail -n 40 {}".format(global_monitor_append_data_fn))
+        #atmoic append: only all keys inside a monitor
+
+        for ln in lns:
+            lns_content = ln
+            if(lns_content[-1] == '\n'):
+                lns_content = lns_content[:-1]
+
+            if(lns_content[-1] == ','):
+                lns_content = lns_content[:-1]
+
+            if(not lns_content[-1] == '}'):
+                continue
+
+            # print(lns_content)
+            pln = json.loads(lns_content)
+
+            if(pln['time'] > time_to_append_min):
+                # print("(pln['time'] > time_to_append_min)", pln)
+                # if(not pln['time'] in tmp_timestamp_counter):
+                #     tmp_timestamp_counter[pln['time']] = []
+                #append to the list, pop when len == monitorkey
+                # if(len(tmp_timestamp_counter[pln['time']]) == int(args['monitorkey'])):
+                pln['time'] -= signal_dic['time']
+                dedicated_monitor_history.append(pln)
+
+                # turn out to be
+                # with open(local_monitor_data_fn, 'a') as out_f:
+                #     #
+                #     out_f.write(str(json.dumps(pln) + '\n'))
+
+    #from dedicated_monitor_history (list) to real data to display
+    #potential stretch and compress
+
+    max_item = int(args['maxmonitoritem'])
+    #a mapping to dedicated_monitor_history
+    history_len = len(dedicated_monitor_history)
+
+    mappint_list = []
+
+    if(history_len > 0):
+        #get the keys
+        key_list = []
+        for key in dedicated_monitor_history[-1]:
+            if(not key == 'time'):
+                key_list.append(key)
+
+        for i in range(max_item):
+            int_mapping = int(((1.0 * i) / max_item) * history_len)
+
+            if(int_mapping >= history_len):
+                int_mapping = history_len - 1
+            if(int_mapping < 0):
+                int_mapping = 0
+
+            mappint_list.append(int_mapping)
+
+        with open(local_monitor_data_fn, 'w') as out_f:
+            out_f.write('[\n')
+            for i in range(max_item):
+                # out_f.write(json.dumps(dedicated_monitor_history[mappint_list[i]]))
+                for l in range(len(key_list)):
+                    #
+                    tmp_dic = {'value' : dedicated_monitor_history[mappint_list[i]][key_list[l]], 'time' : dedicated_monitor_history[mappint_list[i]]['time'], 'type' : key_list[l]}
+                    out_f.write(json.dumps(tmp_dic))
+                    if(not (i == max_item - 1 and l == len(key_list) - 1)):
+                        out_f.write(',')
+                    out_f.write('\n')
+            out_f.write(']\n')
+
+
 def PostProcessing(signal_dic):
-    #ramdom pick
+    # dedicated monitor data
+    GenDedicatedMonitorData(signal_dic)
 
     #### master.json
     # master_agg_path = args['localdir'] + "/master_agg.json"
@@ -147,8 +270,6 @@ def PostProcessing(signal_dic):
             lns = f.readlines()
             f.close()
 
-            # print(lns)
-
             tmp_len = len(global_master_dic_list)
             for i in range(tmp_len, len(lns)):
                 ln = lns[i]
@@ -166,7 +287,6 @@ def PostProcessing(signal_dic):
                 # print('global_master_dic_list.append ', global_master_dic_list[-1])
     #dump master_5q.json
 
-    #或许需要处理文件短暂为空的逻辑
     with open(master_5q_path, 'w') as f:
         dic_to_write = {}
         dic_to_write['task_num_in_memory'] = 0
@@ -174,6 +294,10 @@ def PostProcessing(signal_dic):
         dic_to_write['cmq_size'] = 0
         dic_to_write['cpq_size'] = 0
         dic_to_write['taskbuf_size'] = 0
+        dic_to_write['task_store_to_cmq'] = 0
+        dic_to_write['cmq_to_cpq'] = 0
+        dic_to_write['cpq_to_task_store'] = 0
+        dic_to_write['cpq_finished'] = 0
 
         if(len(global_master_dic_list) > 0):
             #[task_num_in_memory, task_num_in_disk, cmq_size, cpq_size, taskbuf_size]
@@ -184,17 +308,16 @@ def PostProcessing(signal_dic):
                 dic_to_write['cmq_size'] += global_master_dic_list[-1][stri][2]
                 dic_to_write['cpq_size'] += global_master_dic_list[-1][stri][3]
                 dic_to_write['taskbuf_size'] += global_master_dic_list[-1][stri][4]
+                dic_to_write['task_store_to_cmq'] += global_master_dic_list[-1][stri][5]
+                dic_to_write['cmq_to_cpq'] += global_master_dic_list[-1][stri][6]
+                dic_to_write['cpq_to_task_store'] += global_master_dic_list[-1][stri][7]
+                dic_to_write['cpq_finished'] += global_master_dic_list[-1][stri][8]
 
         dic_to_write['task_num_in_memory_float'] = EvilMapping(dic_to_write['task_num_in_memory'])
         dic_to_write['task_num_in_disk_float'] = EvilMapping(dic_to_write['task_num_in_disk'])
         dic_to_write['cmq_size_float'] = EvilMapping(dic_to_write['cmq_size'])
         dic_to_write['cpq_size_float'] = EvilMapping(dic_to_write['cpq_size'])
         dic_to_write['taskbuf_size_float'] = EvilMapping(dic_to_write['taskbuf_size'])
-
-        dic_to_write['task_transfer_1'] = dic_to_write['task_num_in_disk']
-        dic_to_write['task_transfer_2'] = dic_to_write['cmq_size']
-        dic_to_write['task_transfer_3'] = dic_to_write['cpq_size']
-        dic_to_write['task_transfer_4'] = dic_to_write['cpq_size']
 
         # print(json.dumps(dic_to_write))
         f.write(json.dumps(dic_to_write) + '\n')
@@ -217,8 +340,6 @@ def PostProcessing(signal_dic):
         slaves_path = args['localdir'] + "/slaves.json"
         post_processing_history = global_post_processing_history
 
-        #post_processing_history[worker_name][tid]可以得到某个节点的某个线程最新挖出来的行。数量可以指定，默认为1
-
         node_id = 0
         for hostname in signal_dic['slaves']:
             local_path = args['localdir'] + '/' + hostname + '/'
@@ -227,7 +348,6 @@ def PostProcessing(signal_dic):
             # print(hostname + ', len(lns) = ', len(lns))
 
             fs = os.listdir(args['localdir'] + "/" + hostname)
-            # print(lns) len(lns)就是现在的某个节点有多少个输出part
 
             #e.g., demo_node_5_thread_0_part_0.log
 
@@ -365,7 +485,6 @@ if __name__ == "__main__":
     gminer_running = False
     while True:
 
-        #暂时不考虑突然连续两次启动的情况
         run_bg_cmd("ls -al .")
         if(os.path.isfile(signal_file_name)):
             # print("os.path.isfile(signal_file_name)")

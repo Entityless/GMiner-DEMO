@@ -20,11 +20,11 @@ def get_timestamp():
 @app.route('/')
 def main():
     image = [1,2,3,4,5,6,7,8,9]
-    persons = gminer_infos.gminer_persons * 7;
+    persons = gminer_infos.gminer_persons;
     persons = [persons[i * 2:i * 2 + 2] for i in range(7//2 + 1)]
     return flask.render_template('index.html', apps=gminer_apps,
             datasets=gminer_datasets, sysconfigs0=gminer_sysconfig[:3],
-            sysconfigs1=gminer_sysconfig[3:], slideimages = image, teammembers = persons)
+            sysconfigs1=gminer_sysconfig[3:], slideimages = image, teammembers = persons, codes = gminer_infos.gminer_codes)
 
 @app.route('/load_json/<folder>/<path>')
 def return_cpu_info(folder, path):
@@ -62,7 +62,7 @@ def runApplication():
     proc = subprocess.Popen(final_cmd, shell=True, stdout=subprocess.DEVNULL)
     app_table[timestamp] = proc
 
-    data = {'key': timestamp, 'status': "ok"}
+    data.update({'key': timestamp, 'status': "ok"});
     # except Exception, e:
     #     data = {'key': timestamp, 'status': "stop"}
     #     print(e)

@@ -66,9 +66,10 @@ var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined}; // 
 
 function stopAll(data = 0) {
   $('#runButton').removeClass('disabled');
-  $('#stopButton').removeClass('red').addClass('disabled');
-  $('#queues .progress').removeClass('blue').addClass('disabled');
+  $('#stopButton').addClass('disabled');
+  $('#queues .progress').addClass('disabled');
   $('#finish-label').addClass('disabled');
+  $('.arrows i').removeClass('move');
   if(typeof(ENV.timeid) != "undefined"){
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
@@ -84,9 +85,11 @@ function stopAll(data = 0) {
 function renderComponents(data){
   // 1. flush console
   let stdout = data['text'];
-  let text = $('#console>p').html();
-  $('#console>p').html(text + stdout);
-  $('#console').scrollTop($('#console')[0].scrollHeight);
+  let text = $('#stdConsole>p').html();
+  $('#stdConsole>p').html(text + stdout);
+  if($('#contentMenu>.item.active').attr('group') === 'std'){
+    $('#stdConsole').scrollTop($('#stdConsole')[0].scrollHeight);
+  }
   data['text'] = '';
   console.log(data);
   ENV.stdpt = data.stdpt;
@@ -97,19 +100,21 @@ function renderComponents(data){
     text: {percent: String(data['task_num_in_disk']) },
     percent: Number(data['task_num_in_disk_float']) * 100
   });
-  $('#pq .arrow-label').text(String(data['task_transfer_1']) + arrow_label_suffix);
+  $('#pq .arrow-label').text(String(data['task_transfer_1']));
 
   $('#cmq').progress({
     text: {percent: String(data['cmq_size'])},
     percent: Number(data['cmq_size_float']) * 100
   });
-  $('#cmq .arrow-label').text(String(data['task_transfer_2']) + arrow_label_suffix);
 
   $('#cpq').progress({
     text: {percent: String(data['cpq_size'])},
     percent: Number(data['cpq_size_float']) * 100
   });
-  $('#cpq .arrow-label').text(String(data['task_transfer_3']) + arrow_label_suffix);
+  $('#qlabel1').text(String(data['task_transfer_1']));
+  $('#qlabel2').text(String(data['task_transfer_2']));
+  $('#qlabel3').text(String(data['task_transfer_3']));
+  $('#qlabel4').text(String(data['task_transfer_4']));
   return data['end'];  
 }
 
@@ -139,9 +144,13 @@ function changeComponents(data){
   console.log(data, data.status);
   if(data.status === "ok"){
     $('#content .segment').removeClass('loading');
-    $('#stopButton').removeClass('disabled').addClass('red');
-    $('#queues .progress').removeClass('disabled').addClass('blue');
-    $('#finish-label').removeClass('disabled');
+    $('#stopButton').removeClass('disabled');
+    $('#queues .progress').removeClass('disabled');
+    $('.arrows i').addClass('move');
+    if(data.apps === "gm"){
+    }
+    else {
+    }
     ENV.key = data.key;
     ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
     ENV.stdpt = 0;
@@ -157,9 +166,9 @@ function changeComponents(data){
 }
 
 // life cycle start
-function submitRunForm(e, fields){
+function submitRunForm(fields){
   console.log('start submit');
-  $('#console>p').text('');
+  $('#stdConsole>p').text('');
   var url = '/runrequest';
   var data = JSON.stringify(fields);
   console.log(data);
@@ -172,14 +181,29 @@ function submitRunForm(e, fields){
   })
   .then(resp => resp.json())
   .then(changeComponents)
-  .catch(e => {
-    console.error(e);
+  .catch(function(e) {
+    $('.arrows i').removeClass('move');
     $('#content .segment').removeClass('loading');
     $('#runButton').removeClass('disabled');
     $('#stopButton').removeClass('red').addClass('disabled');
   });
 }
 
+function validateFormWithDefault() {
+  let now_field_values = $('#config .ui.form').form('get values');
+  console.log(now_field_values);
+  for(let v in has_default_fields){
+    let field = has_default_fields[v];
+    let now_val = now_field_values[field.identifier];
+    if(now_val === ""){
+      let selector = '#' + field.identifier;
+      let val = $(selector).attr('placeholder');
+      $(selector).attr('value', val);
+    }
+  }
+  $('.ui.form').form('validate form');
+  return $('.ui.form').form('is valid');
+}
 $(document).ready(function(){
   /* initialize */
   $('.ui.form').form({
@@ -187,26 +211,25 @@ $(document).ready(function(){
       apps: 'empty',
       dataset: 'empty'
     },
-    onSuccess: submitRunForm,
-    onFailure: function(formerrors, fields){alert('Please fill valid values in "Config" page! More tips please refer to "Config"');}
+    duration: 800
   });
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */
+  $('#configModal').modal({
+    onApprove: validateFormWithDefault
+  });
+
   $('#runButton').click(function(){
     if($(this).hasClass('.disabled')){
       return;
     }
-    let now_field_values = $('.ui.form').form('get values');
-    for(let v in has_default_fields){
-      let field = has_default_fields[v];
-      let now_val = now_field_values[field.identifier];
-      if(now_val === ""){
-        let selector = '#' + field.identifier;
-        let val = $(selector).attr('placeholder');
-        $(selector).attr('value', val);
-      }
+    let res = validateFormWithDefault();
+    if(res === true) {
+      submitRunForm($('#config .ui.form').form('get values'));
     }
-    $('.ui.form').form('validate form');
+    else{
+      $('#configModal').modal('show');
+    }
   });
 
   // bind stop

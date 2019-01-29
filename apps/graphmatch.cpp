@@ -74,7 +74,7 @@ public:
 		return &count_;
 	}
 
-	string demo_str(const vector<unsigned long long>& parts) override
+	string get_agg_str(const vector<unsigned long long>& parts) override
 	{
 		unsigned long long total_parts = 0;
 
@@ -210,7 +210,7 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& demo_str)
 	{
 		int & round = context.round;
 		round++;
@@ -404,7 +404,7 @@ public:
 			Q.push_back(a);
 			unsigned long long & count = context.count;
 
-			back_track(0, g, Q, c_nodes, count, str_ref);
+			back_track(0, g, Q, c_nodes, count, demo_str);
 
 			return false;
 		}
