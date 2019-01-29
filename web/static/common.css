@@ -9,6 +9,37 @@ html::-webkit-scrollbar {
   display: none;
 }
 
+/* ----- Modal ----- */
+#configModal,#aboutModal,#teamModal,#compareModal {
+  height: calc(100% - 6rem);
+}
+.ui.modal>.header:first-of-type {
+  height: 4.5rem;
+}
+.ui.modal .actions {
+  height: 4.5rem;
+}
+#configModal>.content,
+#compareModal>.comtent
+{
+  height: calc(100% - 9rem);
+}
+#aboutModal>.content {
+  height: calc(100% - 4.5rem);
+}
+#teamModal>.content {
+  height: 100%;
+}
+
+#teamModal>.content,
+#compareModal>.content {
+  overflow-y: scroll;
+}
+#teamModal .personName {
+  font-weight: bold;
+  font-size: 2rem;
+}
+/* ------------------ */
 .block {
   box-shadow: 0 5px 5px rgba(0,0,0,0.1);
   border-style: solid;
@@ -16,6 +47,7 @@ html::-webkit-scrollbar {
   border-radius: 0;
   border-color: #c7c7c7;
 }
+
 
 #main-grid {
   display: flex;
@@ -25,53 +57,35 @@ html::-webkit-scrollbar {
   top: 1rem;
   bottom: 1rem;
   right: 1rem;
-  align-items: start;
-  padding: 32px auto 0 auto;
+  align-items: stretch;
 }
-
+/* ------------- console --------------- */
 #content {
   flex-grow: 1;
-  position: relative;
   height: 100%;
 }
-
 #content #contentMenu{
-  z-index: 2;
-  position: relative;
+  height: 3em;
 }
-
-#console {
-  position: absolute;
+#content #console {
   padding: 1.5rem;
-  bottom: 0;
-  right: 0;
-  /*overflow-y: scroll; show when console option is activate*/
-  z-index: 1;
+  height: calc(100% - 3em);
 }
 #std { display: none; }
-
 #visual {
   height: 100%;
   width: 100%;
 }
-
-#patternSvg {
-  position: absolute;
-  top: 2em;
-  border-style: solid;
-  border-width: 1px;
-  border-color: blue;
-  border-radius: 20px;
-  height: 30%;
-  width: 15%;
+/* ------------------- */
+.compare-item {
+  text-align: center;
+  overflow-y: scroll;
 }
-
 #graph-col {
   display: inline-flex;
   flex-direction: column;
-  justify-content: space-between;
   align-content: center; 
-  width: 30%;
+  min-width: 30%;
   padding-left:20px;
 }
 
@@ -95,27 +109,3 @@ html::-webkit-scrollbar {
   display: flex;
 }
 
-.slider {
-  margin: 15% auto 20% auto;
-  background-color: white;
-}
-
-.slider-item {
-  margin: auto;
-  padding: 2rem;
-  min-height: 280px;
-}
-
-.slider-item img {
-  margin: auto;
-  height: 240px;
-}
-
-#teamModal {
-  padding: 1.2rem;
-}
-
-.personName {
-  font-weight: bold;
-  font-size: 2rem;
-}

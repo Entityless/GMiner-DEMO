@@ -210,33 +210,48 @@
         <div class="ui green approve button">Confirm</div>
       </div>
     </div>
-    <div class='ui basic modal' id='compareModal'>
-      <div class='slider'>
-        {% for image in slideimages %}
-        <div class='slider-item image'>
+    <div class='ui modal' id='compareModal'>
+      <div class="header">Compare</div>
+      {% for image in slideimages %}
+      <div class="compare-item content" style="display: none;">
+        <p style="margin-top: 1.2rem;"> Page {{ loop.index }}/{{ loop.length }} </p>
+        <div class="image">
           <img src="{{ url_for('static', filename='images/{}.png'.format(image)) }}" alt="loading...">
         </div>
-        {% endfor %}
+        <p> discription </p>
+      </div>
+      {% endfor %}
+      <div class="actions">
+        <div class="ui primary button" id="prev">
+          Prev
+          <i class="left chevron icon"></i>
+        </div>
+        <div class="ui primary button" id="next">
+          Next
+          <i class="right chevron icon"></i>
+        </div>
       </div>
     </div>
-    <div class='ui longer modal' id='teamModal'>
-      <div class="ui two column divided grid">
-        {% for row in teammembers %}
-        <div class="row">
-          {% for person in row %}
-          <div class="column">
-            <div style="float:left; margin-right: 1rem">
-              <img src="{{ url_for('static',filename='images/{}'.format(person['img'])) }}" width="128">
+    <div class='ui modal' id='teamModal'>
+      <div class='content'>
+        <div class="ui two column divided grid">
+          {% for row in teammembers %}
+          <div class="row">
+            {% for person in row %}
+            <div class="column">
+              <div style="float:left; margin-right: 1rem">
+                <img src="{{ url_for('static',filename='images/{}'.format(person['img'])) }}" width="128">
+              </div>
+              <p>
+                <span class="personName">{{ person['name'] }}</span>
+                <br>
+                <span>{{ person['info'] }}</span>
+              </p>
             </div>
-            <p>
-              <span class="personName">{{ person['name'] }}</span>
-              <br>
-              <span>{{ person['info'] }}</span>
-            </p>
+            {% endfor %}
           </div>
           {% endfor %}
         </div>
-        {% endfor %}
       </div>
     </div>
 

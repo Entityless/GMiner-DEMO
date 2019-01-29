@@ -206,7 +206,7 @@ $(document).ready(function(){
       apps: 'empty',
       dataset: 'empty'
     },
-    // onSuccess: submitRunForm,
+    duration: 800
   });
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */
