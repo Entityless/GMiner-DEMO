@@ -66,9 +66,10 @@ var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined}; // 
 
 function stopAll(data = 0) {
   $('#runButton').removeClass('disabled');
-  $('#stopButton').removeClass('red').addClass('disabled');
-  $('#queues .progress').removeClass('blue').addClass('disabled');
+  $('#stopButton').addClass('disabled');
+  $('#queues .progress').addClass('disabled');
   $('#finish-label').addClass('disabled');
+  $('.arrows i').removeClass('move');
   if(typeof(ENV.timeid) != "undefined"){
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
@@ -99,19 +100,21 @@ function renderComponents(data){
     text: {percent: String(data['task_num_in_disk']) },
     percent: Number(data['task_num_in_disk_float']) * 100
   });
-  $('#pq .arrow-label').text(String(data['task_transfer_1']) + arrow_label_suffix);
+  $('#pq .arrow-label').text(String(data['task_transfer_1']));
 
   $('#cmq').progress({
     text: {percent: String(data['cmq_size'])},
     percent: Number(data['cmq_size_float']) * 100
   });
-  $('#cmq .arrow-label').text(String(data['task_transfer_2']) + arrow_label_suffix);
 
   $('#cpq').progress({
     text: {percent: String(data['cpq_size'])},
     percent: Number(data['cpq_size_float']) * 100
   });
-  $('#cpq .arrow-label').text(String(data['task_transfer_3']) + arrow_label_suffix);
+  $('#qlabel1').text(String(data['task_transfer_1']));
+  $('#qlabel2').text(String(data['task_transfer_2']));
+  $('#qlabel3').text(String(data['task_transfer_3']));
+  $('#qlabel4').text(String(data['task_transfer_4']));
   return data['end'];  
 }
 
@@ -141,9 +144,9 @@ function changeComponents(data){
   console.log(data, data.status);
   if(data.status === "ok"){
     $('#content .segment').removeClass('loading');
-    $('#stopButton').removeClass('disabled').addClass('red');
-    $('#queues .progress').removeClass('disabled').addClass('blue');
-    $('#finish-label').removeClass('disabled');
+    $('#stopButton').removeClass('disabled');
+    $('#queues .progress').removeClass('disabled');
+    $('.arrows i').addClass('move');
     if(data.apps === "gm"){
     }
     else {
@@ -179,7 +182,7 @@ function submitRunForm(fields){
   .then(resp => resp.json())
   .then(changeComponents)
   .catch(function(e) {
-    console.error(e);
+    $('.arrows i').removeClass('move');
     $('#content .segment').removeClass('loading');
     $('#runButton').removeClass('disabled');
     $('#stopButton').removeClass('red').addClass('disabled');

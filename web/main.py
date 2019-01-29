@@ -20,7 +20,7 @@ def get_timestamp():
 @app.route('/')
 def main():
     image = [1,2,3,4,5,6,7,8,9]
-    persons = gminer_infos.gminer_persons * 7;
+    persons = gminer_infos.gminer_persons;
     persons = [persons[i * 2:i * 2 + 2] for i in range(7//2 + 1)]
     return flask.render_template('index.html', apps=gminer_apps,
             datasets=gminer_datasets, sysconfigs0=gminer_sysconfig[:3],

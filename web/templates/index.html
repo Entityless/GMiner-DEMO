@@ -102,31 +102,42 @@
         </div>
         <div id="graph-col" >
           <div id="queues" class="block">
-            <div id="pq" class="ui indicating disabled progress queue">
-              <div class="bar">
-                <div class="progress"></div>
-              </div>
-              <div class="label">
-                Task Store
-              </div>
-              <div class="arrow-label"> 0 Tasks/sec</div>
-              <div class="arrow arrow1"></div>
-              <div class="arrow arrow2"></div>
+            <div class="row">
+              <div id="pq" class="ui indicating teal progress queue">
+                <div class="bar">
+                  <div class="progress"></div>
+                </div>
+                <div class="label">
+                  Task Store
+                </div>
+              </div>   
+              <div class="arrows"></div>
             </div>
-            <div id="cmq" class="ui indicating disabled progress queue">
-              <div class="bar">
-                <div class="progress"></div>
+            <div class="row">
+              <div class="up arrows" style="position: relative; bottom: 0.5em;">
+                <i class="chevron up icon ar-animated ar-delay-2s"></i>
+                <i class="chevron up icon ar-animated"></i>
+                <div class="arrow-label"><span id="qlabel4">0</span><br>Tasks/sec</div>
               </div>
-              <div class="label">Candidate Retriever </div>
-              <div class="arrow-label"> 0 Tasks/sec</div>
-              <div class="arrow arrow1"></div>
-              <div class="arrow arrow2"></div>
+              <div id="cmq" class="ui indicating orange progress queue">
+                <div class="bar">
+                  <div class="progress"></div>
+                </div>
+                <div class="label">Candidate Retriever </div>
+              </div> 
             </div>
-            <div id="cpq" class="ui indicating disabled progress queue">
-              <div class="bar">
-                <div class="progress"></div>
+            <div class="row">
+              <div id="cpq" class="ui indicating blue progress queue">
+                <div class="bar">
+                  <div class="progress"></div>
+                </div>
+                <div class="label">Task Executor</div>  
               </div>
-              <div class="label">Task Executor</div>
+              <div class="arrows"></div>
+            </div>
+          </div>
+          <!--div>
+            
               <div class="arrow-label"> 0 Tasks/sec</div>
               <div class="arrow arrow1"></div>
               <div class="arrow arrow2"></div>
@@ -134,7 +145,7 @@
             <div class="disabled" id="finish-label">
               Finish Status
             </div>
-          </div>
+          </div-->
           <div id="timeline" class="block">
             <div id="chartView"></div>
           </div>
@@ -272,11 +283,10 @@
             {% for person in row %}
             <div class="column">
               <div style="float:left; margin-right: 1rem">
-                <img src="{{ url_for('static',filename='images/{}'.format(person['img'])) }}" width="128">
+                <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128">
               </div>
               <p>
                 <span class="personName">{{ person['name'] }}</span>
-                <br>
                 <span>{{ person['info'] }}</span>
               </p>
             </div>

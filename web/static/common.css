@@ -40,6 +40,10 @@ html::-webkit-scrollbar {
 {
   height: calc(100% - 9rem);
 }
+.compare-item {
+  text-align: center;
+  overflow-y: scroll;
+}
 #aboutModal>.content {
   height: calc(100% - 4.5rem);
 }
@@ -53,7 +57,6 @@ html::-webkit-scrollbar {
 }
 #teamModal .personName {
   font-weight: bold;
-  font-size: 2rem;
 }
 /* ------------------ */
 
@@ -86,10 +89,6 @@ div[group=api] pre{
   overflow-x: scroll;
 }
 /*---------*/
-.compare-item {
-  text-align: center;
-  overflow-y: scroll;
-}
 #graph-col {
   display: inline-flex;
   flex-direction: column;
@@ -97,12 +96,22 @@ div[group=api] pre{
   min-width: 30%;
   padding-left:20px;
 }
-
 #queues {
   padding: 1.5rem;
   background-color: white;
 }
-
+#queues .row {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+#pq,#cmq,#cpq {
+  width: calc((100%) *  2/ 3);
+  margin: 0 0 2.5em 0;
+}
+#queues .arrows {
+  width: calc((100%)/3);
+}
 
 #timeline {
   margin-top: 16px;
