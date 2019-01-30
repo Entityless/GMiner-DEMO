@@ -135,7 +135,7 @@ public:
 		cout << endl;
 	}
 
-	void back_track(int level, SubgraphT & g, vector<VertexID> & Q, vector<VertexID> & nodes, unsigned long long & count, string& demo_str)
+	void back_track(int level, SubgraphT & g, vector<VertexID> & Q, vector<VertexID> & nodes, unsigned long long & count)
 	{
 		level++;
 		if (level == 1)
@@ -164,7 +164,7 @@ public:
 							Q.push_back(n);
 							vector<VertexID> out_b = b_vec;
 							out_b.erase(out_b.begin() + j);
-							back_track(level, g, Q, out_b, count, demo_str);
+							back_track(level, g, Q, out_b, count);
 							Q.pop_back();
 						}
 					}
@@ -187,18 +187,27 @@ public:
 						Q.push_back(adj[j].id);
 						//print_Q(Q);
 						
-						//append string
-						if(count % 5000 == 0)
+						// //append demo string; to_output_ is set by dump_context
+						if(to_output_)
 						{
-							string to_append = "{\"Q\":[";
+							string to_append;
+							if(count == 0)
+							{
+								to_append = "[";
+							}
+							else
+							{
+								to_append = ",[";
+							}
+
 							for(int i = 0; i < Q.size(); i++)
 							{
 								to_append += to_string(Q[i]);
 								if(i != Q.size() - 1)
 									to_append += ",";
 							}
-							to_append += "]}\n";
-							demo_str += to_append;
+							to_append += "]";
+							demo_str_ += to_append;
 						}
 
 						count++;
@@ -210,7 +219,7 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& demo_str)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
 		int & round = context.round;
 		round++;
@@ -404,10 +413,106 @@ public:
 			Q.push_back(a);
 			unsigned long long & count = context.count;
 
-			back_track(0, g, Q, c_nodes, count, demo_str);
+			back_track(0, g, Q, c_nodes, count);
+
+			if(check_status())
+			{
+				//backup variables for back_track, enables dump_context
+				Q_to_dump_ = Q;
+				c_nodes_to_dump_ = c_nodes;
+			}
 
 			return false;
 		}
+	}
+
+	//for dump context
+	bool to_output_ = false;
+	vector<VertexID> Q_to_dump_, c_nodes_to_dump_;
+
+	bool check_status() override
+	{
+		if(context.count > 3 && context.count < 10)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	void dump_context() override
+	{
+		to_output_ = true;
+		if(!to_output_)
+			return;
+
+		demo_str_ = "{\"subg\":[";
+		unsigned long long count = 0;
+
+		back_track(0, subG, Q_to_dump_, c_nodes_to_dump_, count);
+
+		demo_str_ += "], \"count\" : " + to_string(count);
+
+		list<NodeT> & nodes = subG.get_nodes();
+
+		//subG node list
+		int tmp_cnt = 0;
+		int nodes_sz = nodes.size();
+
+		vector<pair<VertexID, VertexID>> edges;
+
+		demo_str_ += ", \"subg_size\" : " + to_string(nodes_sz) + ", \"subg_list\" : [";
+		for (auto node : nodes)
+		{
+			demo_str_ += to_string(node.id);
+			if(tmp_cnt != nodes_sz - 1)
+			{
+				demo_str_ += ",";
+			}
+
+			for(auto adj : node.adjlist)
+			{
+				if(adj.id > node.id)
+				{
+					edges.push_back(make_pair(node.id, adj.id));
+				}
+			}
+
+			tmp_cnt++;
+		}
+
+		demo_str_ += "], \"label_list\" : [";
+		char tmp_str[2];
+		tmp_str[1] = 0;
+		tmp_cnt = 0;
+		for (auto node : nodes)
+		{
+			// demo_str_ += "\"" + to_string(node.attr) + "\"";
+			tmp_str[0] = node.attr;
+			demo_str_ += "\"" + string(tmp_str) + "\"";
+			if(tmp_cnt != nodes_sz - 1)
+			{
+				demo_str_ += ",";
+			}
+			tmp_cnt++;
+		}
+		//print the label
+
+		demo_str_ += "], \"conn_list\" : [";
+
+		for(int i = 0; i < edges.size(); i++)
+		{
+			demo_str_ += "[" + to_string(edges[i].first) + "," + to_string(edges[i].second) + "]";
+			if(i != edges.size() - 1)
+			{
+				demo_str_ += ",";
+			}
+		}
+
+		demo_str_ += "], \"conn_size\" : " + to_string(edges.size());
+
+		demo_str_ += "}\n";
+
+		to_output_ = false;
 	}
 };
 

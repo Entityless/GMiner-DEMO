@@ -150,6 +150,11 @@ public:
 		return &count_;
 	}
 
+	string app_name() override
+	{
+		return "GC";
+	}
+
 private:
 	FocusResult count_;
 };
@@ -159,7 +164,7 @@ class FocusTask :public Task<VertexID, FocusContext, Attribute<AttrValueT> >
 {
 public:
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
 		vector<VertexID>& cluster = context.cluster;
 		VtxIdSet& outlier = context.outlier;
