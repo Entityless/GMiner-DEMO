@@ -127,6 +127,11 @@ public:
 		return &count_;
 	}
 
+	string app_name() override
+	{
+		return "CD";
+	}
+
 private:
 	Result count_;
 };
@@ -312,7 +317,7 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& str_ref)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
 		int max_size = 0;
 		ComAttrSet& com_attr_set = this->context.com_attr_set;
