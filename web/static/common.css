@@ -73,6 +73,9 @@ html::-webkit-scrollbar {
   padding: 1.5rem;
   height: calc(100% - 3em);
 }
+#visualConsole {
+  padding-top: 0.5rem;
+}
 #apiConsole, #stdConsole {
   overflow-y: scroll;
 }
@@ -89,6 +92,16 @@ div[group=api] pre{
   overflow-x: scroll;
 }
 /*---------*/
+/* ------------ infoTable ---------- */
+#infoTable {
+  width: 100%;
+}
+#infoTable th{
+  height: 2em;
+}
+.seghead {
+  height: 1.8em;
+}
 #graph-col {
   display: inline-flex;
   flex-direction: column;
@@ -97,8 +110,14 @@ div[group=api] pre{
   padding-left:20px;
 }
 #queues {
-  padding: 1.5rem;
   background-color: white;
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#queues>div:first-of-type {
+  width: 90%;
 }
 #queues .row {
   display: flex;
@@ -106,11 +125,17 @@ div[group=api] pre{
   width: 100%;
 }
 #pq,#cmq,#cpq {
-  width: calc((100%) *  2/ 3);
-  margin: 0 0 2.5em 0;
+  flex-grow: 1;
+  margin: 3.5rem 0 0 0;
 }
-#queues .arrows {
-  width: calc((100%)/3);
+#queues .sideitem {
+  width: calc(100% / 6);
+}
+#pq .label,#cmq .label,#cpq .label{
+  top: unset;
+  bottom: 1.7rem;
+  font-size: 1.3rem;
+  font-weight: 600;
 }
 
 #timeline {
@@ -126,4 +151,5 @@ div[group=api] pre{
 #side {
   display: flex;
 }
+
 

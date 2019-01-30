@@ -43,7 +43,12 @@ void Master<AggregatorT>::sys_sync()
 	if (agg != NULL)
 	{
 		vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
+		// printf("before master gather\n");
+		// fflush(stdout);
+		// MPI_Barrier(MPI_COMM_WORLD);
 		master_gather(parts);
+		// printf("after master gather\n");
+		// fflush(stdout);
 
 		string agg_str = agg->get_agg_str(parts);
 		if(agg_str.size() != 0)
@@ -72,6 +77,8 @@ void Master<AggregatorT>::agg_sync()
 	if (agg != NULL)
 	{
 		vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
+
+		// MPI_Barrier(MPI_COMM_WORLD);
 		master_gather(parts);
 		for (int i = 0; i < get_num_workers(); i++)
 		{
@@ -106,6 +113,7 @@ void Master<AggregatorT>::context_sync()
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
 			this_thread::sleep_for(chrono::nanoseconds(uint64_t(AGG_SLEEP_TIME * (1000 * 1000 * 1000))));
+			MPI_Barrier(MPI_COMM_WORLD);
 			if(!agg->agg_sync_disabled())
 				agg_sync();
 		}
@@ -120,6 +128,7 @@ void Master<AggregatorT>::context_sync()
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
 			this_thread::sleep_for(chrono::nanoseconds(uint64_t(SYS_SLEEP_TIME * (1000 * 1000 * 1000))));
+			MPI_Barrier(MPI_COMM_WORLD);
 			sys_sync();
 		}
 	}
@@ -147,6 +156,7 @@ void Master<AggregatorT>::context_sync()
 
 				time_to_sleep  = last_agg_sync - sleep_counter;
 				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				MPI_Barrier(MPI_COMM_WORLD);
 				if(!agg->agg_sync_disabled())
 					agg_sync();
 
@@ -159,6 +169,7 @@ void Master<AggregatorT>::context_sync()
 
 				time_to_sleep  = last_sys_sync - sleep_counter;
 				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				MPI_Barrier(MPI_COMM_WORLD);
 				sys_sync();
 
 				sleep_counter = last_sys_sync;
@@ -353,6 +364,7 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 	//============================ RUN ============================
 	thread sync(&Master::context_sync, this);
 	thread listen(&Master::schedule_listen,this);
+	// MPI_Barrier(MPI_COMM_WORLD);
 	thread steal(&Master::task_steal,this);
 	//ResetTimer(MASTER_TIMER);
 	//StopTimer(MASTER_TIMER);

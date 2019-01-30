@@ -63,9 +63,23 @@ $(document).ready(function(){
       var selector_str = '#appParam .' + data_value;
       $(selector_str).show();
       $('#appParam').fadeIn();
+      $('#dataset option[value="friendster"]').attr('disabled', 'disabled');
     }
     else{
       $('#appParam').fadeOut();
+      $('#dataset option[value="friendster"]').prop('disabled', false);
+    }
+  });
+  $('#dataset').change(function() {
+    var opt = $('#dataset option:selected');
+    var data_value = opt.attr('value');
+    if(data_value === "friendster"){
+      $('#apps option[value="cd"]').attr('disabled', 'disabled');
+      $('#apps option[value="fco"]').attr('disabled', 'disabled');
+    }
+    else {
+      $('#apps option[value="cd"]').prop('disabled', false);
+      $('#apps option[value="fco"]').prop('disabled', false);
     }
   });
   /* code */

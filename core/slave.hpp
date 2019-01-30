@@ -155,6 +155,9 @@ private:
 	void thread_demo_str_compute(const string& demo_str, int tid);
 	void thread_demo_str_finalize();
 
+	int GetAndIncreaseCounter();
+
+
 	//PART 5 =======================================================
 	//members
 
@@ -192,15 +195,41 @@ private:
 	mutex vtx_req_lock_;
 	condition_variable vtx_req_cond_;
 
-	struct DemoFile
+	pthread_spinlock_t task_counter_lock_;
+	volatile int task_counter_ = 0;//should not directly access this variable!
+
+	struct ThreadDemoT
 	{
-		FILE* first = NULL;
-		pthread_spinlock_t second;
+		FILE* log_file = NULL;
+		pthread_spinlock_t file_lock, task_counter_lock;
+		volatile int task_counter = 0, fine_task_counter = 0;
+		bool force_output = false;
+		ThreadDemoT()
+		{
+			pthread_spin_init(&file_lock, 0);
+			pthread_spin_init(&task_counter_lock, 0);
+		}
+
+		int GetAndIncreaseCounter()
+		{
+			pthread_spin_lock(&task_counter_lock);
+			int task_counter_before = task_counter++;
+			pthread_spin_unlock(&task_counter_lock);
+			return task_counter_before;
+		}
+
+		int GetAndIncreaseFineCounter()
+		{
+			pthread_spin_lock(&task_counter_lock);
+			int task_counter_before = fine_task_counter++;
+			pthread_spin_unlock(&task_counter_lock);
+			return task_counter_before;
+		}
 	} __attribute__((aligned(128))); //act as pair<FILE*, pthread_spinlock_t>, in case of false sharing
 
-	static_assert(sizeof(DemoFile) == (128), "DemoFile struct not aligned to 128B");
+	static_assert(sizeof(ThreadDemoT) == (128), "ThreadDemoT struct not aligned to 128B");
 
-	vector<DemoFile> thread_demo_files_;
+	vector<ThreadDemoT> thread_demo_var_;
 	int filename_part_ = 0;
 	int sys_sync_time_ = 0;
 

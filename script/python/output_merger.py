@@ -50,6 +50,12 @@ global_post_processing_history = {}
 global_master_dic_list = []
 global_post_processing_len = 0
 
+#for SlavesLineReader
+slave_line_history_list = []
+slave_line_history_dic = {}
+slave_finished_cnt = {}
+slave_last_ret = ""
+
 def OnAppStart():
     #write some file that needed by the frontend
     os.system("mkdir -p " + args['localdir'])
@@ -68,10 +74,10 @@ def OnAppStart():
     dic_to_write['cpq_size_float'] = 0.0
     dic_to_write['taskbuf_size_float'] = 0.0
 
-    dic_to_write['task_transfer_1'] = 0.0
-    dic_to_write['task_transfer_2'] = 0.0
-    dic_to_write['task_transfer_3'] = 0.0
-    dic_to_write['task_transfer_4'] = 0.0
+    dic_to_write['task_store_to_cmq'] = 0
+    dic_to_write['cmq_to_cpq'] = 0
+    dic_to_write['cpq_to_task_store'] = 0
+    dic_to_write['cpq_finished'] = 0
 
     with open(master_5q_path, 'w') as f:
         f.write(json.dumps(dic_to_write) + '\n')
@@ -95,6 +101,7 @@ def OnSignalAppear():
     for hostname in local_signal_dic['slaves']:
         os.system("mkdir -p " + args['localdir'] + "/" + hostname)
         global_post_processing_history[hostname] = []
+        slave_finished_cnt[hostname] = 0
 
     os.system("mkdir -p " + args['localdir'] + "/" + local_signal_dic['master'])
     os.system("mkdir -p " + local_signal_dic['master'])
@@ -246,6 +253,66 @@ def GenDedicatedMonitorData(signal_dic):
                     out_f.write('\n')
             out_f.write(']\n')
 
+#called by post processing; always return a newest line of slaves' output
+def SlavesLineReader(signal_dic):
+    global slave_line_history_list
+    global slave_line_history_dic
+    global slave_finished_cnt
+    global slave_last_ret
+
+    #append history
+    node_id = 0
+    for hostname in signal_dic['slaves']:
+        local_path = args['localdir'] + '/' + hostname + '/'
+        finish_lns = run_bg_cmd("ls -l " + local_path + "| grep 'finish'") #somehow wasting
+
+        #last glance to part slave_finished_cnt[hostname]
+        if(len(finish_lns) != slave_finished_cnt[hostname]):
+            #
+            for tid in range(signal_dic['nthreads']):
+                newest_possible_fn = local_path + 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(slave_finished_cnt[hostname]) + '.log'
+                cmd = 'tail -n 1 ' + newest_possible_fn
+
+                if(os.path.isfile(newest_possible_fn)):
+                    tail_ret = run_bg_cmd(cmd)
+                    if(len(tail_ret) == 0):
+                        continue
+                    ln = tail_ret[0]
+                    if(ln[-1] == '}'):
+                        #append this line
+                        if(not ln in slave_line_history_dic):
+                            slave_line_history_dic[ln] = 0
+                            slave_line_history_list.append(ln)
+
+            slave_finished_cnt[hostname] = len(finish_lns)
+
+        #normal glance
+        for tid in range(signal_dic['nthreads']):
+            newest_possible_fn = local_path + 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(len(finish_lns)) + '.log'
+            cmd = 'tail -n 1 ' + newest_possible_fn
+
+            if(os.path.isfile(newest_possible_fn)):
+                tail_ret = run_bg_cmd(cmd)
+                if(len(tail_ret) == 0):
+                    continue
+                ln = tail_ret[0]
+                if(ln[-1] == '}'):
+                    #append this line
+                    if(not ln in slave_line_history_dic):
+                        slave_line_history_dic[ln] = 0
+                        slave_line_history_list.append(ln)
+        node_id += 1
+
+    ret = ""
+
+    #pop history
+    if(len(slave_line_history_list) > 0):
+        ret = slave_line_history_list.pop()
+        slave_last_ret = ret
+    else:
+        ret = slave_last_ret
+
+    return ret
 
 def PostProcessing(signal_dic):
     # dedicated monitor data
@@ -332,82 +399,17 @@ def PostProcessing(signal_dic):
     global global_post_processing_len
 
     ##### slaves.json
-    ## this cound be somehow complex; random pick
+    ## this cound be somehow complex; juse pick one line
     ## multiple file need to be processed
     if(signal_dic['app_name'] == 'GM' or signal_dic['app_name'] == 'TC'):
-        
-
         slaves_path = args['localdir'] + "/slaves.json"
-        post_processing_history = global_post_processing_history
 
-        node_id = 0
-        for hostname in signal_dic['slaves']:
-            local_path = args['localdir'] + '/' + hostname + '/'
-            lns = run_bg_cmd("ls -l " + local_path + "| grep 'finish'") #somehow wasting
-
-            # print(hostname + ', len(lns) = ', len(lns))
-
-            fs = os.listdir(args['localdir'] + "/" + hostname)
-
-            #e.g., demo_node_5_thread_0_part_0.log
-
-            node_counter = 0
-
-            #check if to scan for the history
-            if(len(lns) != global_post_processing_len):
-                for tid in range(signal_dic['nthreads']):
-                    newest_possible_fn = 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(global_post_processing_len) + '.log'
-
-                    cmd = 'tail -n ' + str(node_max_q) + " " + local_path + newest_possible_fn
-
-                    if(os.path.isfile(local_path + newest_possible_fn)):
-                        
-                        # print(cmd)
-                        tail_ret = run_bg_cmd(cmd)
-
-                        for ln in tail_ret:
-                            # print('pln = json.loads ', ln)
-                            if(ln[-1] == '}'):
-                                pln = json.loads(ln)
-                                post_processing_history[hostname].insert(0, pln['Q'])
-                                node_counter += 1
-
-                    if(node_counter > node_max_q):
-                        break
-                global_post_processing_len = len(lns)
-
-            for tid in range(signal_dic['nthreads']):
-                newest_possible_fn = 'demo_node_' + str(node_id) + '_thread_' + str(tid) + '_part_' + str(len(lns)) + '.log'
-
-                cmd = 'tail -n ' + str(node_max_q) + " " + local_path + newest_possible_fn
-
-                if(os.path.isfile(local_path + newest_possible_fn)):
-                    
-                    # print(cmd)
-                    tail_ret = run_bg_cmd(cmd)
-
-                    for ln in tail_ret:
-                        # print('pln = json.loads ', ln)
-                        if(ln[-1] == '}'):
-                            pln = json.loads(ln)
-                            post_processing_history[hostname].insert(0, pln['Q'])
-                            node_counter += 1
-
-                if(node_counter > node_max_q):
-                    break
-
-                # break
-
-            while(len(post_processing_history[hostname]) > node_max_q):
-                post_processing_history[hostname].pop()
-
-            node_id += 1
+        # result_dic = json.loads(SlavesLineReader(signal_dic))
+        result_line = SlavesLineReader(signal_dic)
 
         with open(slaves_path, 'w') as f:
-            f.write(json.dumps(post_processing_history) + '\n')
+            f.write(result_line + '\n')
             f.close()
-
-        global_post_processing_history = post_processing_history
 
     if(signal_dic['app_name'] == 'MC'):
         #

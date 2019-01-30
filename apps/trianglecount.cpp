@@ -119,7 +119,7 @@ class TriangleTask :public Task<VertexID, TriangleContext>
 {
 public:
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& demo_str)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
 		VertexT last_v;
 		last_v.id = context.last_id;
@@ -142,25 +142,134 @@ public:
 				//my neighbor is my neighbor's neighbor
 				if (adj[size_i].id == id_j)
 				{
-					if(context.count % 100 == 0)
-					{
-						string to_append = "{\"Q\":[";
-						to_append += to_string(frontier[i]->id) + ",";
-						to_append += to_string(context.creator_id) + ",";
-						to_append += to_string(id_j);
-						to_append += "]}\n";
-						demo_str += to_append;
-					}
-
 					//the triangle is: frontier[i], context.creator_id, id_j
-
 					context.count++;
 					size_i++;
 				}
 			}
 		}
+
+		if(check_status())
+		{
+			frontier_to_dump_ = &frontier;
+
+
+		}
+
 		return false;
 	}
+
+	vector<VertexT *>* frontier_to_dump_;
+
+	bool check_status() override
+	{
+		if(context.count > 4 && context.count < 8)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	void dump_context() override
+	{
+		//filter
+		if(fine_task_counter_ % 20 != 0)
+		{
+			return;
+		}
+
+		//one hop here, stateless
+		vector<VertexT *> & frontier = *frontier_to_dump_;
+		SubgraphT & g = subG;
+
+		int size = frontier.size();
+
+		demo_str_ = "{\"subg\":[";
+		unsigned long long count = 0;
+
+		map<VertexID, set<VertexID>> edges_map;
+
+		edges_map[context.creator_id] = set<VertexID>();
+
+		for (int i = 0; i < size - 1; i++)
+		{
+			AdjVtxList & adj = frontier[i]->get_adjlist();
+			int size_i = 0;  //pos in frontier[i]’s adj to search next
+			int size_j = adj.size();
+			for (int j = i + 1; j < size; j++)
+			{
+				VertexID id_j = frontier[j]->id;  ////frontier[j]’s ID
+				while ((size_i < size_j) && (adj[size_i].id < id_j))
+					size_i++;
+				if (size_i >= size_j)
+					break;
+
+				//my neighbor is my neighbor's neighbor
+				if (adj[size_i].id == id_j)
+				{
+					string to_append = "[";
+					to_append += to_string(context.creator_id) + ",";
+					to_append += to_string(frontier[i]->id) + ",";
+					to_append += to_string(id_j);
+					to_append += "]";
+					if(count != context.count - 1)
+						to_append += ",";
+					demo_str_ += to_append;
+
+					if(edges_map.count(frontier[i]->id) == 0)
+						edges_map[frontier[i]->id] = set<VertexID>();
+					if(edges_map.count(id_j) == 0)
+						edges_map[id_j] = set<VertexID>();
+
+					edges_map[context.creator_id].insert(frontier[i]->id);
+					edges_map[context.creator_id].insert(id_j);
+					edges_map[frontier[i]->id].insert(id_j);
+					//the triangle is: frontier[i], context.creator_id, id_j
+					count++;
+					size_i++;
+				}
+			}
+		}
+
+		demo_str_ += "], \"count\" : " + to_string(count);
+
+		list<NodeT> & nodes = subG.get_nodes();
+
+		//subG node list
+		int tmp_cnt = 0;
+		int nodes_sz = edges_map.size();
+		vector<pair<VertexID, VertexID>> edges;
+
+		demo_str_ += ", \"subg_size\" : " + to_string(nodes_sz) + ", \"subg_list\" : [";
+		for (auto edge_kv : edges_map)
+		{
+			demo_str_ += to_string(edge_kv.first);
+			if(tmp_cnt != nodes_sz - 1)
+			{
+				demo_str_ += ",";
+			}
+			tmp_cnt++;
+
+			for(auto dst_id : edge_kv.second)
+			{
+				edges.push_back(make_pair(edge_kv.first, dst_id));
+			}
+		}
+		demo_str_ += "], \"conn_list\" : [";
+
+		for(int i = 0; i < edges.size(); i++)
+		{
+			demo_str_ += "[" + to_string(edges[i].first) + "," + to_string(edges[i].second) + "]";
+			if(i != edges.size() - 1)
+			{
+				demo_str_ += ",";
+			}
+		}
+
+		demo_str_ += "], \"conn_size\" : " + to_string(edges.size());
+		demo_str_ += "}\n";
+	}
+
 };
 
 

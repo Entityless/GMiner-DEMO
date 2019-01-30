@@ -204,6 +204,40 @@ function validateFormWithDefault() {
   $('.ui.form').form('validate form');
   return $('.ui.form').form('is valid');
 }
+function updateTableInfo() {
+  let now_field_values = $('#config .ui.form').form('get values');
+  console.log('updateTableInfo: ',now_field_values);
+  for(let v in now_field_values){
+    let selector = '#table' + v;
+    let table_item = $(selector);
+    let input_selector = '#' + v;
+    
+    if(v === "ib"){
+      let val;
+      if(now_field_values[v]) val="Infiniband";
+      else val = "Ethernet";
+      table_item.text(val);
+    }
+    else if(now_field_values[v] === ""){
+      let val = $(input_selector).attr('placeholder');
+      if(typeof(val)=="undefined"){
+        val = "unset";
+      }
+      else{
+        val = val + ' (default)';
+      }
+      table_item.text(val);
+    }
+    else if(v === "apps"){
+      let opt = $('#apps option:selected');
+      let val = opt.text();
+      table_item.text(val);
+    }
+    else{
+      table_item.text(now_field_values[v]);
+    }
+  }
+}
 $(document).ready(function(){
   /* initialize */
   $('.ui.form').form({
@@ -216,7 +250,8 @@ $(document).ready(function(){
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */
   $('#configModal').modal({
-    onApprove: validateFormWithDefault
+    onApprove: validateFormWithDefault,
+    onHidden: updateTableInfo
   });
 
   $('#runButton').click(function(){

@@ -1,7 +1,7 @@
 @keyframes move { 
-  0% {left: 0%;  opacity: 0; }
-  70% { left: 70%; opacity: 1 }
-  100% {left: 100%;opacity: 0;}
+  0% { opacity: 0; }
+  50% { opacity: 1 }
+  100% { opacity: 0;}
 }    
 .move{
   -webkit-animation-name:move;
@@ -32,61 +32,27 @@
 .arrows i.icon{
   font-size: 1.5rem;
 }
-
+.up.arrows i.icon {
+  height: 0.7rem;
+}
+.rightdown.arrows i.icon, .downleft.arrows i.icon{
+  height: 0.7rem;
+  width: 0.8rem;
+}
 .up.arrows {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 3.5em;
-  flex-wrap: wrap;
+  position: relative;
+  top: 1.6rem;
+  color: #2185d0;
 }
-
-#queues .ui.progress>.label {
-  width: unset;
+.rightdown.arrows {
+  position: relative;
+  left: 0.7rem;
+  top:3.4rem;
+  color:#00b5ad;
 }
-
-#finish-label {
-  width: 100%;
-  text-align: right;
+.downleft.arrows {
+  position: relative;
+  left: 0.7rem;
+  top: 0.4rem;
+  color: #f2711c;
 }
-
-#finish-label.disabled {
-  color: rgba(136, 136, 136, 0.5);
-}
-
-.queue:not(.disabled) .arrow1 {
-  -webkit-animation: arrow-movement 2s ease-in-out infinite;
-          animation: arrow-movement 2s ease-in-out infinite;
-}
-.queue:not(.disabled) .arrow2 {
-  -webkit-animation: arrow-movement 2s 1s ease-in-out infinite;
-          animation: arrow-movement 2s 1s ease-in-out infinite;
-}
-
-@-webkit-keyframes arrow-movement {
-  0% {
-    opacity: 0.1;
-    top: 1.4em;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    top: 2.3em;
-    opacity: 0.1;
-  }
-}
-
-@keyframes arrow-movement {
-  0% {
-    top: 1.4em;
-    opacity: 0.1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    top: 2.3em;
-    opacity: 0.1;
-  }
-}*/

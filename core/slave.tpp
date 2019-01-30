@@ -16,6 +16,7 @@ Slave<TaskT, AggregatorT>::Slave()
 	threadpool_size_ = NUM_COMP_THREAD;
 	vtx_req_count_=vtx_resp_count_=0;
     task_count_ = 0;
+    pthread_spin_init(&task_counter_lock_, 0);
 }
 
 //PART 2 =======================================================
@@ -149,8 +150,10 @@ void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
 		if(t != NULL)
 		{
 			t->set_to_request();
+			//all adjacents are in cache
 			if(t->is_request_empty())
 			{
+				t->task_counter_ = thread_demo_var_[tid].GetAndIncreaseCounter();
 				t = recursive_compute(t, tid);
 			}
 			if(t != NULL)
@@ -193,17 +196,15 @@ void Slave<TaskT, AggregatorT>::dump_tasks(TaskVec& tasks)
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::thread_demo_str_init()
 {
-	thread_demo_files_.resize(threadpool_size_);
+	thread_demo_var_.resize(threadpool_size_);
 
 	for(int i = 0; i < threadpool_size_; i++)
 	{
 		if(DEMO_LOG_PATH.size() > 0)
 		{
 			string file_name = DEMO_LOG_PATH + "demo_node_" + to_string(_my_rank) + "_thread_" + to_string(i) + "_part_" + to_string(filename_part_) + ".log";
-			thread_demo_files_[i].first = fopen(file_name.c_str(), "w");
+			thread_demo_var_[i].log_file = fopen(file_name.c_str(), "w");
 		}
-
-		pthread_spin_init(&thread_demo_files_[i].second, 0);
 	}
 }
 
@@ -223,23 +224,23 @@ void Slave<TaskT, AggregatorT>::thread_demo_str_period()
 	}
 
 	int i = 0;
-	for(auto & v : thread_demo_files_)
+	for(auto & v : thread_demo_var_)
 	{
-		pthread_spin_lock(&(v.second));
+		pthread_spin_lock(&(v.file_lock));
 
-		if(v.first)
+		if(v.log_file)
 		{
-			fflush(v.first);
+			fflush(v.log_file);
 
 			if(need_to_switch)
 			{
-				fclose(v.first);
+				fclose(v.log_file);
 				string file_name = DEMO_LOG_PATH + "demo_node_" + to_string(_my_rank) + "_thread_" + to_string(i) + "_part_" + to_string(filename_part_) + ".log";
-				v.first = fopen(file_name.c_str(), "w");
+				v.log_file = fopen(file_name.c_str(), "w");
 			}
 		}
 
-		pthread_spin_unlock(&(v.second));
+		pthread_spin_unlock(&(v.file_lock));
 		i++;
 	}
 
@@ -248,7 +249,7 @@ void Slave<TaskT, AggregatorT>::thread_demo_str_period()
 		//write a flag file indicates that switch complete
 		string file_name = DEMO_LOG_PATH + "demo_node_" + to_string(_my_rank) + "_part_" + to_string(filename_part_ - 1) + "_finish.log";
 		FILE* f = fopen(file_name.c_str(), "w");
-		fprintf(f, "2333\n");
+		fprintf(f, "0\n");//anyway, write something. TODO: write something meaningful
 		fclose(f);
 	}
 }
@@ -256,33 +257,32 @@ void Slave<TaskT, AggregatorT>::thread_demo_str_period()
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::thread_demo_str_compute(const string& demo_str, int tid)
 {
-	pthread_spin_lock(&(thread_demo_files_[tid].second));
+	pthread_spin_lock(&(thread_demo_var_[tid].file_lock));
 	//append
 	//\n in here
-	if(thread_demo_files_[tid].first)
-		fprintf(thread_demo_files_[tid].first, demo_str.c_str());
+	if(thread_demo_var_[tid].log_file)
+		fprintf(thread_demo_var_[tid].log_file, demo_str.c_str());
 
-	pthread_spin_unlock(&(thread_demo_files_[tid].second));
+	pthread_spin_unlock(&(thread_demo_var_[tid].file_lock));
 }
 
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::thread_demo_str_finalize()
 {
-	for(auto & v : thread_demo_files_)
+	for(auto & v : thread_demo_var_)
 	{
-		pthread_spin_lock(&(v.second));
+		pthread_spin_lock(&(v.file_lock));
 
-		if(v.first)
-			fclose(v.first);
+		if(v.log_file)
+			fclose(v.log_file);
 
-		pthread_spin_unlock(&(v.second));
+		pthread_spin_unlock(&(v.file_lock));
 	}
 }
 
 template <class TaskT,  class AggregatorT>
 TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 {
-	string demo_str;
 	//set frontier for UDF compute
 	vector<VertexT *> frontier;
 	for(int i = 0 ; i < task->to_pull.size(); i++)
@@ -295,7 +295,7 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 	//clear task.to_pull, reset it in compute
 	task->to_pull.clear();
 
-	if(task->compute(task->subG, task->context, frontier, demo_str))
+	if(task->compute(task->subG, task->context, frontier))
 	{
 		task->set_to_request();
 		//if to_request is not empty, add the current task into pque
@@ -316,11 +316,24 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 			agg->step_partial(task->context);
 			agg_lock_.unlock();
 		}
+
 		//for demo, or debug usage
-		if(demo_str.size() != 0)
+		if(task->demo_str_.size() != 0)
 		{
-			thread_demo_str_compute(demo_str, tid);
+			thread_demo_str_compute(task->demo_str_, tid);
 		}
+
+		if(task->check_status())
+		{
+			task->fine_task_counter_ = thread_demo_var_[tid].GetAndIncreaseFineCounter();
+			task->demo_str_ = "";
+			task->dump_context();
+			if(task->demo_str_.size() != 0)
+			{
+				thread_demo_str_compute(task->demo_str_, tid);
+			}
+		}
+
 		delete task;
 		return NULL;
 	}
@@ -475,6 +488,15 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 }
 
 template <class TaskT,  class AggregatorT>
+int Slave<TaskT, AggregatorT>::GetAndIncreaseCounter()
+{
+	pthread_spin_lock(&task_counter_lock_);
+	int task_counter_before = task_counter_++;
+	pthread_spin_unlock(&task_counter_lock_);
+	return task_counter_before;
+}
+
+template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 {
 	while(1)
@@ -491,6 +513,8 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 			refs.push_back(nbs[reqs[j]]);
 		}
 		t->to_request.clear();
+
+		t->task_counter_ = thread_demo_var_[tid].GetAndIncreaseCounter();
 		t = recursive_compute(t, tid);
 
 		commun_lock_.lock();
@@ -652,7 +676,8 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 		PartialT* part = agg->finish_partial();
 		agg_lock_.unlock();
 		//gathering
-		slave_gather(part);
+		// MPI_Barrier(MPI_COMM_WORLD);
+		slave_gather(*part);
 	}
 
 	thread_demo_str_period();
@@ -670,6 +695,7 @@ void Slave<TaskT, AggregatorT>::agg_sync()
 		PartialT* part = agg->finish_partial();
 		agg_lock_.unlock();
 		//gathering
+		// MPI_Barrier(MPI_COMM_WORLD);
 		slave_gather(part);
 		//scattering
 		FinalT final;
@@ -695,17 +721,19 @@ void Slave<TaskT, AggregatorT>::context_sync()
 	{
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
+			this_thread::sleep_for(chrono::nanoseconds(uint64_t(AGG_SLEEP_TIME * (1000 * 1000 * 1000))));
+			MPI_Barrier(MPI_COMM_WORLD);
 			if(!agg->agg_sync_disabled())
 				agg_sync();
-			this_thread::sleep_for(chrono::nanoseconds(uint64_t(AGG_SLEEP_TIME * (1000 * 1000 * 1000))));
 		}
 	}
 	else if(AGG_SLEEP_TIME == 0.0)
 	{
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
-			sys_sync();
 			this_thread::sleep_for(chrono::nanoseconds(uint64_t(SYS_SLEEP_TIME * (1000 * 1000 * 1000))));
+			MPI_Barrier(MPI_COMM_WORLD);
+			sys_sync();
 		}
 	}
 	else
@@ -727,6 +755,7 @@ void Slave<TaskT, AggregatorT>::context_sync()
 
 				time_to_sleep  = last_agg_sync - sleep_counter;
 				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				MPI_Barrier(MPI_COMM_WORLD);
 				if(!agg->agg_sync_disabled())
 					agg_sync();
 
@@ -739,6 +768,7 @@ void Slave<TaskT, AggregatorT>::context_sync()
 
 				time_to_sleep  = last_sys_sync - sleep_counter;
 				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
+				MPI_Barrier(MPI_COMM_WORLD);
 				sys_sync();
 
 				sleep_counter = last_sys_sync;
@@ -903,7 +933,10 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	for( unsigned i = 0; i < threadpool_size_; ++i )
 		threadpool_.emplace_back(std::thread(&Slave::pull_CPQ_to_taskbuf, this, i));
 	run_to_no_task();
+
+	// MPI_Barrier(MPI_COMM_WORLD);
 	cout << _my_rank << ": Regular Work Pipeline is Done, Start Task Stealing Stage." << endl;
+
 
 	//Task Stealing Step
 	queue<ibinstream> streams;

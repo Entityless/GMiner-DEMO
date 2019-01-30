@@ -3,6 +3,8 @@
 
 
 #include "core/subg-dev.hpp"
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -15,7 +17,7 @@ typedef map<VertexID, set<VertexID>> Graph;
 
 struct MaxCliquePartialT
 {
-	int mc;
+	int mc = 0;
 	// vector<int> counts;
 	int mcount = 0;
 	vector<vector<int>> track;
@@ -27,7 +29,10 @@ ibinstream& operator << (ibinstream& m, const MaxCliquePartialT& v)
 {
 	m << v.mc;
 	m << v.mcount;
-	m << v.track;
+	if(v.mcount > 0)
+	{
+		m << v.track;
+	}
 	return m;
 }
 
@@ -35,7 +40,10 @@ obinstream& operator >> (obinstream& m, MaxCliquePartialT& v)
 {
 	m >> v.mc;
 	m >> v.mcount;
-	m >> v.track;
+	if(v.mcount > 0)
+	{
+		m >> v.track;
+	}
 	return m;
 }
 
@@ -43,7 +51,10 @@ ifbinstream& operator << (ifbinstream& m, const MaxCliquePartialT& v)
 {
 	m << v.mc;
 	m << v.mcount;
-	m << v.track;
+	if(v.mcount > 0)
+	{
+		m << v.track;
+	}
 	return m;
 }
 
@@ -51,7 +62,10 @@ ofbinstream& operator >> (ofbinstream& m, MaxCliquePartialT & v)
 {
 	m >> v.mc;
 	m >> v.mcount;
-	m >> v.track;
+	if(v.mcount > 0)
+	{
+		m >> v.track;
+	}
 	return m;
 }
 
@@ -79,9 +93,9 @@ public:
 		else if(v.mc == partial_.mc)
 		{
 			partial_.mcount += v.mcount;
-			for(auto vv : v.track)
+			for(auto single_track : v.track)
 			{
-				partial_.track.push_back(vv);
+				partial_.track.push_back(single_track);
 			}
 		}
 	}
@@ -98,16 +112,17 @@ public:
 		{
 			partial_.mcount += part->mcount;
 
-			for(auto vv : part->track)
+			for(auto single_track : part->track)
 			{
-				partial_.track.push_back(vv);
+				partial_.track.push_back(single_track);
 			}
 		}
 	}
 
 	virtual MaxCliquePartialT* finish_partial()
 	{
-		 return &partial_;
+		// printf("my_rank = %d, %d, %d\n", _my_rank, partial_.mc, partial_.mcount);
+		return &partial_;
 	}
 
 	virtual int* finish_final()
@@ -130,7 +145,7 @@ public:
 				max_part_cnt = 0;
 				track.resize(0);
 			}
-			if(v.mc == max_parts)
+			if(v.mc == max_parts && max_parts != 0)
 			{
 				max_part_cnt += v.mcount;
 				for(auto Q : v.track)
@@ -143,23 +158,29 @@ public:
 		string list;
 		int tmp_counter = 0;
 
-		for(auto Q : track)
-		{
-			list += ", \"" + to_string(tmp_counter) + "\" : [";
-			for(int i = 0; i < Q.size(); i++)
-			{
-				if(i != 0)
-					list += ", ";
-				list += to_string(Q[i]);
-			}
-			list += "]";
-
-			tmp_counter++;
-		}
-
 		string ret_str;
+		if(max_parts != 0)
+		{
+			for(auto Q : track)
+			{
+				list += ", \"" + to_string(tmp_counter) + "\" : [";
+				for(int i = 0; i < Q.size(); i++)
+				{
+					if(i != 0)
+						list += ", ";
+					list += to_string(Q[i]);
+				}
+				list += "]";
 
-		ret_str = "{\"mc\" : " + to_string(max_parts) + ", \"count\" : " + to_string(max_part_cnt) + list + "}";
+				tmp_counter++;
+			}
+
+			ret_str = "{\"mc\" : " + to_string(max_parts) + ", \"count\" : " + to_string(max_part_cnt) + list + "}";
+		}
+		else
+		{
+			ret_str = "{\"mc\" : " + to_string(max_parts) + ", \"count\" : " + to_string(max_part_cnt) + "}";
+		}
 
 		return ret_str;
 	}
@@ -267,7 +288,7 @@ public:
 	* Q: the candidates of maxclique calculated before current stage
 	* maxSize: the size of MaxClique mined out currently
 	*/
-	void max_clique(Graph & g, vector<VertexID> & listR, map<VertexID, int> & color, vector<VertexID> & Q, int & max_size, string& demo_str, ContextType & context)
+	void max_clique(Graph & g, vector<VertexID> & listR, map<VertexID, int> & color, vector<VertexID> & Q, int & max_size, ContextType & context)
 	{
 		while (!listR.empty())
 		{
@@ -297,7 +318,7 @@ public:
 
 					get_listR(subg, listR);
 					color_sort(subg, listR, color);
-					max_clique(subg, listR, color, Q, max_size, demo_str, context);
+					max_clique(subg, listR, color, Q, max_size, context);
 				}
 				else if (Q.size() >= max_size)
 				{
@@ -327,8 +348,13 @@ public:
 		}
 	}
 
-	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier, string& demo_str)
+	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
+		// // DEBUG
+		// this_thread::sleep_for(chrono::minutes(1));
+		// printf("WARNING: this_thread::sleep_for(chrono::minutes(1)) finished\n");
+		// fflush(stdout);
+
 		int  max_size = *(int*)get_agg();
 		vector<VertexID> Q;
 		Q.push_back(g.get_nodes().front().id);
@@ -356,7 +382,7 @@ public:
 
 			get_listR(tempG, listR);
 			color_sort(tempG, listR, color);
-			max_clique(tempG, listR, color, Q, max_size, demo_str, context);
+			max_clique(tempG, listR, color, Q, max_size, context);
 		}
 		else if (Q.size() >= max_size)
 		{
