@@ -42,14 +42,17 @@
 .up.arrows {
   position: relative;
   top: 1.6rem;
+  color: #2185d0;
 }
 .rightdown.arrows {
   position: relative;
   left: 0.7rem;
   top:3.4rem;
+  color:#00b5ad;
 }
 .downleft.arrows {
   position: relative;
   left: 0.7rem;
   top: 0.4rem;
+  color: #f2711c;
 }
