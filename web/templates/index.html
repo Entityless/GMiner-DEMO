@@ -62,11 +62,40 @@
               <p group="std"></p>
             </div>
             <div id="visualConsole" group="visual">
-              <div group="visual" style="width: 100%; height: 100%;"> 
-                <!-- svg id="gtPattern">
-                </svg>
-                <svg id="visualSvg" width="100%" height="100%">
-                </svg -->
+              <div style="width:100%;">
+                <div class="ui top attached tabular menu">
+                    <div class="active item">Current Running Setting</div>
+                </div>
+                <div class="ui bottom attached active tab segment" style="padding-top: 0;">
+                  <table id="infoTable">
+                    <tr class="seghead">
+                      <th align="left"><em>Sys config</em></th>
+                    </tr>
+                    <tr>
+                      {% for param in sysconfigs0 %}
+                      <th align="left">{{ param['name'] }}:</th>
+                      <td align="left" id="{{ 'table'+param['name'] }}"> {{ param['default'] }} (default) </td>
+                      {% endfor %}
+                    </tr>
+                    <tr>
+                      {% for param in sysconfigs1 %}
+                      <th align="left">{{ param['name'] }}:</th>
+                      <td align="left" id="{{ 'table'+param['name'] }}"> {{ param['default'] }} (default) </td>
+                      {% endfor %}
+                      <th align="left">Network Interface:</th>
+                      <td id="tableib" align="left">Ethernet (default)</td>
+                    </tr>
+                    <tr class="seghead">
+                      <th align="left"><em>App config</em></th>
+                    </tr>
+                    <tr>
+                      <th align="left">Application:</th>
+                      <td id="tableapps" align="left"> unset </td>
+                      <th align="left">Dataset:</th>
+                      <td id="tabledataset" align="left"> unset </td>
+                    </tr>
+                  </table>
+                </div>
               </div>
             </div>
             <div group="api" id="apiConsole">

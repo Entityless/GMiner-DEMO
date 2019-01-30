@@ -73,6 +73,9 @@ html::-webkit-scrollbar {
   padding: 1.5rem;
   height: calc(100% - 3em);
 }
+#visualConsole {
+  padding-top: 0.5rem;
+}
 #apiConsole, #stdConsole {
   overflow-y: scroll;
 }
@@ -89,6 +92,17 @@ div[group=api] pre{
   overflow-x: scroll;
 }
 /*---------*/
+/* ------------ infoTable ---------- */
+#infoTable {
+  width: 100%;
+  table-layout: fixed;
+}
+th, td{
+  align: left;
+}
+.seghead {
+  height: 1.8em;
+}
 #graph-col {
   display: inline-flex;
   flex-direction: column;
