@@ -94,6 +94,15 @@
                   </table>
                 </div>
               </div>
+              <div id="graphPanel">
+                <div id="gmgt">
+                  <h4 style="text-align:center; margin-top: 5px;">Pattern</h4>
+                  <svg>
+                  </svg>
+                </div>
+                <svg id="maingraph">
+                </svg>
+              </div>
             </div>
             <div group="api" id="apiConsole">
               <div group="api">
@@ -383,7 +392,7 @@
     <script src="http://static.runoob.com/assets/jquery-validation-1.14.0/dist/jquery.validate.min.js"></script>
     <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
     <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.1/dist/g2.min.js"></script>
-    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="{{ url_for('static', filename='d3/d3.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/rainbow.min.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/generic.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/c.js') }}"></script>

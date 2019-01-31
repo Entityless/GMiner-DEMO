@@ -1,35 +1,30 @@
 #chartView {
-  padding-top: 5%;
   padding-bottom: 1rem;
 }
 .g2-legend {
-    width: 98%;
-    margin-left: auto;
-    margin-right: auto;
-    color: #595959 !important;
-    font-size: 12px;
-    inline-height: 17px !important;
-    position: unset !important;
+  width: calc(100% - 4px);
+  margin:0 auto;
+  color: #595959 !important;
+  font-size: 12px;
+  position: unset !important;
+  overflow: visible !important;
 }
-
+.g2-legend-list {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
 .g2-legend-title {
     color: #5a5a5a;
 }
-
-.g2-legend-list {
-    margin-top: 10px !important
-}
-
 .g2-legend-list-item {
     height: 30px;
-    margin: 3px;
-    display: inline;
+    margin: 0 3px;
 }
-
 .legend-item-marker {
     width: 18px;
     height: 18px;
-    border-radius: 50px;
+    border-radius: 50%;
     text-align: center;
     font-size: 12px;
     margin-top: 5px;
@@ -41,28 +36,12 @@
     border-color: #fff;
 }
 
-.legend-item-marker:after {
-    display: inline-block;
-    width: 0;
-    height: 100%;
-    vertical-align: middle;
-    content: '';
-}
-
 .legend-item-name {
     height: 100%;
     float: left;
     margin-left: 4px;
     color: #595959;
     text-align: left;
-}
-
-.legend-item-name:after {
-    display: inline-block;
-    width: 0;
-    height: 100%;
-    vertical-align: middle;
-    content: '';
 }
 
 .legend-item-percent {
@@ -72,14 +51,6 @@
     margin-left: 4px;
     color: #595959;
     text-align: left;
-}
-
-.legend-item-percent:after {
-    display: inline-block;
-    width: 0;
-    height: 100%;
-    vertical-align: middle;
-    content: '';
 }
 
 div.tooltip {
