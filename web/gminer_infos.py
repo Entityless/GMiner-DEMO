@@ -74,7 +74,7 @@ subg_size_t = {
         'default': 30
         }
 
-gminer_datasets = ['youtube', 'skitter', 'orkut', 'friendster']
+gminer_datasets = ['youtube', 'skitter', 'orkut', 'friendster', 'dblp']
 
 gminer_apps = [
             {'tc': {'name':'Triangle Counting', 'param':None}} , 

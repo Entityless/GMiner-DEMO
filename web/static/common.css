@@ -102,6 +102,7 @@ div[group=api] pre{
 .seghead {
   height: 1.8em;
 }
+/* ----------- Side Panels ---------------*/
 #graph-col {
   display: inline-flex;
   flex-direction: column;
@@ -124,6 +125,7 @@ div[group=api] pre{
   flex-wrap: nowrap;
   width: 100%;
 }
+
 #pq,#cmq,#cpq {
   flex-grow: 1;
   margin: 3.5rem 0 0 0;
@@ -152,4 +154,7 @@ div[group=api] pre{
   display: flex;
 }
 
-
+#timeline h3 {
+  margin-top: 1.2rem;
+  text-align: center;
+}
