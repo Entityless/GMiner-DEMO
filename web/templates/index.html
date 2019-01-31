@@ -68,16 +68,15 @@
                 </div>
                 <div class="ui bottom attached active tab segment" style="padding-top: 0;">
                   <table id="infoTable">
-                    <tr class="seghead">
-                      <th align="left"><em>Sys config</em></th>
-                    </tr>
                     <tr>
+                      <th align="left"><em>Sys config</em></th>
                       {% for param in sysconfigs0 %}
                       <th align="left">{{ param['name'] }}:</th>
                       <td align="left" id="{{ 'table'+param['name'] }}"> {{ param['default'] }} (default) </td>
                       {% endfor %}
                     </tr>
                     <tr>
+                      <th></th>
                       {% for param in sysconfigs1 %}
                       <th align="left">{{ param['name'] }}:</th>
                       <td align="left" id="{{ 'table'+param['name'] }}"> {{ param['default'] }} (default) </td>
@@ -85,10 +84,8 @@
                       <th align="left">Network Interface:</th>
                       <td id="tableib" align="left">Ethernet (default)</td>
                     </tr>
-                    <tr class="seghead">
-                      <th align="left"><em>App config</em></th>
-                    </tr>
                     <tr>
+                      <th align="left"><em>App config</em></th>
                       <th align="left">Application:</th>
                       <td id="tableapps" align="left"> unset </td>
                       <th align="left">Dataset:</th>
@@ -131,50 +128,98 @@
         </div>
         <div id="graph-col" >
           <div id="queues" class="block">
-            <div class="row">
-              <div id="pq" class="ui indicating teal progress queue">
-                <div class="bar">
-                  <div class="progress"></div>
+            <div>
+              <div class="row">
+                <div id="pq" class="ui indicating teal progress queue">
+                  <div class="label">Task Store</div>
+                  <div class="bar">
+                    <div class="progress"></div>
+                  </div>
+                </div>   
+                <div class="sideitem">
+                  <table class="rightdown arrows">
+                    <tr>
+                      <td><i class="chevron right icon ar-animated ar-delay"></i></td>
+                      <td><i class="chevron down icon ar-animated ar-delay-1s"></i></td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td><i class="chevron down icon ar-animated ar-delay-2s"></i></td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td><i class="chevron down icon ar-animated ar-delay-3s"></i></td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td><i class="chevron down icon ar-animated ar-delay-4s"></i></td>
+                    </tr>
+                  </table>
                 </div>
-                <div class="label">
-                  Task Store
-                </div>
-              </div>   
-              <div class="arrows"></div>
-            </div>
-            <div class="row">
-              <div class="up arrows" style="position: relative; bottom: 0.5em;">
-                <i class="chevron up icon ar-animated ar-delay-2s"></i>
-                <i class="chevron up icon ar-animated"></i>
-                <div class="arrow-label"><span id="qlabel4">0</span><br>Tasks/sec</div>
               </div>
-              <div id="cmq" class="ui indicating orange progress queue">
-                <div class="bar">
-                  <div class="progress"></div>
+              <div class="row">
+                <div class="sideitem">
+                  <table class="up arrows">
+                    {% for i in range(1, 5) %}
+                    <tr>
+                      <td><i class="chevron up icon ar-animated ar-delay-{{ 5 - i }}s"></i></td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                      <td><i class="chevron up icon ar-animated"></i></td>
+                    </tr>
+                  </table>
                 </div>
-                <div class="label">Candidate Retriever </div>
-              </div> 
-            </div>
-            <div class="row">
-              <div id="cpq" class="ui indicating blue progress queue">
-                <div class="bar">
-                  <div class="progress"></div>
-                </div>
-                <div class="label">Task Executor</div>  
+                <div id="cmq" class="ui indicating orange progress queue">
+                  <div class="label">Candidate Retriever </div>
+                  <div class="bar">
+                    <div class="progress"></div>
+                  </div>
+                </div> 
               </div>
-              <div class="arrows"></div>
+              <div class="row">
+                <div id="cpq" class="ui indicating blue progress queue">
+                  <div class="label">Task Executor</div>  
+                  <div class="bar">
+                    <div class="progress"></div>
+                  </div>
+                </div>
+                <div class="sideitem">
+                  <table class="downleft arrows">
+                    <tr>
+                      <td></td>
+                      <td><i class="chevron down icon ar-animated ar-delay"></i></td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td><i class="chevron down icon ar-animated ar-delay-1s"></i></td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td><i class="chevron down icon ar-animated ar-delay-2s"></i></td>
+                    </tr>
+                      <td>
+                        <i class="chevron left icon ar-animated ar-delay-4s"></i>
+                      </td>
+                      <td><i class="chevron down icon ar-animated ar-delay-3s"></i></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+              <div class="row">
+                <table class="down arrows">
+                  <tr>
+                    <td>
+                      <i class="chevron down icon ar-animated ar-delay"></i>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><i class="flag checkered icon"></i></td>
+                  </tr>
+                </table>
+              </div>
             </div>
           </div>
-          <!--div>
-            
-              <div class="arrow-label"> 0 Tasks/sec</div>
-              <div class="arrow arrow1"></div>
-              <div class="arrow arrow2"></div>
-            </div>
-            <div class="disabled" id="finish-label">
-              Finish Status
-            </div>
-          </div-->
           <div id="timeline" class="block">
             <div id="chartView"></div>
           </div>
