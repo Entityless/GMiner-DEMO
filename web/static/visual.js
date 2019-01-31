@@ -33,10 +33,23 @@ $(document).ready(function() {
   }
   
   makeGmPattern(d3.select('#graphPanel #gmgt>svg'));
-  /* show gm gt
+  /* show gm gt */
+  var gt_nodes = [
+    {name: "a", cx: 47.52, cy:48.59},
+    {name: "b", cx: 33.44, cy: 75.08},
+    {name: "c", cx: 63.43, cy: 74.02},
+    {name: "b", cx: 49.25, cy: 100.46},
+    {name: "d", cx: 50.13, cy: 130.44}];
+  var gt_edges = [
+    {"source": 0, "target": 1}, {"source": 0, "target": 2},
+    {"source": 1, "target": 2}, {"source": 2, "target": 3},
+    {"source": 3, "target": 4}];
+
   var gt_force = d3.forceSimulation().nodes(gt_nodes)
     .force('link', d3.forceLink(gt_edges))
-
+    .force('center', d3.forceCenter().x(mw/2).y(mh/2))
+    .force("charge", d3.forceManyBody())
+  var g = d3.select('#maingraph').append('g');
   var lines = g.append("g").selectAll("line").data(gt_edges).enter().append('line').style('stroke', 'black').style('stroke-width', 2);
   var circles = g.append("g").selectAll("circle").data(gt_nodes).enter().append('circle').attr('r', 10)
     .style('fill', (d, i)=> colorScale(d.name))
@@ -70,7 +83,6 @@ $(document).ready(function() {
   }
   console.log(gt_nodes);
   console.log(gt_edges);
-  */
 });
 
 

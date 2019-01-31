@@ -173,7 +173,7 @@ function submitRunForm(fields){
   var data = JSON.stringify(fields);
   console.log(data);
   $('#runButton').addClass('disabled');
-  $('#content .segment').addClass('loading');
+  $('#content>.segment').addClass('loading');
   fetch(url, {
     method: 'POST',
     body: data,
