@@ -514,6 +514,9 @@ void master_gather(vector<T>& to_get)
 		recvoffset[i] = (i == 0 ? 0 : recvoffset[i - 1] + recvcounts[i - 1]);
 	}
 
+	// printf("master_gather 01\n");
+	// fflush(stdout);
+
 	char* sendbuf;
 	int recv_tot = recvoffset[_num_workers - 1] + recvcounts[_num_workers - 1];
 	char* recvbuf = new char[recv_tot]; //obinstream will delete it
@@ -521,6 +524,9 @@ void master_gather(vector<T>& to_get)
 	StartTimer(TRANSFER_TIMER);
 	MPI_Gatherv(sendbuf, sendcount, MPI_CHAR, recvbuf, recvcounts, recvoffset, MPI_CHAR, MASTER_RANK, MPI_COMM_WORLD);
 	StopTimer(TRANSFER_TIMER);
+
+	// printf("master_gather 02\n");
+	// fflush(stdout);
 
 	StartTimer(SERIALIZATION_TIMER);
 	obinstream um(recvbuf, recv_tot);
@@ -530,6 +536,10 @@ void master_gather(vector<T>& to_get)
 			continue;
 		um >> to_get[i];
 	}
+
+	// printf("master_gather 03\n");
+	// fflush(stdout);
+
 	StopTimer(SERIALIZATION_TIMER);
 	delete[] recvcounts;
 	delete[] recvoffset;

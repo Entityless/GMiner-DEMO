@@ -13,6 +13,7 @@ void Master<AggregatorT>::sys_sync()
 {
 	vector<QueueMonitorT> parts(get_num_workers());
 
+	// MPI_Barrier(MPI_COMM_WORLD);
 	master_gather(parts);
 
 	//write queue info to file
@@ -42,23 +43,29 @@ void Master<AggregatorT>::sys_sync()
 	AggregatorT* agg = (AggregatorT*)get_aggregator();
 	if (agg != NULL)
 	{
-		vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
-		// printf("before master gather\n");
-		// fflush(stdout);
-		// MPI_Barrier(MPI_COMM_WORLD);
-		master_gather(parts);
-		// printf("after master gather\n");
-		// fflush(stdout);
-
-		string agg_str = agg->get_agg_str(parts);
-		if(agg_str.size() != 0)
+		if(!agg->sys_agg_disabled())
 		{
-			// printf("void Master<AggregatorT>::sys_sync(), %s\n", agg_str.c_str());
-			if(f)
+			vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
+			// printf("before master gather\n");
+			fflush(stdout);
+			MPI_Barrier(MPI_COMM_WORLD);
+			_global_dbg_flag = true;
+			master_gather(parts);
+			_global_dbg_flag = false;
+			MPI_Barrier(MPI_COMM_WORLD);
+			// printf("after master gather\n");
+			fflush(stdout);
+
+			string agg_str = agg->get_agg_str(parts);
+			if(agg_str.size() != 0)
 			{
-				fprintf(f, ", \"agg_str\" : %s", agg_str.c_str());
+				// printf("void Master<AggregatorT>::sys_sync(), %s\n", agg_str.c_str());
+				if(f)
+				{
+					fprintf(f, ", \"agg_str\" : %s", agg_str.c_str());
+				}
+				printf("time = %.2f seconds, %s%s\n", get_running_wtime(), agg->sys_print_header().c_str(), agg_str.c_str());
 			}
-			printf("time = %.2f seconds, %s%s\n", get_running_wtime(), agg->sys_print_header().c_str(), agg_str.c_str());
 		}
 	}
 
@@ -113,7 +120,7 @@ void Master<AggregatorT>::context_sync()
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
 			this_thread::sleep_for(chrono::nanoseconds(uint64_t(AGG_SLEEP_TIME * (1000 * 1000 * 1000))));
-			MPI_Barrier(MPI_COMM_WORLD);
+			// MPI_Barrier(MPI_COMM_WORLD);
 			if(!agg->agg_sync_disabled())
 				agg_sync();
 		}
@@ -128,7 +135,7 @@ void Master<AggregatorT>::context_sync()
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
 			this_thread::sleep_for(chrono::nanoseconds(uint64_t(SYS_SLEEP_TIME * (1000 * 1000 * 1000))));
-			MPI_Barrier(MPI_COMM_WORLD);
+			// MPI_Barrier(MPI_COMM_WORLD);
 			sys_sync();
 		}
 	}
@@ -156,7 +163,7 @@ void Master<AggregatorT>::context_sync()
 
 				time_to_sleep  = last_agg_sync - sleep_counter;
 				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
-				MPI_Barrier(MPI_COMM_WORLD);
+				// MPI_Barrier(MPI_COMM_WORLD);
 				if(!agg->agg_sync_disabled())
 					agg_sync();
 
@@ -169,7 +176,7 @@ void Master<AggregatorT>::context_sync()
 
 				time_to_sleep  = last_sys_sync - sleep_counter;
 				this_thread::sleep_for(chrono::nanoseconds(uint64_t(time_to_sleep * (1000 * 1000 * 1000))));
-				MPI_Barrier(MPI_COMM_WORLD);
+				// MPI_Barrier(MPI_COMM_WORLD);
 				sys_sync();
 
 				sleep_counter = last_sys_sync;
@@ -343,11 +350,11 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 {
 	WriteSignalFile();
 
-	if (dir_check(params.input_path.c_str(), params.output_path.c_str(), true, params.force_write) == -1)
-	{
-		terminate();
-		return;
-	}
+	// if (dir_check(params.input_path.c_str(), params.output_path.c_str(), true, params.force_write) == -1)
+	// {
+	// 	terminate();
+	// 	return;
+	// }
 	printf("Loading data from HDFS...\n");
 	fflush(stdout);
 	start_to_work();
