@@ -132,6 +132,17 @@ public:
 		return "CD";
 	}
 
+	bool agg_sync_disabled() override
+	{
+		return true;
+	}
+
+	bool sys_agg_disabled() override
+	{
+		return true;
+	}
+
+
 private:
 	Result count_;
 };

@@ -665,6 +665,7 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 	last_task_to_cmq_ = task_to_cmq_count_;
 	last_task_to_cpq_ = task_to_cpq_count_;
 
+	// MPI_Barrier(MPI_COMM_WORLD);
 	slave_gather(part);
 
 	//fake agg_sync
@@ -672,12 +673,16 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 	AggregatorT* agg = (AggregatorT*)get_aggregator();
 	if (agg != NULL)
 	{
-		agg_lock_.lock();
-		PartialT* part = agg->finish_partial();
-		agg_lock_.unlock();
-		//gathering
-		// MPI_Barrier(MPI_COMM_WORLD);
-		slave_gather(*part);
+		if(!agg->sys_agg_disabled())
+		{
+			agg_lock_.lock();
+			PartialT* part = agg->finish_partial();
+			agg_lock_.unlock();
+			//gathering
+			MPI_Barrier(MPI_COMM_WORLD);
+			slave_gather(*part);
+			MPI_Barrier(MPI_COMM_WORLD);
+		}
 	}
 
 	thread_demo_str_period();
@@ -722,7 +727,7 @@ void Slave<TaskT, AggregatorT>::context_sync()
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
 			this_thread::sleep_for(chrono::nanoseconds(uint64_t(AGG_SLEEP_TIME * (1000 * 1000 * 1000))));
-			MPI_Barrier(MPI_COMM_WORLD);
+			// MPI_Barrier(MPI_COMM_WORLD);
 			if(!agg->agg_sync_disabled())
 				agg_sync();
 		}
@@ -732,7 +737,7 @@ void Slave<TaskT, AggregatorT>::context_sync()
 		while (!all_land(is_end_))  //do agg_sync periodically when at least one worker is still computing
 		{
 			this_thread::sleep_for(chrono::nanoseconds(uint64_t(SYS_SLEEP_TIME * (1000 * 1000 * 1000))));
-			MPI_Barrier(MPI_COMM_WORLD);
+			// MPI_Barrier(MPI_COMM_WORLD);
 			sys_sync();
 		}
 	}

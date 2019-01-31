@@ -50,14 +50,14 @@ $(document).ready(function(){
           spaceX: 2,
           containerTpl: '<div class="g2-legend"><div class="g2-legend-list"></div></div>',
           itemTpl: function itemTpl(value, color, checked, index) {
-                  var markerDom = '<div class="legend-item-marker" style="background-color:' + color + '">' + (index + 1) + '</div>';
-                  var nameDom = '<div class="legend-item-name">' + value + '</div>';
-                  var percentDom = '<div class="legend-item-percent">' + items[value] + '</div>';
-                  return '<div class="g2-legend-list-item">' + markerDom + nameDom + percentDom + '</div>';
-                },
+            var markerDom = '<div class="legend-item-marker" style="background-color:' + color + '">' + (index + 1) + '</div>';
+            var nameDom = '<div class="legend-item-name">' + value + '</div>';
+            var percentDom = '<div class="legend-item-percent">' + items[value] + '</div>';
+            return '<div class="g2-legend-list-item">' + markerDom + nameDom + percentDom + '</div>';
+          },
           'g2-legend-list-item': {
-                  marginRight: '0px'
-                }
+             marginRight: '0px'
+           }
         });
     chart.render();
     ENV.chart = chart;

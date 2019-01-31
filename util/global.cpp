@@ -7,6 +7,7 @@
 int _my_rank;
 int _num_workers;
 string _given_timestamp_str;
+volatile bool _global_dbg_flag = false;
 
 double get_running_wtime()
 {
