@@ -108,10 +108,13 @@ def send_infos():
     
     # 4. read graph info
     fname = 'runtime-infos/{}/slaves.json'.format(key)
-    if os.path.exists(fname):
-        with open(fname) as f:
-            graph = json.load(f);
-            res.update(graph)
+    try:
+        if os.path.exists(fname):
+            with open(fname) as f:
+                graph = json.load(f);
+                res.update(graph)
+    except Exception:
+        pass
     # 5. if end
     res['end'] = 0 if app_table[int(key)].poll() is None else 1
     respon = flask.Response(json.dumps(res), mimetype='application/json')

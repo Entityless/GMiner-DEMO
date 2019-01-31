@@ -26,6 +26,18 @@
 .ar-delay-8s{animation-delay:0.8s;}
 .ar-delay-9s{animation-delay:0.9s;}
 .ar-delay-10s{animation-delay:0.10s;}
+#qlegend {
+  flex-wrap: wrap !important;
+  justify-content: center;
+  margin-top: 0.5em;
+  margin-bottom: 2rem;
+}
+#qlegend>div {
+  width: 45%;
+}
+#qlegend>div>span {
+  margin-left: 0.2em;
+}
 .arrows {
   white-space: nowrap;
 }
