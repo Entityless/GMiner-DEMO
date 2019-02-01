@@ -25,17 +25,18 @@ function makeNodeLine(id_list, label_list, conn_list) {
   }
   return [nodes, edges];
 }
+/* ---------------------------- render functions --------------------- */
 function rendertcGraph(taskRes) {
   var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = d3.select('#maingraph');
   var force = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(100))
+        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
         .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
         .force("charge", d3.forceManyBody())
 
   var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'black').style('stroke-width', 2);
-  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 10)
+  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
         .style('fill', (d, i)=> graphEnv.colorScale(i%24))
         .call(d3.drag()
            .on('start', function(d){dragstarted(d, force);})
@@ -68,17 +69,17 @@ function rendergmGraph(taskRes) {
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = d3.select('#maingraph');
   var force = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(100))
+        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
         .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
         .force("charge", d3.forceManyBody())
   var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'black').style('stroke-width', 2);
-  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 10)
+  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
         .style('fill', (d, i)=> graphEnv.colorScale(d.label))
         .call(d3.drag()
            .on('start', function(d){dragstarted(d, force);})
            .on('drag', dragged)
            .on('end', function(d){dragended(d, force);}));
-  circles.append("title").text((d)=>"id: "+d.id+"\n"+"label: "+d.label);
+  circles.append("title").text((d)=>"id: "+d.id+"\nlabel: "+d.label);
   force.on('tick', function() {
     circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
     lines.attr('x1', (d,i)=>d.source.x)
@@ -100,6 +101,151 @@ function rendergmGraph(taskRes) {
   }
   $('#graphnote').show();
 }
+function rendermcGraph(taskRes) {
+  var {size, count}  = taskRes; 
+  var lineLinear = d3.scaleLinear();
+  lineLinear.domain([0, size]).range([-0.7,-0.3]);
+
+  if($('#graphnote>h4').length === 0){
+    $('#graphnote').append('<h4>Realtime Max Clique</h4>');
+    $('#graphnote').append('<table></table>');
+    $('#graphnote table').append(
+      ['<tr><td>max clique size: <span id="mcsize">', size,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
+      ['<tr><td>max clique count: <span id="mccount">', count,'</span></td></tr>'].join(''));
+  }else{
+    $('#mcsize').text(size);
+    $('#mccount').text(count);
+  }
+  $('#graphnote').show();
+
+  var raw_node = taskRes["mc"][0];
+  var nodes = []
+  var edges = []
+  for(let i=0; i < raw_node.length; ++ i){
+    nodes.push({name: raw_node[i]});
+    for(let j=i + 1; j < raw_node.length; ++j){
+      edges.push({"source": i, "target": j});
+    }
+  }
+  var svg = d3.select('#maingraph');
+  
+  var wind = Math.min(graphEnv.mh, graphEnv.mw);
+  var force = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).distance(0.5 * wind))
+        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
+        .force("charge", d3.forceManyBody())
+  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'rgba(0,0,0,0.05)').style('stroke-width', 0.8);
+
+
+  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.01 * wind)
+        .style('fill', (d, i)=> d3.interpolateYlGnBu(-lineLinear(i)))
+        .call(d3.drag()
+           .on('start', function(d){dragstarted(d, force);})
+           .on('drag', dragged)
+           .on('end', function(d){dragended(d, force);}));
+
+  circles.append("title").text((d)=>"id:"+d.name);
+  force.on('tick', function() {
+    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
+    lines.attr('x1', (d,i)=>d.source.x)
+      .attr('y1', (d,i)=>d.source.y)
+      .attr('x2', (d,i)=>d.target.x)
+      .attr('y2', (d,i)=>d.target.y);
+  });
+}
+function rendercdGraph(taskRes) {
+  var {subg_list, label_list, conn_list, subg_size, task_id="0"} = taskRes;
+  var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
+  var svg = d3.select('#maingraph');
+  var force = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
+        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
+        .force("charge", d3.forceManyBody())
+
+  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'black').style('stroke-width', 2);
+  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
+        .style('fill', (d, i)=> graphEnv.colorScale(i%24))
+        .call(d3.drag()
+           .on('start', function(d){dragstarted(d, force);})
+           .on('drag', dragged)
+           .on('end', function(d){dragended(d, force);}));
+  circles.append("title").text((d)=>"id: "+d.id + "\nlabel: " + d.label);
+  force.on('tick', function() {
+    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
+    lines.attr('x1', (d,i)=>d.source.x)
+      .attr('y1', (d,i)=>d.source.y)
+      .attr('x2', (d,i)=>d.target.x)
+      .attr('y2', (d,i)=>d.target.y);
+  });
+  
+  if($('#graphnote>h4').length === 0){
+    $('#graphnote').append('<h4>Realtime CD Task Sample</h4>');
+    $('#graphnote').append('<table></table>');
+    $('#graphnote table').append(
+      ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
+      ['<tr><td>community size: <span id="cdsize">', subg_size,'</span></td></tr>'].join(''));
+  }
+  else{
+    $('#taskId').text(task_id);
+    $('#cdsize').text(subg_size);
+  }
+  $('#graphnote').show();
+}
+function renderfcoGraph(taskRes) {
+  var lineLinear = d3.scaleLinear();
+  
+  var {subg_list, label_list, conn_weight, conn_list, subg_size, task_id="0"} = taskRes;
+  var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
+  for(let i = 0; i < conn_weight.length; ++ i){
+    edges[i].weight = conn_weight[i];
+  }
+  var svg = d3.select('#maingraph');
+  var force = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
+        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
+        .force("charge", d3.forceManyBody())
+
+  var min_weight = Math.min(...conn_weight), max_weight = Math.max(...conn_weight);
+  lineLinear.domain([min_weight, max_weight + 0.0001]).range([0.3,0.7]);
+
+  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line')
+    .style('stroke', d=>d3.interpolateYlGnBu(lineLinear(d.weight)))
+    .style('stroke-width', d=>lineLinear(d.weight) * 5 + 2);
+  console.log('edges', edges);
+  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
+        .style('fill', "rgba(190,186,186,0.7)")
+        .call(d3.drag()
+           .on('start', function(d){dragstarted(d, force);})
+           .on('drag', dragged)
+           .on('end', function(d){dragended(d, force);}));
+  circles.append("title").text((d)=>"id: "+d.id);
+  lines.append('title').text((d)=>"edge weight: "+d.weight);
+
+  force.on('tick', function() {
+    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
+    lines.attr('x1', (d,i)=>d.source.x)
+      .attr('y1', (d,i)=>d.source.y)
+      .attr('x2', (d,i)=>d.target.x)
+      .attr('y2', (d,i)=>d.target.y);
+  });
+
+  if($('#graphnote>h4').length === 0){
+    $('#graphnote').append('<h4>Realtime FCO Task Sample</h4>');
+    $('#graphnote').append('<table></table>');
+    $('#graphnote table').append(
+      ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
+      ['<tr><td>cluster size: <span id="fcosize">', subg_size,'</span></td></tr>'].join(''));
+  }
+  else{
+    $('#taskId').text(task_id);
+    $('#fcosize').text(subg_size);
+  }
+  $('#graphnote').show();
+
+}
 function renderGraphVisualize(taskRes) {
   console.log('graph visual: ', taskRes);
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
@@ -120,6 +266,7 @@ function renderGraphVisualize(taskRes) {
     renderfcoGraph(taskRes);
   }
 }
+/* ----------------------- */
 var graphEnv = {};
 $(document).ready(function() {
   $('#gmgt').hide();
