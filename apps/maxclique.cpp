@@ -190,6 +190,11 @@ public:
 		return "MC";
 	}
 
+	bool sys_agg_disabled() override
+	{
+		return false;
+	}
+
 	string sys_print_header() override
 	{
 		return "Current max clique size: ";

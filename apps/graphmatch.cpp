@@ -105,6 +105,11 @@ public:
 		return true;
 	}
 
+	bool sys_agg_disabled() override
+	{
+		return false;
+	}
+
 private:
 	unsigned long long count_;
 };
@@ -460,6 +465,12 @@ public:
 
 		vector<pair<VertexID, VertexID>> edges;
 
+		// set<VertexID> vtx_id_set; // adj must in this set
+		// for (auto node : nodes)
+		// {
+		// 	vtx_id_set.insert(node.id);
+		// }
+
 		demo_str_ += ", \"subg_size\" : " + to_string(nodes_sz) + ", \"subg_list\" : [";
 		for (auto node : nodes)
 		{
@@ -471,6 +482,10 @@ public:
 
 			for(auto adj : node.adjlist)
 			{
+				// if(vtx_id_set.count(adj.id) == 0)
+				// {
+				// 	continue;
+				// }
 				if(adj.id > node.id)
 				{
 					edges.push_back(make_pair(node.id, adj.id));
@@ -509,6 +524,8 @@ public:
 		}
 
 		demo_str_ += "], \"conn_size\" : " + to_string(edges.size());
+
+		demo_str_ += ", \"task_id\" : " + to_string(task_counter_);
 
 		demo_str_ += "}\n";
 

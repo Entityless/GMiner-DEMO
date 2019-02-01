@@ -362,7 +362,10 @@ if __name__ == "__main__":
                 else:
                     break
 
-            with open(args['localdir'] + '/monitor-data.json', 'w') as f:
+
+            monitor_writting_path = args['localdir'] + '/monitor-data_writting.json'
+            monitor_finish_path = args['localdir'] + '/monitor-data.json'
+            with open(monitor_writting_path, 'w') as f:
                 f.write('[\n')
                 for i in range(len(online_list_of_dic_to_write)):
                     f.write(json.dumps(online_list_of_dic_to_write[i]))
@@ -372,6 +375,9 @@ if __name__ == "__main__":
                         f.write('\n')
                 f.write(']\n')
                 f.close()
+                os.system("mv {} {}".format(monitor_writting_path, monitor_finish_path))
+
+
 
         # break
         comm.Barrier() #this is critical, because MPI_Gather on small data do not sync all nodes
