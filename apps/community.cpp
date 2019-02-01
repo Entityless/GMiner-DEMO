@@ -137,12 +137,6 @@ public:
 		return true;
 	}
 
-	bool sys_agg_disabled() override
-	{
-		return true;
-	}
-
-
 private:
 	Result count_;
 };
@@ -469,9 +463,9 @@ public:
 	{
 		CountAgg::FinalType* agg = (CountAgg::FinalType*)get_agg();
 		stringstream ss;
-		ss << "The size of max attr community is " << agg->max_size << endl;
+		// ss << "The size of max attr community is " << agg->max_size << endl;
 		QSet& q_set = agg->q_set;
-		ss << "The size of communities containing at least " << K_THRESHOLD << " members is " << q_set.size() << endl;
+		// ss << "The size of communities containing at least " << K_THRESHOLD << " members is " << q_set.size() << endl;
 		for (QSet::const_iterator iter = q_set.begin(); iter != q_set.end(); ++iter)
 		{
 			ss << "Attr Community: ";
@@ -480,6 +474,11 @@ public:
 				ss << *i << " ";
 			ss << endl;
 		}
+
+		ss << "The size of max attr community is " << agg->max_size << endl;
+
+		ss << "The size of communities containing at least " << K_THRESHOLD << " members is " << q_set.size() << endl;
+		
 		cout << ss.str();
 	}
 };

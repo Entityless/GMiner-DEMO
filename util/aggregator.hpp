@@ -26,7 +26,7 @@ public:
 	virtual string app_name(){return "Unnamed GMiner Application";}
 	virtual string sys_print_header(){return "GMiner agg_str: ";} // if "", then do not print when 
 	virtual bool agg_sync_disabled(){return false;}
-	virtual bool sys_agg_disabled(){return false;}
+	virtual bool sys_agg_disabled(){return true;}
 };
 
 
