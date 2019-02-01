@@ -106,6 +106,17 @@ html::-webkit-scrollbar {
   position: absolute;
   top: 0;
 }
+#graphPanel #graphnote {
+  position: absolute;
+  margin-top: 1rem;
+  right: 1rem;
+  background-color: #FFFFCC;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #FFCC00;
+  border-radius: 5px;
+  padding: 1rem;
+}
 /* ------------------- */
 /* ------------- api --------------- */
 #apiradios {

@@ -62,7 +62,7 @@ var has_default_fields = {
   iter: gc_iter_field,
   cand: gc_cand_field
 }
-var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined}; // global environment
+var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined, apps: undefined}; // global environment
 
 function stopAll(data = 0) {
   $('#runButton').removeClass('disabled');
@@ -101,12 +101,10 @@ function renderComponents(data){
     percent: Number(data['task_num_in_disk_float']) * 100
   });
   $('#pq .arrow-label').text(String(data['task_transfer_1']));
-
   $('#cmq').progress({
     text: {percent: String(data['cmq_size'])},
     percent: Number(data['cmq_size_float']) * 100
   });
-
   $('#cpq').progress({
     text: {percent: String(data['cpq_size'])},
     percent: Number(data['cpq_size_float']) * 100
@@ -115,6 +113,8 @@ function renderComponents(data){
   $('#qlabel2').text(String(data['task_transfer_2']));
   $('#qlabel3').text(String(data['task_transfer_3']));
   $('#qlabel4').text(String(data['task_transfer_4']));
+
+  renderGraphVisualize(data['taskRes']);
   return data['end'];  
 }
 
@@ -147,12 +147,16 @@ function changeComponents(data){
     $('#stopButton').removeClass('disabled');
     $('#queues .progress').removeClass('disabled');
     $('.arrows i').addClass('move');
-    if(data.apps === "gm"){
+    d3.select('#maingraph').selectAll('*').remove();
+    if(data["apps"] === "gm"){
+      $('#gmgt').show();      
     }
     else {
+      $('#gmgt').hide();      
     }
     ENV.key = data.key;
     ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
+    ENV.apps = data.apps;
     ENV.stdpt = 0;
     ENV.chart.scale('time', {
       tickInterval: 300
@@ -169,6 +173,8 @@ function changeComponents(data){
 function submitRunForm(fields){
   console.log('start submit');
   $('#stdConsole>p').text('');
+  $('#graphnote').hide();
+  $('#graphnote *').remove();
   var url = '/runrequest';
   var data = JSON.stringify(fields);
   console.log(data);
