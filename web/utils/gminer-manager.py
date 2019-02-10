@@ -14,8 +14,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-l', '-logpath', '--logpath', help='Local path of unmerged outputs', default = '/home/cghuan/gminer_demo_log/')
 parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/dev/shm/chhuang/merge-gminer/')
 parser.add_argument('-b', '-bkpdir', '--bkpdir', help='Merged output backup', default = '/home/cghuan/bkp_gm/')
-parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.5')
-parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='4')
+parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.2')
+parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='1')
 parser.add_argument('-t', '-timestamp', '--timestamp', help = 'the timestamp when GMiner application was launched', required = True)
 parser.add_argument('-m', '-maxmonitoritem', '--maxmonitoritem', help = 'Maximum count for web cluster monitor', default='300')
 
@@ -134,7 +134,10 @@ def OnSignalAppear():
             local_signal_dic['time'] = pln['time']
 
     if(not 'time' in local_signal_dic):
+        print("if(not 'time' in local_signal_dic)")
         local_signal_dic['time'] = time.time()
+    
+    print("local_signal_dic['time']", local_signal_dic['time'])
 
     return local_signal_dic
 
@@ -152,10 +155,13 @@ def RunningMaster(signal_dic):
 def RunningSlave(signal_dic):
     # print("RunningSlave")
     for hostname in signal_dic['slaves']:
+        #for HDL cluster
         ib_name = 'ib' + hostname[6:]
         command = "rsync -avzP --delete " + ib_name + ":" + signal_dic['DEMO_LOG_PATH'] + " " + args['localdir'] + "/" + hostname
         proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         procs.append(proc)
+        break
+
     return 0
 
 def UglyTanh(x, f):
@@ -176,11 +182,12 @@ def GenDedicatedMonitorData(signal_dic):
     global_monitor_data_fn = "{}/{}".format(merger_dir, 'monitor-data.json')
     global_monitor_append_data_fn = "{}/{}".format(merger_dir, 'monitor-append.log')
 
-    local_monitor_data_fn = "{}/{}/{}".format(merger_dir, args['timestamp'], 'monitor-data.json')
+    local_monitor_data_fn = "{}/{}/{}".format(merger_dir, args['timestamp'], 'monitor-data_writting.json')
+    local_monitor_data_final_fn = "{}/{}/{}".format(merger_dir, args['timestamp'], 'monitor-data.json')
 
     time_to_append_min = signal_dic['time']
     if(len(dedicated_monitor_history) > 0):
-        time_to_append_min = dedicated_monitor_history[-1]['time']
+        time_to_append_min = dedicated_monitor_history[-1]['time'] + signal_dic['time']
 
     # print("time_to_append_min = ", time_to_append_min)
 
@@ -259,6 +266,8 @@ def GenDedicatedMonitorData(signal_dic):
                         out_f.write(',')
                     out_f.write('\n')
             out_f.write(']\n')
+            os.system("mv {} {}".format(local_monitor_data_fn, local_monitor_data_final_fn))
+
 
 #called by post processing; always return a newest line of slaves' output
 def SlavesLineReader(signal_dic):
@@ -289,6 +298,12 @@ def SlavesLineReader(signal_dic):
                         #append this line
                         if(not ln in slave_line_history_dic):
                             slave_line_history_dic[ln] = 0
+                            try:
+                                pln = json.loads(ln)
+                            except Exception:
+                                continue
+                            # print("slave_line_history_list.append", ln)
+
                             slave_line_history_list.append(ln)
 
             slave_finished_cnt[hostname] = len(finish_lns)
@@ -307,8 +322,14 @@ def SlavesLineReader(signal_dic):
                     #append this line
                     if(not ln in slave_line_history_dic):
                         slave_line_history_dic[ln] = 0
+                        try:
+                            pln = json.loads(ln)
+                        except Exception:
+                            continue
+                        # print("slave_line_history_list.append", ln)
                         slave_line_history_list.append(ln)
         node_id += 1
+        break
 
     ret = ""
 
@@ -319,6 +340,8 @@ def SlavesLineReader(signal_dic):
     else:
         ret = slave_last_ret
 
+    print("ret = ", ret)
+
     return ret
 
 def PostProcessing(signal_dic):
@@ -327,7 +350,8 @@ def PostProcessing(signal_dic):
 
     #### master.json
     # master_agg_path = args['localdir'] + "/master_agg.json"
-    master_5q_path = args['localdir'] + "/master_5q.json"
+    master_5q_path = args['localdir'] + "/master_5q_writting.json"
+    master_5q_final_path = args['localdir'] + "/master_5q.json"
     master_append_path = args['localdir'] + "/master_append.json"
     # cmd = 'cp ' + args['localdir'] + '/' + signal_dic['master'] + '/master_5q.log ' + master_agg_path
     # # print(cmd)
@@ -402,6 +426,7 @@ def PostProcessing(signal_dic):
         # print(json.dumps(q_dic_to_write))
         f.write(json.dumps(q_dic_to_write) + '\n')
         f.close()
+        os.system("mv {} {}".format(master_5q_path, master_5q_final_path))
 
         #debug
         with open(master_append_path, 'a') as f2:
@@ -411,24 +436,56 @@ def PostProcessing(signal_dic):
     global global_post_processing_history
     global global_post_processing_len
 
+    default_line_dic = {}
+    #fill visualization with default content (sample)
+    default_line_dic['GM'] = """{"subg":[[1201467,534950,1201466,808130,120757],[1201467,534950,1201466,808130,307772],[1201467,534950,1201466,808130,807973],[1201467,534950,1201466,862900,529891]], "count" : 4, "subg_size" : 9, "subg_list" : [1201467,1201466,534950,120757,307772,807973,808130,529891,862900], "label_list" : ["a","b","c","d","d","d","b","d","b"], "conn_list" : [[1201466,1201467],[534950,1201467],[534950,1201466],[534950,808130],[534950,862900],[120757,808130],[307772,808130],[807973,808130],[529891,862900]], "conn_size" : 9, "task_id" : 0}
+    """
+
+    default_line_dic['TC'] = """{"subg":[[723043,723044,1433589],[723043,896471,1443759],[723043,896471,1443760],[723043,1443759,1443760]], "count" : 4, "subg_size" : 6, "subg_list" : [723043,723044,896471,1433589,1443759,1443760], "conn_list" : [[723043,723044],[723043,896471],[723043,1433589],[723043,1443759],[723043,1443760],[723044,1433589],[896471,1443759],[896471,1443760],[1443759,1443760]], "conn_size" : 9, "task_id" : 0}
+    """
+
+    default_line_dic['CD'] = """{"subg_size" : 9, "subg_list" : [1201467,1201466,534950,120757,307772,807973,808130,529891,862900], "label_list" : ["Aa23","['aa','bb']","Cc","Dd","Dd","Dd","Bb","Dd","Bb"], "conn_list" : [[1201466,1201467],[534950,1201467],[534950,1201466],[534950,808130],[534950,862900],[120757,808130],[307772,808130],[807973,808130],[529891,862900]], "conn_size" : 9, "task_id":0}
+    """
+
+    default_line_dic['GC'] = """{"subg_size" : 51, "subg_list" : [604306,628283,628286,628275,628278,628280,633816,628287,628312,628320,866123,628290,628291,628295,628300,628302,628303,628306,628308,633813,863314,628276,628310,628311,628313,628314,628315,628317,628318,628321,628277,628279,628281,628284,628285,628296,628297,628322,628323,628324,628298,628288,628289,628292,628293,628294,628299,628301,628304,628305,628307], "conn_list":[[604306,628275],[604306,628276],[604306,628277],[604306,628278],[604306,628279],[604306,628280],[604306,628281],[604306,628283],[604306,628284],[604306,628285],[604306,628286],[604306,628287],[604306,628288],[604306,628289],[604306,628290],[604306,628291],[604306,628292],[604306,628293],[604306,628294],[604306,628295],[604306,628296],[604306,628297],[604306,628298],[604306,628299],[604306,628300],[604306,628301],[604306,628302],[604306,628303],[604306,628304],[604306,628305],[604306,628306],[604306,628307],[604306,628308],[604306,628310],[604306,628311],[604306,628312],[604306,628313],[604306,628314],[604306,628315],[604306,628317],[604306,628318],[604306,628320],[604306,628321],[604306,628322],[604306,628323],[604306,628324],[604306,863314],[628283,633813],[628283,633816],[628283,866123]], "conn_size" : 50, "conn_weight" : [0.527864,0.500000,0.500000,0.527864,0.500000,0.527864,0.500000,0.563508,0.500000,0.500000,0.563508,0.527864,0.500000,0.500000,0.527864,0.527864,0.500000,0.500000,0.500000,0.527864,0.500000,0.500000,0.500000,0.500000,0.527864,0.500000,0.527864,0.527864,0.500000,0.500000,0.527864,0.500000,0.527864,0.500000,0.500000,0.527864,0.500000,0.500000,0.500000,0.500000,0.500000,0.527864,0.500000,0.500000,0.500000,0.500000,0.500000,0.500000,0.527864,0.527864], "task_id" : 0}
+    """
+
     ##### slaves.json
     ## this cound be somehow complex; juse pick one line
     ## multiple file need to be processed
-    if(signal_dic['app_name'] == 'GM' or signal_dic['app_name'] == 'TC'):
-        slaves_path = args['localdir'] + "/slaves.json"
+    if(signal_dic['app_name'] == 'GM' or signal_dic['app_name'] == 'TC' or signal_dic['app_name'] == 'CD' or signal_dic['app_name'] == 'GC'):
+        slaves_path = args['localdir'] + "/slaves_writting.json"
+        slaves_final_path = args['localdir'] + "/slaves.json"
 
         # result_dic = json.loads(SlavesLineReader(signal_dic))
         result_line = SlavesLineReader(signal_dic)
+        if(len(result_line) == 0 or signal_dic['app_name'] == 'GC' or signal_dic['app_name'] == 'CD'):
+            #print default
+            result_line = default_line_dic[signal_dic['app_name']]
+
+        # # sometimes wrong
+        # try:
+        #     pln = json.loads(result_line)
+        # except Exception:
+        #     result_line = 
+
+        # print(result_line)
 
         with open(slaves_path, 'w') as f:
             f.write(result_line + '\n')
             f.close()
+            os.system("mv {} {}".format(slaves_path, slaves_final_path))
+
+        with open(slaves_final_path, 'r') as f:
+            pln = json.load(f)
+            
 
     if(signal_dic['app_name'] == 'MC'):
         #
         #given: {"count" : 2, "size" : 3, "group1" : [1,2,3], "group2" : [2,4,5]}
         #ori: {"mc" : 3, "count" : 2, "0" : [786496, 945665, 945664], "1" : [983073, 1012607, 989527]}
-        slaves_path = args['localdir'] + "/slaves.json"
+        slaves_path = args['localdir'] + "/slaves_writting.json"
+        slaves_final_path = args['localdir'] + "/slaves.json"
         # print("if(signal_dic['app_name'] == 'MC'):")
         # just read info from master_5q.log
         if(len(master_5q_log_last_line) > 1):
@@ -436,14 +493,18 @@ def PostProcessing(signal_dic):
             # print(pln)
             pln['size'] = pln.pop('mc')
 
+            pln['mc'] = []
+
             for i in range(pln['count']):
                 ori_key = str(i)
-                new_key = 'group' + str(i + 1)
-                pln[new_key] = pln.pop(ori_key)
+                # new_key = 'group' + str(i + 1)
+                # pln[new_key] = pln.pop(ori_key)
+                pln['mc'].append(pln.pop(ori_key))
 
             with open(slaves_path, 'w') as f:
                 f.write(json.dumps(pln) + '\n')
                 f.close()
+                os.system("mv {} {}".format(slaves_path, slaves_final_path))
 
     #cp file
     return 0
@@ -498,12 +559,14 @@ if __name__ == "__main__":
 
     sleep_cnt = 0
     gminer_running = False
+
     while True:
 
         run_bg_cmd("ls -al .")
         if(os.path.isfile(signal_file_name)):
             # print("os.path.isfile(signal_file_name)")
             if(not gminer_running):
+                signal_appear_time = time.time()
                 signal_dic = OnSignalAppear()
                 gminer_running = True
                 sleep_cnt = 0
@@ -522,6 +585,7 @@ if __name__ == "__main__":
             sleep_cnt += 1
         else:
             if(gminer_running):
+                print("total time: ", time.time() - signal_appear_time)
                 #wait for procs
                 for proc in procs:
                     proc.wait()
