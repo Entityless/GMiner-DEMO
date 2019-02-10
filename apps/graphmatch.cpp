@@ -446,6 +446,12 @@ public:
 
 	void dump_context() override
 	{
+		//filter
+		if(fine_task_counter_ % 2 != 0)
+		{
+			return;
+		}
+
 		to_output_ = true;
 		if(!to_output_)
 			return;

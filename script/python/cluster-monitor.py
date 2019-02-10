@@ -60,7 +60,6 @@ def submit_bg_cmd(command):
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     return proc
 
-
 def test_wait_bg_cmd(proc):
     #return a dic, ['ok']
     if(proc.poll() == None):

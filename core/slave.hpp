@@ -156,7 +156,8 @@ private:
 	void thread_demo_str_finalize();
 
 	int GetAndIncreaseCounter();
-
+	void IncreaseComputingTaskCount();
+	void DecreaseComputingTaskCount();
 
 	//PART 5 =======================================================
 	//members
@@ -234,6 +235,8 @@ private:
 	int sys_sync_time_ = 0;
 
 	volatile int task_finished_count_ = 0, task_recycle_count_ = 0, task_to_cmq_count_ = 0, task_to_cpq_count_ = 0;
+	// volatile int demo_task_store_ = 0, demo_candidate_retriever_ = 0, demo_task_executor_ = 0;//dedicated for demo monitor
+	volatile int computing_task_count_ = 0;
 	int last_task_finished_ = 0, last_task_recycle_ = 0, last_task_to_cmq_ = 0, last_task_to_cpq_ = 0;
 };
 

@@ -232,25 +232,8 @@ public:
 
 			hash_map<VertexID, VertexT*>::iterator new_vtx = vertex_idx_map.find(new_node_iter->first);
 
-			// NodeT new_node(new_node_iter->first);
-			// g.add_node(new_node);
-
 			NodeT new_node(new_vtx->second->id);
 			g.add_node(new_node);
-
-			// g.add_edge(, new_node);
-			//try to add edge
-			AdjVtxList& new_adjlist = new_vtx->second->get_adjlist();
-			for(auto adj_var : new_adjlist)
-			{
-				// if(new_vtx->second->id < adj_var.id && g.has_node(adj_var.id))
-				// {
-					// Node* connedted_node = g.get_node(adj_var.id);
-					// g.add_edge(, new_node);
-					context.edges.push_back(make_tuple(new_vtx->second->id, adj_var.id, adj_var.attr.get_attr_vec()[0]));
-				// }
-			}
-
 
 			subG.insert(new_node_iter->first);
 			subg_wid_map.insert(make_pair(new_node_iter->first, new_node_iter->second));
@@ -367,35 +350,31 @@ public:
 				for (list<NodeT>::iterator iter = nodes.begin(); iter != nodes.end(); ++iter)
 					cluster.push_back(iter->id);
 
-				// //insert edges at once
-				// for(auto vtx_id : cluster)
-				// {
-				// 	hash_map<VertexID, VertexT*>::iterator new_vtx = vertex_idx_map.find(vtx_id);
+				//insert edges at once
+				for(auto vtx_id : cluster)
+				{
+					hash_map<VertexID, VertexT*>::iterator vtx_iter = vertex_idx_map.find(vtx_id);
 					
-				// }
+					if (vtx_iter == vertex_idx_map.end())
+					{
+						cout << "current VertexID is not in vertexIdxMap(fronter) in function FocusTask::compute cluster id demo" << endl;
+						abort();
+					}
 
-				// hash_map<VertexID, VertexT*>::iterator new_vtx = vertex_idx_map.find(new_node_iter->first);
+					AdjVtxList& vtx_adjlist = vtx_iter->second->get_adjlist();
 
-				// // NodeT new_node(new_node_iter->first);
-				// // g.add_node(new_node);
+					for(auto adj_var : vtx_adjlist)
+					{
+						if(vtx_iter->second->id < adj_var.id && g.has_node(adj_var.id))
+						{
+							context.edges.push_back(make_tuple(vtx_iter->second->id, adj_var.id, adj_var.attr.get_attr_vec()[0]));
+						}
+					}
+				}
+				bool to_demo = true; // for GC, do not need to sample the output
+				if(context.edges.size() > 2000)
+					to_demo = false;
 
-				// NodeT new_node(new_vtx->second->id);
-				// g.add_node(new_node);
-
-				// // g.add_edge(, new_node);
-				// //try to add edge
-				// AdjVtxList& new_adjlist = new_vtx->second->get_adjlist();
-				// for(auto adj_var : new_adjlist)
-				// {
-				// 	// if(new_vtx->second->id < adj_var.id && g.has_node(adj_var.id))
-				// 	// {
-				// 		// Node* connedted_node = g.get_node(adj_var.id);
-				// 		// g.add_edge(, new_node);
-				// 		context.edges.push_back(make_tuple(new_vtx->second->id, adj_var.id, adj_var.attr.get_attr_vec()[0]));
-				// 	// }
-				// }
-
-				// demo_str_ = "{\"subg_list\":[";
 				demo_str_ = "{\"subg_size\" : " + to_string(cluster.size()) + ", \"subg_list\" : [";
 
 				//print
@@ -408,36 +387,42 @@ public:
 					demo_str_ += to_string(cluster[i]);
 					to_print += " " + to_string(cluster[i]);
 				}
-				demo_str_ += "], \"conn_list\":[";
 
-				string conn_weight_str;
-
-
-				for(int i = 0; i < context.edges.size(); i++)
+				if(to_demo)
 				{
-					auto edge_item = context.edges[i];
-					if(i != 0)
+					demo_str_ += "], \"conn_list\":[";
+
+					string conn_weight_str;
+
+					for(int i = 0; i < context.edges.size(); i++)
 					{
-						conn_weight_str += ",";
-						demo_str_ += ",";
+						auto edge_item = context.edges[i];
+						if(i != 0)
+						{
+							conn_weight_str += ",";
+							demo_str_ += ",";
+						}
+
+						conn_weight_str += to_string(get<2>(edge_item));
+						demo_str_ += "[" + to_string(get<0>(edge_item)) + "," + to_string(get<1>(edge_item)) +"]";
 					}
 
-					conn_weight_str += to_string(get<2>(edge_item));
-					demo_str_ += "[" + to_string(get<0>(edge_item)) + "," + to_string(get<1>(edge_item)) +"]";
+					demo_str_ += "], \"conn_size\" : " + to_string(context.edges.size());
+
+					demo_str_ += ", \"conn_weight\" : [" + conn_weight_str + "]";
+
+					demo_str_ += ", \"task_id\" : " + to_string(task_counter_);
+
+					demo_str_ += "}\n";
+				}
+				else
+				{
+					demo_str_ = "";
 				}
 
-				demo_str_ += "], \"conn_size\" : " + to_string(context.edges.size());
-
-				demo_str_ += ", \"conn_weight\" : [" + conn_weight_str + "]";
-
-
-				//try to print the link
-
-
 				to_print += ", size = " + to_string(cluster.size());
-				demo_str_ += "}\n";
 
-				printf("%s\n", to_print.c_str());
+				// printf("%s\n", to_print.c_str());
 			}
 			else
 			{
@@ -712,7 +697,7 @@ public:
 
 			ss << endl;
 		}
-		cout << ss.str();
+		// cout << ss.str();
 
 		size_count(co_map);
 	}
