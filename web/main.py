@@ -19,12 +19,11 @@ def get_timestamp():
 
 @app.route('/')
 def main():
-    image = [1,2,3,4,5,6,7,8,9]
     persons = gminer_infos.gminer_persons;
     persons = [persons[i * 2:i * 2 + 2] for i in range(7//2 + 1)]
     return flask.render_template('index.html', apps=gminer_apps,
             datasets=gminer_datasets, sysconfigs0=gminer_sysconfig[:3],
-            sysconfigs1=gminer_sysconfig[3:], slideimages = image, teammembers = persons, codes = gminer_infos.gminer_codes)
+            sysconfigs1=gminer_sysconfig[3:], slideimages = gminer_infos.gminer_compare, teammembers = persons, codes = gminer_infos.gminer_codes)
 
 @app.route('/load_json/<folder>/<path>')
 def return_cpu_info(folder, path):
@@ -55,17 +54,14 @@ def runApplication():
     with open(myenv['GMINER_INI_NAME'], 'w') as f:
         f.write(ini_str)
 
-    cmd = cmd.format(str(timestamp))
     print('run command: ', cmd)
     final_cmd = 'GMINER_INI_NAME={} GMINER_START_TIMESTAMP={} {}'.\
             format(myenv['GMINER_INI_NAME'], myenv['GMINER_START_TIMESTAMP'], cmd)
-    proc = subprocess.Popen(final_cmd, shell=True, stdout=subprocess.DEVNULL)
+    log_file = open('/dev/shm/chhuang/merge-gminer/{}.log'.format(str(timestamp)), 'w')
+    proc = subprocess.Popen(final_cmd, shell=True, stdout=log_file)
     app_table[timestamp] = proc
 
     data.update({'key': timestamp, 'status': "ok"});
-    # except Exception, e:
-    #     data = {'key': timestamp, 'status': "stop"}
-    #     print(e)
     
     resp = flask.Response(json.dumps(data), mimetype='application/json')
     return resp

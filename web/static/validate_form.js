@@ -158,9 +158,6 @@ function changeComponents(data){
     ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
     ENV.apps = data.apps;
     ENV.stdpt = 0;
-    ENV.chart.scale('time', {
-      tickInterval: 300
-    });
     ENV.chart.render();
     return;
   }
