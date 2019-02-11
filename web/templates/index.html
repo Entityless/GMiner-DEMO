@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='arrows.css') }}">
-    <title>GMiner playgroud</title>
+    <title>GMiner Demo</title>
   </head>
   <body>
     <div id="side" class="ui left vertical inverted sidebar labeled icon menu visible">
@@ -36,7 +36,7 @@
       </a>
       <a class="item" id='compareOpen'>
         <i class="balance scale icon"></i>
-        Compare
+        Comparison
       </a>
       <a class="item" id='teamOpen'>
         <i class="users icon"></i>
@@ -54,7 +54,7 @@
               Console Output
             </a>
             <a class="item" group="api">
-              API
+              Implementation
             </a>
           </div>
           <div class="ui attached segment" id="console" style="padding:0">
@@ -248,20 +248,26 @@
       <i class="close icon"></i>
       <div class='header'>About</div>
       <div class='content'>
-        <p>G-Miner is a general distributed system aimed at graph mining over large-scale graphs.</p>
-        <p style="text-align:justify;"> <!-- 两端对齐 -->
-          Graph mining is one of the most important areas in data mining. 
-          However, scalable solutions for graph mining are still lacking as existing studies focus on sequential algorithms. 
-          While many distributed graph processing systems have been proposed in recent years, most of them were designed to 
-          parallelize computations such as PageRank and Breadth-First Search that keep states on individual vertices and 
-          propagate updates along edges. Graph mining, on the other hand, may generate many subgraphs whose number can far 
-          exceed the number of vertices. This inevitably leads to much higher computational and space complexity rendering 
-          existing graph systems inefficient. We propose G-Miner, a distributed system with a new architecture designed for 
-          general graph mining. G-Miner adopts a unified programming framework for implementing a wide range of graph mining 
-          algorithms. We model subgraph processing as independent tasks, and design a novel task pipeline to streamline task 
-          processing for better CPU, network and I/O utilization.
-        </p>
-        <p><a href="https://github.com/yaobaiwei/GMiner" target="_blank">G-Miner github project</a></p>
+        <div id="description">
+        <div class="leading">
+          <p>G-Miner is a general distributed system aimed at graph mining over large-scale graphs.</p>
+        </div>
+        <div class="content">
+          <p style="text-align:justify; margin-top: 1.2rem;">
+            Graph mining is one of the most important areas in data mining. 
+            However, scalable solutions for graph mining are still lacking as existing studies focus on sequential algorithms. 
+            While many distributed graph processing systems have been proposed in recent years, most of them were designed to 
+            parallelize computations such as PageRank and Breadth-First Search that keep states on individual vertices and 
+            propagate updates along edges. Graph mining, on the other hand, may generate many subgraphs whose number can far 
+            exceed the number of vertices. This inevitably leads to much higher computational and space complexity rendering 
+            existing graph systems inefficient. We propose G-Miner, a distributed system with a new architecture designed for 
+            general graph mining. G-Miner adopts a unified programming framework for implementing a wide range of graph mining 
+            algorithms. We model subgraph processing as independent tasks, and design a novel task pipeline to streamline task 
+            processing for better CPU, network and I/O utilization.
+          </p>
+          <p><a href="https://github.com/yaobaiwei/GMiner" target="_blank">G-Miner github project</a></p>
+        </div>
+        </div>
       </div>
     </div>
     <div class='ui modal' id='configModal'>
@@ -346,14 +352,22 @@
       </div>
     </div>
     <div class='ui modal' id='compareModal'>
-      <div class="header">Compare</div>
+      <div class="header">Comparison</div>
       {% for image in slideimages %}
       <div class="compare-item content" style="display: none;">
-        <p style="margin-top: 1.2rem;"> Page {{ loop.index }}/{{ loop.length }} </p>
-        <div class="image">
-          <img src="{{ url_for('static', filename='images/{}.png'.format(image)) }}" alt="loading...">
+        <div id="description">
+        <div class="leading">
+        <p style="margin-bottom: 1.5rem;"> Page {{ loop.index }}/{{ loop.length }} </p>
         </div>
-        <p> discription </p>
+        </div>
+        <div class="image">
+          <img src="{{ url_for('static', filename='images/{}.png'.format(image['slide'])) }}" alt="loading...">
+        </div>
+        <div id="description">
+        <div class='content'>
+        <p style="margin-top: 2.0rem;"> {{ image['description'] }} </p>
+        </div>
+        </div>
       </div>
       {% endfor %}
       <div class="actions">
