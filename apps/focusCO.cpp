@@ -5,6 +5,7 @@
 #define USE_ATTRIBUTE
 
 #include "core/subg-dev.hpp"
+#include <tuple>
 
 using namespace std;
 
@@ -31,6 +32,8 @@ struct FocusContext
 {
 	vector<VertexID> cluster;
 	VtxIdSet outlier;
+
+	vector<tuple<VertexID, VertexID, AttrValueT>> edges;
 
 	size_t comp_round;
 	size_t iter_round;
@@ -155,6 +158,11 @@ public:
 		return "GC";
 	}
 
+	bool agg_sync_disabled() override
+	{
+		return true;
+	}
+
 private:
 	FocusResult count_;
 };
@@ -221,8 +229,12 @@ public:
 		if (best_weight_node != -1)
 		{
 			hash_map<VertexID, int>::iterator new_node_iter = cand_wid_map.find(best_weight_node);
-			NodeT new_node(new_node_iter->first);
+
+			hash_map<VertexID, VertexT*>::iterator new_vtx = vertex_idx_map.find(new_node_iter->first);
+
+			NodeT new_node(new_vtx->second->id);
 			g.add_node(new_node);
+
 			subG.insert(new_node_iter->first);
 			subg_wid_map.insert(make_pair(new_node_iter->first, new_node_iter->second));
 
@@ -332,10 +344,85 @@ public:
 		{
 			if (g.get_nodes().size() >= MIN_RESULT_SIZE)
 			{
+				//A expected cluster
 				cluster.clear();
 				list<NodeT>& nodes = g.get_nodes();
 				for (list<NodeT>::iterator iter = nodes.begin(); iter != nodes.end(); ++iter)
 					cluster.push_back(iter->id);
+
+				//insert edges at once
+				for(auto vtx_id : cluster)
+				{
+					hash_map<VertexID, VertexT*>::iterator vtx_iter = vertex_idx_map.find(vtx_id);
+					
+					if (vtx_iter == vertex_idx_map.end())
+					{
+						cout << "current VertexID is not in vertexIdxMap(fronter) in function FocusTask::compute cluster id demo" << endl;
+						abort();
+					}
+
+					AdjVtxList& vtx_adjlist = vtx_iter->second->get_adjlist();
+
+					for(auto adj_var : vtx_adjlist)
+					{
+						if(vtx_iter->second->id < adj_var.id && g.has_node(adj_var.id))
+						{
+							context.edges.push_back(make_tuple(vtx_iter->second->id, adj_var.id, adj_var.attr.get_attr_vec()[0]));
+						}
+					}
+				}
+				bool to_demo = true; // for GC, do not need to sample the output
+				if(context.edges.size() > 2000)
+					to_demo = false;
+
+				demo_str_ = "{\"subg_size\" : " + to_string(cluster.size()) + ", \"subg_list\" : [";
+
+				//print
+				string to_print = "my_rank = " + to_string(_my_rank);
+				to_print += "";
+				for(int i = 0; i < cluster.size(); i++)
+				{
+					if(i != 0)
+						demo_str_ += ",";
+					demo_str_ += to_string(cluster[i]);
+					to_print += " " + to_string(cluster[i]);
+				}
+
+				if(to_demo)
+				{
+					demo_str_ += "], \"conn_list\":[";
+
+					string conn_weight_str;
+
+					for(int i = 0; i < context.edges.size(); i++)
+					{
+						auto edge_item = context.edges[i];
+						if(i != 0)
+						{
+							conn_weight_str += ",";
+							demo_str_ += ",";
+						}
+
+						conn_weight_str += to_string(get<2>(edge_item));
+						demo_str_ += "[" + to_string(get<0>(edge_item)) + "," + to_string(get<1>(edge_item)) +"]";
+					}
+
+					demo_str_ += "], \"conn_size\" : " + to_string(context.edges.size());
+
+					demo_str_ += ", \"conn_weight\" : [" + conn_weight_str + "]";
+
+					demo_str_ += ", \"task_id\" : " + to_string(task_counter_);
+
+					demo_str_ += "}\n";
+				}
+				else
+				{
+					demo_str_ = "";
+				}
+
+				to_print += ", size = " + to_string(cluster.size());
+
+				// printf("%s\n", to_print.c_str());
 			}
 			else
 			{
@@ -505,11 +592,18 @@ public:
 		AdjVertex seed_vtx(v->id, get_worker_id());
 		core_node_cands.push_back(seed_vtx);
 		AdjVtxList& adjlist = v->get_adjlist();
+
+		//create a attr list
+		vector<tuple<VertexID, VertexID, AttrValueT>> prepared_edges;
+
 		for (AdjVtxIter v_iter = adjlist.begin(); v_iter != adjlist.end(); ++v_iter)
 		{
 			AttrValueT weight = v_iter->attr.get_attr_vec().front();
 			if (weight >= MIN_WEIGHT)
+			{
+				prepared_edges.push_back(make_tuple(v->id, v_iter->id, weight));//potential duplicate
 				core_node_cands.push_back(*v_iter);
+			}
 		}
 		if (core_node_cands.size() < MIN_CORE_SIZE)
 			return NULL;
@@ -517,12 +611,20 @@ public:
 		FocusTask * task = new FocusTask;
 		task->context.comp_round = 0;
 		task->context.iter_round = 0;
+		task->context.edges = prepared_edges;
 		hash_map<VertexID, int>& subg_wid_map = task->context.subg_wid_map;
+		int iter_id = 0;
+		NodeT seed_node(v->id);
 		for (AdjVtxIter v_iter = core_node_cands.begin(); v_iter != core_node_cands.end(); ++v_iter)
 		{
 			NodeT core_node(v_iter->id);
 			task->subG.add_node(core_node);
+			// if(iter_id != 0)
+			// {
+			// 	task->subG.add_edge(seed_node, core_node);
+			// }
 			subg_wid_map.insert(make_pair(v_iter->id, v_iter->wid));
+			iter_id++;
 		}
 		task->pull(core_node_cands);
 		return task;
@@ -595,7 +697,7 @@ public:
 
 			ss << endl;
 		}
-		cout << ss.str();
+		// cout << ss.str();
 
 		size_count(co_map);
 	}

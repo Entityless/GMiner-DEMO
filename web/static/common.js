@@ -64,15 +64,26 @@ $(document).ready(function(){
       $(selector_str).show();
       $('#appParam').fadeIn();
       $('#dataset option[value="friendster"]').hide();
-      $('#dataset option[value="dblp"]').show();
+      if(data_value === "fco"){
+        $('#dataset option[value="tencent"]').hide();
+        $('#dataset option[value="dblp"]').show();
+      }
+      else{
+        $('#dataset option[value="tencent"]').show();
+        $('#dataset option[value="dblp"]').hide();
+      }
     }
     else{
       $('#appParam').fadeOut();
       $('#dataset option[value="friendster"]').show();
-      if (data_value === "")
+      if (data_value === ""){
         $('#dataset option[value="dblp"]').show();
-      else
+        $('#dataset option[value="tencent"]').show();
+      }
+      else{
         $('#dataset option[value="dblp"]').hide();
+        $('#dataset option[value="tencent"]').hide();
+      }
     }
   });
   $('#dataset').change(function() {
@@ -83,10 +94,15 @@ $(document).ready(function(){
       $('#apps option[value="cd"]').hide();
       $('#apps option[value="fco"]').hide();
     }
-    else if(data_value === "dblp") {
+    else if(data_value === "dblp" || data_value === "tencent") {
       $('#apps option[value="tc"]').hide();
       $('#apps option[value="mc"]').hide();
       $('#apps option[value="gm"]').hide();
+      if(data_value === "dblp"){
+        $('#apps option[value="cd"]').hide();
+      }
+      else if(data_value === "tencent")
+        $('#apps option[value="fco"]').hide();
     }
   });
   /* code */

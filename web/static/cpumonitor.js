@@ -1,5 +1,5 @@
 $(document).ready(function(){
-    const jsonPath = "load_json/runtime-infos/monitor-data.json";
+    var jsonPath = "load_json/runtime-infos/monitor-data.json";
     const refreshInterval = 500; //In ms
     const numOfType = 4;         //Number of type to display
     const maxItem   = 120;        //Maximun number of item in each json file

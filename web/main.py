@@ -82,6 +82,7 @@ def kill_by_timestamp():
     resp = flask.Response(json.dumps(data), mimetype='application/json')
     return resp
 
+last_sub_graph = ""
 @app.route('/interaction', methods=['POST'])
 def send_infos():
     data = json.loads(request.data)
@@ -105,16 +106,19 @@ def send_infos():
         res.update(que)
 
     # 3. read system info
-    
     # 4. read graph info
     fname = 'runtime-infos/{}/slaves.json'.format(key)
-    try:
-        if os.path.exists(fname):
-            with open(fname) as f:
-                graph = json.load(f);
-                res.update(graph)
-    except Exception:
-        pass
+    if os.path.exists(fname):
+        with open(fname) as f:
+            graph = json.load(f);
+            res['taskRes'] = graph
+    else:
+        res['taskRes']=""
+    global last_sub_graph
+    if res['taskRes'] == last_sub_graph:
+        res['taskRes'] = ""
+    else:
+        last_sub_graph = res['taskRes']
     # 5. if end
     res['end'] = 0 if app_table[int(key)].poll() is None else 1
     respon = flask.Response(json.dumps(res), mimetype='application/json')

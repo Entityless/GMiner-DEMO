@@ -16,6 +16,7 @@ Slave<TaskT, AggregatorT>::Slave()
 	threadpool_size_ = NUM_COMP_THREAD;
 	vtx_req_count_=vtx_resp_count_=0;
     task_count_ = 0;
+    task_counter_ = _my_rank;
     pthread_spin_init(&task_counter_lock_, 0);
 }
 
@@ -153,8 +154,11 @@ void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
 			//all adjacents are in cache
 			if(t->is_request_empty())
 			{
-				t->task_counter_ = thread_demo_var_[tid].GetAndIncreaseCounter();
+				// t->task_counter_ = thread_demo_var_[tid].GetAndIncreaseCounter();
+				t->task_counter_ = GetAndIncreaseCounter();
+				IncreaseComputingTaskCount();
 				t = recursive_compute(t, tid);
+				DecreaseComputingTaskCount();
 			}
 			if(t != NULL)
 			{
@@ -491,9 +495,27 @@ template <class TaskT,  class AggregatorT>
 int Slave<TaskT, AggregatorT>::GetAndIncreaseCounter()
 {
 	pthread_spin_lock(&task_counter_lock_);
-	int task_counter_before = task_counter_++;
+	// int task_counter_before = task_counter_++;
+	int task_counter_before = task_counter_;
+	task_counter_ += _num_workers - 1;
 	pthread_spin_unlock(&task_counter_lock_);
 	return task_counter_before;
+}
+
+template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::IncreaseComputingTaskCount()
+{
+	pthread_spin_lock(&task_counter_lock_);
+	computing_task_count_++;
+	pthread_spin_unlock(&task_counter_lock_);
+}
+
+template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::DecreaseComputingTaskCount()
+{
+	pthread_spin_lock(&task_counter_lock_);
+	computing_task_count_--;
+	pthread_spin_unlock(&task_counter_lock_);
 }
 
 template <class TaskT,  class AggregatorT>
@@ -514,8 +536,11 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 		}
 		t->to_request.clear();
 
-		t->task_counter_ = thread_demo_var_[tid].GetAndIncreaseCounter();
+		// t->task_counter_ = thread_demo_var_[tid].GetAndIncreaseCounter();
+		t->task_counter_ = GetAndIncreaseCounter();
+		IncreaseComputingTaskCount();
 		t = recursive_compute(t, tid);
+		DecreaseComputingTaskCount();
 
 		commun_lock_.lock();
 		//clear the items in cache with refs
@@ -652,8 +677,11 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 	//basic queue info
 	part.task_num_in_memory = get_task_num_in_memory();
 	part.task_num_in_disk = get_task_num_in_disk();
-	part.cmq_size = task_pipeline_.cmq_size() * PIPE_POP_NUM;
-	part.cpq_size = task_pipeline_.cpq_size();
+	// part.cmq_size = task_pipeline_.cmq_size() * PIPE_POP_NUM;
+	part.cmq_size = task_to_cmq_count_ - task_to_cpq_count_;
+	// part.cpq_size = task_pipeline_.cpq_size();
+	part.cpq_size = task_pipeline_.cpq_size() + computing_task_count_;
+	// part.cpq_size = task_to_cpq_count_ - (task_finished_count_ + task_recycle_count_);
 	part.taskbuf_size = task_pipeline_.taskbuf_size();
 	part.task_store_to_cmq = task_to_cmq_count_ - last_task_to_cmq_;
 	part.cmq_to_cpq = task_to_cpq_count_ - last_task_to_cpq_;

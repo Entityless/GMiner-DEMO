@@ -14,10 +14,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-l', '-logpath', '--logpath', help='Local path of unmerged outputs', default = '/home/cghuan/gminer_demo_log/')
 parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/dev/shm/chhuang/merge-gminer/')
 parser.add_argument('-b', '-bkpdir', '--bkpdir', help='Merged output backup', default = '/home/cghuan/bkp_gm/')
-parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.5')
-parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='4')
+parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.2')
+parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='1')
 parser.add_argument('-t', '-timestamp', '--timestamp', help = 'the timestamp when GMiner application was launched', required = True)
 parser.add_argument('-m', '-maxmonitoritem', '--maxmonitoritem', help = 'Maximum count for web cluster monitor', default='300')
+parser.add_argument('-w', '-max_wait', '--max_wait', help='how many time to wait ', default='4')
 
 args = vars(parser.parse_args())
 
@@ -45,6 +46,27 @@ def run_bg_cmd(command):
             lns_content.append(line)
     return lns_content
 
+def submit_bg_cmd(command):
+    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    return proc
+
+
+def test_wait_bg_cmd(proc):
+    #return a dic, ['ok']
+    if(proc.poll() == None):
+        return {'ok' : False}
+
+    proc.wait() #this works
+
+    lns_content = []
+    for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
+        if(line[-1] == '\n'):
+            lns_content.append(line[:-1])
+        else:
+            lns_content.append(line)
+
+    return {'ok' : True, 'out' : lns_content}
+
 node_max_q = 2
 global_post_processing_history = {}
 global_master_dic_list = []
@@ -56,38 +78,50 @@ slave_line_history_dic = {}
 slave_finished_cnt = {}
 slave_last_ret = ""
 
+q_dic_to_write = {}
+
 def OnAppStart():
+    global q_dic_to_write
     #write some file that needed by the frontend
     os.system("mkdir -p " + args['localdir'])
 
     master_5q_path = args['localdir'] + "/master_5q.json"
-    dic_to_write = {}
-    dic_to_write['task_num_in_memory'] = 0
-    dic_to_write['task_num_in_disk'] = 0
-    dic_to_write['cmq_size'] = 0
-    dic_to_write['cpq_size'] = 0
-    dic_to_write['taskbuf_size'] = 0
+    q_dic_to_write['task_num_in_memory'] = 0
+    q_dic_to_write['task_num_in_disk'] = 0
+    q_dic_to_write['cmq_size'] = 0
+    q_dic_to_write['cpq_size'] = 0
+    q_dic_to_write['taskbuf_size'] = 0
 
-    dic_to_write['task_num_in_memory_float'] = 0.0
-    dic_to_write['task_num_in_disk_float'] = 0.0
-    dic_to_write['cmq_size_float'] = 0.0
-    dic_to_write['cpq_size_float'] = 0.0
-    dic_to_write['taskbuf_size_float'] = 0.0
+    q_dic_to_write['task_num_in_memory_float'] = 0.0
+    q_dic_to_write['task_num_in_disk_float'] = 0.0
+    q_dic_to_write['cmq_size_float'] = 0.0
+    q_dic_to_write['cpq_size_float'] = 0.0
+    q_dic_to_write['taskbuf_size_float'] = 0.0
 
-    dic_to_write['task_store_to_cmq'] = 0
-    dic_to_write['cmq_to_cpq'] = 0
-    dic_to_write['cpq_to_task_store'] = 0
-    dic_to_write['cpq_finished'] = 0
+    q_dic_to_write['task_store_to_cmq'] = 0
+    q_dic_to_write['cmq_to_cpq'] = 0
+    q_dic_to_write['cpq_to_task_store'] = 0
+    q_dic_to_write['cpq_finished'] = 0
+
+    q_dic_to_write['task_transfer_1'] = 0
+    q_dic_to_write['task_transfer_2'] = 0
+    q_dic_to_write['task_transfer_3'] = 0
+    q_dic_to_write['task_transfer_4'] = 0
 
     with open(master_5q_path, 'w') as f:
-        f.write(json.dumps(dic_to_write) + '\n')
+        f.write(json.dumps(q_dic_to_write) + '\n')
         f.close()
+
+#slave_procs[hostname] = {'wait_cnt': *, 'proc' : *}
+slave_procs = {}
 
 #begin
 def OnSignalAppear():
     global global_post_processing_history
     global global_master_dic_list
     global global_post_processing_len
+    global slave_procs
+
     global_post_processing_history = {}
     global_master_dic_list = []
     global_post_processing_len = 0
@@ -102,6 +136,7 @@ def OnSignalAppear():
         os.system("mkdir -p " + args['localdir'] + "/" + hostname)
         global_post_processing_history[hostname] = []
         slave_finished_cnt[hostname] = 0
+        slave_procs[hostname] = {'wait_cnt' : -1}
 
     os.system("mkdir -p " + args['localdir'] + "/" + local_signal_dic['master'])
     os.system("mkdir -p " + local_signal_dic['master'])
@@ -127,11 +162,14 @@ def OnSignalAppear():
             local_signal_dic['time'] = pln['time']
 
     if(not 'time' in local_signal_dic):
+        print("if(not 'time' in local_signal_dic)")
         local_signal_dic['time'] = time.time()
+    
+    print("local_signal_dic['time']", local_signal_dic['time'])
 
     return local_signal_dic
 
-procs = []
+# procs = []
 
 #running
 def RunningMaster(signal_dic):
@@ -144,36 +182,65 @@ def RunningMaster(signal_dic):
 
 def RunningSlave(signal_dic):
     # print("RunningSlave")
+    global slave_procs
+
     for hostname in signal_dic['slaves']:
-        ib_name = 'ib' + hostname[6:]
+        ib_name = hostname
+        if(hostname[:6] == 'worker'):
+            #hardcoded for HDL cluster
+            ib_name = 'ib' + hostname[6:]
+
         command = "rsync -avzP --delete " + ib_name + ":" + signal_dic['DEMO_LOG_PATH'] + " " + args['localdir'] + "/" + hostname
-        proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        procs.append(proc)
+
+        if(slave_procs[hostname]['wait_cnt'] == -1):
+            #submit rsync
+            slave_procs[hostname]['proc'] = submit_bg_cmd(command)
+            slave_procs[hostname]['wait_cnt'] = -1
+
     return 0
 
-def UglyTanh(x, f):
+def WaitSlavesRsync(signal_dic, hard = False):
+    global slave_procs
+    max_wait = int(args['max_wait'])
+
+    for hostname in signal_dic['slaves']:
+        if(slave_procs[hostname]['wait_cnt'] >= 0):
+            test_dic = test_wait_bg_cmd(slave_procs[hostname]['proc'])
+            if(test_dic['ok']):
+                slave_procs[hostname]['wait_cnt'] = -1
+            else:
+                slave_procs[hostname]['wait_cnt'] += 1
+
+            if(slave_procs[hostname]['wait_cnt'] > max_wait or hard):
+                #kill this proc
+                slave_procs[hostname]['proc'].kill()
+                slave_procs[hostname]['wait_cnt'] = -1
+
+def SomehowTanh(x, f):
     return 1.0 -  1.0 / (np.log(x / f + 1) * np.log(x / f + 1) + 1)
 
-def EvilMapping(x):
+def FloatMapping(x):
     #x: any numerical value
     if(x <= 0.0):
         return 0.0
     if(not x >= 0.0):
         return 0.0
-    return 0.2 * UglyTanh(x, 1) + 0.175 * UglyTanh(x, 10) + 0.175 * UglyTanh(x, 100) + 0.175 * UglyTanh(x, 1000) + 0.175 * UglyTanh(x, 10000) + 0.1 * UglyTanh(x, 100000)
+    return 0.2 * SomehowTanh(x, 1) + 0.175 * SomehowTanh(x, 10) + 0.175 * SomehowTanh(x, 100) + 0.175 * SomehowTanh(x, 1000) + 0.175 * SomehowTanh(x, 10000) + 0.1 * SomehowTanh(x, 100000)
 
 dedicated_monitor_history = []
+# temporarily disabled
 def GenDedicatedMonitorData(signal_dic):
     global dedicated_monitor_history
     #
     global_monitor_data_fn = "{}/{}".format(merger_dir, 'monitor-data.json')
     global_monitor_append_data_fn = "{}/{}".format(merger_dir, 'monitor-append.log')
 
-    local_monitor_data_fn = "{}/{}/{}".format(merger_dir, args['timestamp'], 'monitor-data.json')
+    local_monitor_data_fn = "{}/{}/{}".format(merger_dir, args['timestamp'], 'monitor-data_writting.json')
+    local_monitor_data_final_fn = "{}/{}/{}".format(merger_dir, args['timestamp'], 'monitor-data.json')
 
     time_to_append_min = signal_dic['time']
     if(len(dedicated_monitor_history) > 0):
-        time_to_append_min = dedicated_monitor_history[-1]['time']
+        time_to_append_min = dedicated_monitor_history[-1]['time'] + signal_dic['time']
 
     # print("time_to_append_min = ", time_to_append_min)
 
@@ -252,6 +319,8 @@ def GenDedicatedMonitorData(signal_dic):
                         out_f.write(',')
                     out_f.write('\n')
             out_f.write(']\n')
+            os.system("mv {} {}".format(local_monitor_data_fn, local_monitor_data_final_fn))
+
 
 #called by post processing; always return a newest line of slaves' output
 def SlavesLineReader(signal_dic):
@@ -282,6 +351,12 @@ def SlavesLineReader(signal_dic):
                         #append this line
                         if(not ln in slave_line_history_dic):
                             slave_line_history_dic[ln] = 0
+                            try:
+                                pln = json.loads(ln)
+                            except Exception:
+                                continue
+                            # print("slave_line_history_list.append", ln)
+
                             slave_line_history_list.append(ln)
 
             slave_finished_cnt[hostname] = len(finish_lns)
@@ -300,8 +375,14 @@ def SlavesLineReader(signal_dic):
                     #append this line
                     if(not ln in slave_line_history_dic):
                         slave_line_history_dic[ln] = 0
+                        try:
+                            pln = json.loads(ln)
+                        except Exception:
+                            continue
+                        # print("slave_line_history_list.append", ln)
                         slave_line_history_list.append(ln)
         node_id += 1
+        # break
 
     ret = ""
 
@@ -312,21 +393,25 @@ def SlavesLineReader(signal_dic):
     else:
         ret = slave_last_ret
 
+    print("ret = ", ret)
+
     return ret
 
 def PostProcessing(signal_dic):
     # dedicated monitor data
-    GenDedicatedMonitorData(signal_dic)
+    # GenDedicatedMonitorData(signal_dic)
 
     #### master.json
     # master_agg_path = args['localdir'] + "/master_agg.json"
-    master_5q_path = args['localdir'] + "/master_5q.json"
+    master_5q_path = args['localdir'] + "/master_5q_writting.json"
+    master_5q_final_path = args['localdir'] + "/master_5q.json"
     master_append_path = args['localdir'] + "/master_append.json"
     # cmd = 'cp ' + args['localdir'] + '/' + signal_dic['master'] + '/master_5q.log ' + master_agg_path
     # # print(cmd)
     # os.system(cmd)
 
     global global_master_dic_list
+    global q_dic_to_write
 
     master_5q_log_last_line = ""
 
@@ -355,67 +440,106 @@ def PostProcessing(signal_dic):
     #dump master_5q.json
 
     with open(master_5q_path, 'w') as f:
-        dic_to_write = {}
-        dic_to_write['task_num_in_memory'] = 0
-        dic_to_write['task_num_in_disk'] = 0
-        dic_to_write['cmq_size'] = 0
-        dic_to_write['cpq_size'] = 0
-        dic_to_write['taskbuf_size'] = 0
-        dic_to_write['task_store_to_cmq'] = 0
-        dic_to_write['cmq_to_cpq'] = 0
-        dic_to_write['cpq_to_task_store'] = 0
-        dic_to_write['cpq_finished'] = 0
+        # q_dic_to_write = {}
+        q_dic_to_write['task_num_in_memory'] = 0
+        q_dic_to_write['task_num_in_disk'] = 0
+        q_dic_to_write['cmq_size'] = 0
+        q_dic_to_write['cpq_size'] = 0
+        q_dic_to_write['taskbuf_size'] = 0
+        q_dic_to_write['task_store_to_cmq'] = 0
+        q_dic_to_write['cmq_to_cpq'] = 0
+        q_dic_to_write['cpq_to_task_store'] = 0
+        q_dic_to_write['cpq_finished'] = 0
 
         if(len(global_master_dic_list) > 0):
             #[task_num_in_memory, task_num_in_disk, cmq_size, cpq_size, taskbuf_size]
             for i in range(global_master_dic_list[-1]['nodes']):
                 stri = str(i)          
-                dic_to_write['task_num_in_memory'] += global_master_dic_list[-1][stri][0]
-                dic_to_write['task_num_in_disk'] += global_master_dic_list[-1][stri][1]
-                dic_to_write['cmq_size'] += global_master_dic_list[-1][stri][2]
-                dic_to_write['cpq_size'] += global_master_dic_list[-1][stri][3]
-                dic_to_write['taskbuf_size'] += global_master_dic_list[-1][stri][4]
-                dic_to_write['task_store_to_cmq'] += global_master_dic_list[-1][stri][5]
-                dic_to_write['cmq_to_cpq'] += global_master_dic_list[-1][stri][6]
-                dic_to_write['cpq_to_task_store'] += global_master_dic_list[-1][stri][7]
-                dic_to_write['cpq_finished'] += global_master_dic_list[-1][stri][8]
+                q_dic_to_write['task_num_in_memory'] += global_master_dic_list[-1][stri][0]
+                q_dic_to_write['task_num_in_disk'] += global_master_dic_list[-1][stri][1]
+                q_dic_to_write['cmq_size'] += global_master_dic_list[-1][stri][2]
+                q_dic_to_write['cpq_size'] += global_master_dic_list[-1][stri][3]
+                q_dic_to_write['taskbuf_size'] += global_master_dic_list[-1][stri][4]
+                q_dic_to_write['task_store_to_cmq'] += global_master_dic_list[-1][stri][5]
+                q_dic_to_write['cmq_to_cpq'] += global_master_dic_list[-1][stri][6]
+                q_dic_to_write['cpq_to_task_store'] += global_master_dic_list[-1][stri][7]
+                q_dic_to_write['cpq_finished'] += global_master_dic_list[-1][stri][8]
 
-        dic_to_write['task_num_in_memory_float'] = EvilMapping(dic_to_write['task_num_in_memory'])
-        dic_to_write['task_num_in_disk_float'] = EvilMapping(dic_to_write['task_num_in_disk'])
-        dic_to_write['cmq_size_float'] = EvilMapping(dic_to_write['cmq_size'])
-        dic_to_write['cpq_size_float'] = EvilMapping(dic_to_write['cpq_size'])
-        dic_to_write['taskbuf_size_float'] = EvilMapping(dic_to_write['taskbuf_size'])
+        q_dic_to_write['task_transfer_1'] = q_dic_to_write['task_store_to_cmq']
+        q_dic_to_write['task_transfer_2'] = q_dic_to_write['cmq_to_cpq']
+        q_dic_to_write['task_transfer_3'] = q_dic_to_write['cpq_to_task_store']
+        q_dic_to_write['task_transfer_4'] = q_dic_to_write['cpq_finished']
 
-        # print(json.dumps(dic_to_write))
-        f.write(json.dumps(dic_to_write) + '\n')
+        q_dic_to_write['task_num_in_memory_float'] = FloatMapping(q_dic_to_write['task_num_in_memory'])
+        q_dic_to_write['task_num_in_disk_float'] = FloatMapping(q_dic_to_write['task_num_in_disk'])
+        q_dic_to_write['cmq_size_float'] = FloatMapping(q_dic_to_write['cmq_size'])
+        q_dic_to_write['cpq_size_float'] = FloatMapping(q_dic_to_write['cpq_size'])
+        q_dic_to_write['taskbuf_size_float'] = FloatMapping(q_dic_to_write['taskbuf_size'])
+
+        # print(json.dumps(q_dic_to_write))
+        f.write(json.dumps(q_dic_to_write) + '\n')
         f.close()
+        os.system("mv {} {}".format(master_5q_path, master_5q_final_path))
 
         #debug
         with open(master_append_path, 'a') as f2:
-            f2.write(json.dumps(dic_to_write) + '\n')
+            f2.write(json.dumps(q_dic_to_write) + '\n')
             f2.close()
 
     global global_post_processing_history
     global global_post_processing_len
 
+    default_line_dic = {}
+    #fill visualization with default content (sample)
+    default_line_dic['GM'] = """{"subg":[[1201467,534950,1201466,808130,120757],[1201467,534950,1201466,808130,307772],[1201467,534950,1201466,808130,807973],[1201467,534950,1201466,862900,529891]], "count" : 4, "subg_size" : 9, "subg_list" : [1201467,1201466,534950,120757,307772,807973,808130,529891,862900], "label_list" : ["a","b","c","d","d","d","b","d","b"], "conn_list" : [[1201466,1201467],[534950,1201467],[534950,1201466],[534950,808130],[534950,862900],[120757,808130],[307772,808130],[807973,808130],[529891,862900]], "conn_size" : 9, "task_id" : -1}
+    """
+
+    default_line_dic['TC'] = """{"subg":[[723043,723044,1433589],[723043,896471,1443759],[723043,896471,1443760],[723043,1443759,1443760]], "count" : 4, "subg_size" : 6, "subg_list" : [723043,723044,896471,1433589,1443759,1443760], "conn_list" : [[723043,723044],[723043,896471],[723043,1433589],[723043,1443759],[723043,1443760],[723044,1433589],[896471,1443759],[896471,1443760],[1443759,1443760]], "conn_size" : 9, "task_id" : -1}
+    """
+
+    default_line_dic['CD'] = """{"subg_size" : 9, "subg_list" : [1201467,1201466,534950,120757,307772,807973,808130,529891,862900], "label_list" : ["Aa23","['aa','bb']","Cc","Dd","Dd","Dd","Bb","Dd","Bb"], "conn_list" : [[1201466,1201467],[534950,1201467],[534950,1201466],[534950,808130],[534950,862900],[120757,808130],[307772,808130],[807973,808130],[529891,862900]], "conn_size" : 9, "task_id":-1}
+    """
+
+    default_line_dic['GC'] = """{"subg_size" : 51, "subg_list" : [604306,628283,628286,628275,628278,628280,633816,628287,628312,628320,866123,628290,628291,628295,628300,628302,628303,628306,628308,633813,863314,628276,628310,628311,628313,628314,628315,628317,628318,628321,628277,628279,628281,628284,628285,628296,628297,628322,628323,628324,628298,628288,628289,628292,628293,628294,628299,628301,628304,628305,628307], "conn_list":[[604306,628275],[604306,628276],[604306,628277],[604306,628278],[604306,628279],[604306,628280],[604306,628281],[604306,628283],[604306,628284],[604306,628285],[604306,628286],[604306,628287],[604306,628288],[604306,628289],[604306,628290],[604306,628291],[604306,628292],[604306,628293],[604306,628294],[604306,628295],[604306,628296],[604306,628297],[604306,628298],[604306,628299],[604306,628300],[604306,628301],[604306,628302],[604306,628303],[604306,628304],[604306,628305],[604306,628306],[604306,628307],[604306,628308],[604306,628310],[604306,628311],[604306,628312],[604306,628313],[604306,628314],[604306,628315],[604306,628317],[604306,628318],[604306,628320],[604306,628321],[604306,628322],[604306,628323],[604306,628324],[604306,863314],[628283,633813],[628283,633816],[628283,866123]], "conn_size" : 50, "conn_weight" : [0.527864,0.500000,0.500000,0.527864,0.500000,0.527864,0.500000,0.563508,0.500000,0.500000,0.563508,0.527864,0.500000,0.500000,0.527864,0.527864,0.500000,0.500000,0.500000,0.527864,0.500000,0.500000,0.500000,0.500000,0.527864,0.500000,0.527864,0.527864,0.500000,0.500000,0.527864,0.500000,0.527864,0.500000,0.500000,0.527864,0.500000,0.500000,0.500000,0.500000,0.500000,0.527864,0.500000,0.500000,0.500000,0.500000,0.500000,0.500000,0.527864,0.527864], "task_id" : -1}
+    """
+
     ##### slaves.json
     ## this cound be somehow complex; juse pick one line
     ## multiple file need to be processed
-    if(signal_dic['app_name'] == 'GM' or signal_dic['app_name'] == 'TC'):
-        slaves_path = args['localdir'] + "/slaves.json"
+    if(signal_dic['app_name'] == 'GM' or signal_dic['app_name'] == 'TC' or signal_dic['app_name'] == 'CD' or signal_dic['app_name'] == 'GC'):
+        slaves_path = args['localdir'] + "/slaves_writting.json"
+        slaves_final_path = args['localdir'] + "/slaves.json"
 
         # result_dic = json.loads(SlavesLineReader(signal_dic))
         result_line = SlavesLineReader(signal_dic)
+        # if(len(result_line) == 0 or signal_dic['app_name'] == 'GC' or signal_dic['app_name'] == 'CD'):
+        if(len(result_line) == 0):
+            #print default
+            result_line = default_line_dic[signal_dic['app_name']]
+
+        # # sometimes wrong
+        # try:
+        #     pln = json.loads(result_line)
+        # except Exception:
+        #     result_line = 
+
+        # print(result_line)
 
         with open(slaves_path, 'w') as f:
             f.write(result_line + '\n')
             f.close()
+            os.system("mv {} {}".format(slaves_path, slaves_final_path))
+
+        with open(slaves_final_path, 'r') as f:
+            pln = json.load(f)
+            
 
     if(signal_dic['app_name'] == 'MC'):
         #
         #given: {"count" : 2, "size" : 3, "group1" : [1,2,3], "group2" : [2,4,5]}
         #ori: {"mc" : 3, "count" : 2, "0" : [786496, 945665, 945664], "1" : [983073, 1012607, 989527]}
-        slaves_path = args['localdir'] + "/slaves.json"
+        slaves_path = args['localdir'] + "/slaves_writting.json"
+        slaves_final_path = args['localdir'] + "/slaves.json"
         # print("if(signal_dic['app_name'] == 'MC'):")
         # just read info from master_5q.log
         if(len(master_5q_log_last_line) > 1):
@@ -423,14 +547,18 @@ def PostProcessing(signal_dic):
             # print(pln)
             pln['size'] = pln.pop('mc')
 
+            pln['mc'] = []
+
             for i in range(pln['count']):
                 ori_key = str(i)
-                new_key = 'group' + str(i + 1)
-                pln[new_key] = pln.pop(ori_key)
+                # new_key = 'group' + str(i + 1)
+                # pln[new_key] = pln.pop(ori_key)
+                pln['mc'].append(pln.pop(ori_key))
 
             with open(slaves_path, 'w') as f:
                 f.write(json.dumps(pln) + '\n')
                 f.close()
+                os.system("mv {} {}".format(slaves_path, slaves_final_path))
 
     #cp file
     return 0
@@ -485,19 +613,19 @@ if __name__ == "__main__":
 
     sleep_cnt = 0
     gminer_running = False
+
     while True:
 
         run_bg_cmd("ls -al .")
         if(os.path.isfile(signal_file_name)):
             # print("os.path.isfile(signal_file_name)")
             if(not gminer_running):
+                signal_appear_time = time.time()
                 signal_dic = OnSignalAppear()
                 gminer_running = True
                 sleep_cnt = 0
             else:
-                for proc in procs:
-                    proc.wait()
-                procs = []
+                WaitSlavesRsync(signal_dic)
 
             RunningMaster(signal_dic)
 
@@ -509,18 +637,15 @@ if __name__ == "__main__":
             sleep_cnt += 1
         else:
             if(gminer_running):
-                #wait for procs
-                for proc in procs:
-                    proc.wait()
-                procs = []
+                print("total time: ", time.time() - signal_appear_time)
+                
+                WaitSlavesRsync(signal_dic)
 
                 #always performs the last sync
                 RunningMaster(signal_dic)
                 RunningSlave(signal_dic)
 
-                for proc in procs:
-                    proc.wait()
-                procs = []
+                WaitSlavesRsync(signal_dic, True)
 
                 PostProcessing(signal_dic)
                 OnSignalDisappear(signal_dic)

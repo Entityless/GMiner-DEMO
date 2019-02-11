@@ -23,6 +23,9 @@ struct CommunityContext
 	int max_size;
 	vector<VertexID> attrQ;
 	ComAttrSet com_attr_set;
+	// vector<vector<AttrValueT>> attr_value;
+
+	VertexID creator_id;
 
 	CommunityContext(): max_size(0) {}
 };
@@ -32,6 +35,7 @@ ibinstream& operator<<(ibinstream& m, const CommunityContext& v)
 	m << v.max_size;
 	m << v.attrQ;
 	m << v.com_attr_set;
+	m << v.creator_id;
 	return m;
 }
 
@@ -40,6 +44,7 @@ obinstream& operator >> (obinstream& m, CommunityContext& v)
 	m >> v.max_size;
 	m >> v.attrQ;
 	m >> v.com_attr_set;
+	m >> v.creator_id;
 	return m;
 }
 
@@ -48,6 +53,7 @@ ifbinstream& operator<<(ifbinstream& m, const CommunityContext& v)
 	m << v.max_size;
 	m << v.attrQ;
 	m << v.com_attr_set;
+	m << v.creator_id;
 	return m;
 }
 
@@ -56,6 +62,7 @@ ofbinstream& operator >> (ofbinstream& m, CommunityContext & v)
 	m >> v.max_size;
 	m >> v.attrQ;
 	m >> v.com_attr_set;
+	m >> v.creator_id;
 	return m;
 }
 
@@ -136,12 +143,6 @@ public:
 	{
 		return true;
 	}
-
-	bool sys_agg_disabled() override
-	{
-		return true;
-	}
-
 
 private:
 	Result count_;
@@ -336,10 +337,17 @@ public:
 
 		vector<VertexID> Q;
 		Q.push_back(g.get_nodes().front().id);
-		int size = frontier.size();
+		int size = frontier.size() - 1;
 
 		if (size != 0)
 		{
+			VertexIdxMap vertex_idx_map; // build a vertexIdxMap for attribute simularity computing between two vertexes
+			for (vector<VertexT *>::iterator iter = frontier.begin(); iter != frontier.end(); ++iter)
+				vertex_idx_map.insert(make_pair((*iter)->id, (*iter)));
+			VertexT* seed_vtx = frontier.back();
+			frontier.pop_back();
+			assert(seed_vtx->id == this->context.creator_id);
+
 			set<VertexID> subg;
 			for (int i = 0; i < size; i++)
 			{
@@ -361,13 +369,73 @@ public:
 
 			vector<VertexID> listR;
 			map<VertexID, int> color;
-			VertexIdxMap vertex_idx_map; // build a vertexIdxMap for attribute simularity computing between two vertexes
-			for (vector<VertexT *>::iterator iter = frontier.begin(); iter != frontier.end(); ++iter)
-				vertex_idx_map.insert(make_pair((*iter)->id, (*iter)));
 
 			get_listR(tempG, listR);
 			color_sort(tempG, listR, color);
 			community(tempG, listR, color, Q, max_size, attrQ, K_THRESHOLD, vertex_idx_map, com_attr_set); //pass the map
+
+			if(attrQ.size() > 0)
+			{
+				demo_str_ = "{\"subg_size\" : " + to_string(attrQ.size()) + ", \"subg_list\" : [";
+
+				string label_str = "[";
+
+				for(int i = 0; i < attrQ.size(); i++)
+				{
+					if(i != 0)
+						demo_str_ += ",";
+					demo_str_ += to_string(attrQ[i]);
+				}
+				demo_str_ += "], \"conn_list\":[";
+
+				//traverse the id map
+
+				int conn_cnt = 0;
+				for(int i = 0; i < attrQ.size(); i++)
+				{
+					hash_map<VertexID, VertexT*>::iterator vtx_iter = vertex_idx_map.find(attrQ[i]);
+
+					if (vtx_iter == vertex_idx_map.end())
+					{
+						cout << "current VertexID is not in vertex_idx_map(attrQ[i]) in function CD::compute cluster id demo " << i << endl;
+						abort();
+					}
+
+					if(i != 0)
+						label_str += ",";
+					label_str += "\"[";
+					const vector<AttrValueT>& attr_vec = vtx_iter->second->attr.get_attr_vec();
+					for(int j = 0; j < attr_vec.size(); j++)
+					{
+						if(j != 0)
+							label_str += ",";
+						label_str += attr_vec[j];
+					}
+					label_str += "]\"";
+
+					AdjVtxList& vtx_adjlist = vtx_iter->second->get_adjlist();
+
+					for(auto adj_var : vtx_adjlist)
+					{
+						if(vtx_iter->second->id < adj_var.id && binary_search(attrQ.begin(), attrQ.end(), adj_var.id))
+						{
+							if(conn_cnt != 0)
+							{
+								demo_str_ += ",";
+							}
+							demo_str_ += "[" + to_string(vtx_iter->second->id) + "," + to_string(adj_var.id) +"]";
+							conn_cnt++;
+						}
+					}
+				}
+				label_str += "]";
+
+				demo_str_ += "], \"conn_size\" : " + to_string(conn_cnt);
+				demo_str_ += ", \"label_list\" : " + label_str;
+				demo_str_ += ", \"task_id\" : " + to_string(task_counter_);
+
+				demo_str_ += "}\n";
+			}
 		}
 		else if (Q.size() > max_size)
 		{
@@ -402,6 +470,8 @@ public:
 		const vector<AttrValueT>& attr_vec = v->attr.get_attr_vec();
 		if ((candidates.size() >= K_THRESHOLD - 1) && (!attr_vec.empty()))
 		{
+			AdjVertex seed_vtx(v->id, get_worker_id());
+			candidates.push_back(seed_vtx);
 			CommunityTask * task = new CommunityTask;
 			task->pull(candidates);
 			NodeT node;
@@ -411,6 +481,8 @@ public:
 
 			//initialization with the whole attributes of the first vertex
 			task->context.com_attr_set.insert(attr_vec.begin(), attr_vec.end());
+
+			task->context.creator_id = v->id;
 
 			return task;
 		}
@@ -469,9 +541,7 @@ public:
 	{
 		CountAgg::FinalType* agg = (CountAgg::FinalType*)get_agg();
 		stringstream ss;
-		ss << "The size of max attr community is " << agg->max_size << endl;
 		QSet& q_set = agg->q_set;
-		ss << "The size of communities containing at least " << K_THRESHOLD << " members is " << q_set.size() << endl;
 		for (QSet::const_iterator iter = q_set.begin(); iter != q_set.end(); ++iter)
 		{
 			ss << "Attr Community: ";
@@ -480,6 +550,11 @@ public:
 				ss << *i << " ";
 			ss << endl;
 		}
+
+		ss << "The size of max attr community is " << agg->max_size << endl;
+
+		ss << "The size of communities containing at least " << K_THRESHOLD << " members is " << q_set.size() << endl;
+		
 		cout << ss.str();
 	}
 };

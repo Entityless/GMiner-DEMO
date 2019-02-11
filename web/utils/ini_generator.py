@@ -32,26 +32,34 @@ input_path = {}
 input_path['skitter'] = {}
 input_path['youtube'] = {}
 input_path['orkut'] = {}
+input_path['friendster'] = {}
+input_path['tencent'] = {}
+input_path['dblp'] = {}
 
 input_path['skitter']['tc'] = '/chhuang/gm_input/skitter_10/'
 input_path['youtube']['tc'] = '/chhuang/gm_input/youtube_10/'
 input_path['orkut']['tc'] = '/chhuang/gm_input/orkut_10/'
+input_path['friendster']['tc'] = '/chhuang/gm_input/friendster_10/'
 
 input_path['skitter']['mc'] = '/chhuang/gm_input/skitter_10/'
 input_path['youtube']['mc'] = '/chhuang/gm_input/youtube_10/'
 input_path['orkut']['mc'] = '/chhuang/gm_input/orkut_10/'
+input_path['friendster']['mc'] = '/chhuang/gm_input/friendster_10/'
 
 input_path['skitter']['gm'] = '/chhuang/gm_input/skitter_label_10/'
 input_path['youtube']['gm'] = '/chhuang/gm_input/youtube_label_10/'
 input_path['orkut']['gm'] = '/chhuang/gm_input/orkut_label_10/'
+input_path['friendster']['gm'] = '/chhuang/gm_input/friendster_label_10/'
 
 input_path['skitter']['cd'] = '/chhuang/gm_input/skitter_attr_10/'
 input_path['youtube']['cd'] = '/chhuang/gm_input/youtube_attr_10/'
 input_path['orkut']['cd'] = '/chhuang/gm_input/orkut_attr_10/'
+input_path['tencent']['cd'] = '/chhuang/gm_input/tencent_attr_10/'
 
-input_path['skitter']['fco'] = '/chhuang/gm_input/skitter_multi_attr_10/'
-input_path['youtube']['fco'] = '/chhuang/gm_input/youtube_multi_attr_10/'
-input_path['orkut']['fco'] = '/chhuang/gm_input/orkut_multi_attr_10/'
+input_path['skitter']['fco'] = '/chhuang/gm_input/skitter_fco_10/'
+input_path['youtube']['fco'] = '/chhuang/gm_input/youtube_fco_10/'
+input_path['orkut']['fco'] = '/chhuang/gm_input/orkut_fco_10/'
+input_path['dblp']['fco'] = '/chhuang/gm_input/dblp_fco_10/'
 
 
 def gminer_ini_gen(param_dic):
@@ -60,7 +68,7 @@ def gminer_ini_gen(param_dic):
 
     #### gen ini str
     ini_str = """#Copyright 2018 Husky Data Lab, CUHK
-#Authors: Hongzhi Chen, Neko Liu
+#Authors: Hongzhi Chen, Miao Liu
 
 
 #ini file for example

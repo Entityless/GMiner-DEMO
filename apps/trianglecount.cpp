@@ -103,6 +103,11 @@ public:
 	{
 		return true;
 	}
+	
+	bool sys_agg_disabled() override
+	{
+		return false;
+	}
 
 	string sys_print_header() override
 	{
@@ -152,8 +157,6 @@ public:
 		if(check_status())
 		{
 			frontier_to_dump_ = &frontier;
-
-
 		}
 
 		return false;
@@ -184,6 +187,8 @@ public:
 
 		int size = frontier.size();
 
+		// demo_str_ = "{\"subg\":[";
+
 		demo_str_ = "{\"subg\":[";
 		unsigned long long count = 0;
 
@@ -207,13 +212,21 @@ public:
 				//my neighbor is my neighbor's neighbor
 				if (adj[size_i].id == id_j)
 				{
-					string to_append = "[";
+					string to_append;
+
+					if(count != 0)
+					{
+						to_append = ",[";
+					}
+					else
+					{
+						to_append = "[";
+					}
+
 					to_append += to_string(context.creator_id) + ",";
 					to_append += to_string(frontier[i]->id) + ",";
 					to_append += to_string(id_j);
 					to_append += "]";
-					if(count != context.count - 1)
-						to_append += ",";
 					demo_str_ += to_append;
 
 					if(edges_map.count(frontier[i]->id) == 0)
@@ -267,6 +280,8 @@ public:
 		}
 
 		demo_str_ += "], \"conn_size\" : " + to_string(edges.size());
+		demo_str_ += ", \"task_id\" : " + to_string(task_counter_);
+
 		demo_str_ += "}\n";
 	}
 

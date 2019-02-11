@@ -64,7 +64,7 @@ html::-webkit-scrollbar {
 #content {
   flex-grow: 1;
   height: 100%;
-  max-width: 70%;
+  width: 68%;
 }
 #content #contentMenu{
   height: 3em;
@@ -105,6 +105,20 @@ html::-webkit-scrollbar {
   width: 100%;
   position: absolute;
   top: 0;
+}
+#graphPanel #graphnote {
+  position: absolute;
+  margin-top: 1rem;
+  right: 1rem;
+  background-color: #FFFFCC;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #FFCC00;
+  border-radius: 5px;
+  padding: 1rem;
+}
+#graphnote h4 {
+  text-align: center;
 }
 /* ------------------- */
 /* ------------- api --------------- */
