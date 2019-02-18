@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='arrows.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/CU_short_logo.png') }}">
     <title>GMiner Demo</title>
   </head>
   <body>
@@ -265,7 +266,7 @@
             algorithms. We model subgraph processing as independent tasks, and design a novel task pipeline to streamline task 
             processing for better CPU, network and I/O utilization.
           </p>
-          <p><a href="https://github.com/yaobaiwei/GMiner" target="_blank">G-Miner github project</a></p>
+          <p>For more details, please refer to our <a href="https://github.com/yaobaiwei/GMiner" target="_blank">github project</a>.</p>
         </div>
         </div>
       </div>
@@ -382,11 +383,14 @@
       </div>
     </div>
     <div class='ui modal' id='teamModal'>
-      <div class="header">Team</div>
+      <div class="header">
+        <span style="font-size: 1.8rem;">Team</span>
+        <img src="{{ url_for('static',filename='./images/CU_long_logo.jpg') }}" style="float:right; height: 2.5rem;">
+      </div>
       <div class='content'>
         <table border="0">
           <tr>
-            <td align="left"><h3>Supervisor</h3></td>
+            <td align="left"><div style="font-weight: 500; font-size: 1.6rem;">Supervisor</div></td>
           </tr>
           <tr>
             <td align="center">&nbsp;</td>
