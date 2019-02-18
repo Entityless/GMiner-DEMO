@@ -21,9 +21,16 @@ def get_timestamp():
 def main():
     persons = gminer_infos.gminer_persons;
     persons = [persons[i * 2:i * 2 + 2] for i in range(7//2 + 1)]
+    supervisors = gminer_infos.gminer_supervisors
+    supervisors = [supervisors[i * 2:i * 2 + 2] for i in range(7//2 + 1)]
     return flask.render_template('index.html', apps=gminer_apps,
-            datasets=gminer_datasets, sysconfigs0=gminer_sysconfig[:3],
-            sysconfigs1=gminer_sysconfig[3:], slideimages = gminer_infos.gminer_compare, teammembers = persons, codes = gminer_infos.gminer_codes)
+            supervisors = supervisors,
+            datasets=gminer_datasets,
+            sysconfigs0=gminer_sysconfig[:3],
+            sysconfigs1=gminer_sysconfig[3:], 
+            slideimages = gminer_infos.gminer_compare, 
+            teammembers = persons, 
+            codes = gminer_infos.gminer_codes)
 
 @app.route('/load_json/<folder>/<path>')
 def return_cpu_info(folder, path):

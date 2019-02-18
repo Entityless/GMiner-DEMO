@@ -44,11 +44,8 @@ html::-webkit-scrollbar {
   text-align: center;
   overflow-y: scroll;
 }
-#aboutModal>.content {
+#aboutModal>.content, #teamModal>.content {
   height: calc(100% - 4.5rem);
-}
-#teamModal>.content {
-  height: 100%;
 }
 
 #teamModal>.content,
@@ -58,6 +55,7 @@ html::-webkit-scrollbar {
 #teamModal .personName {
   font-weight: bold;
 }
+
 /* ------------------ */
 
 /* ------------- console --------------- */

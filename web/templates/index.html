@@ -382,12 +382,19 @@
       </div>
     </div>
     <div class='ui modal' id='teamModal'>
+      <div class="header">Team</div>
       <div class='content'>
-        <div class="ui two column divided grid">
-          {% for row in teammembers %}
-          <div class="row">
+        <table border="0">
+          <tr>
+            <td align="left"><h3>Supervisor</h3></td>
+          </tr>
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          {% for row in supervisors %}
+          <tr>
             {% for person in row %}
-            <div class="column">
+            <td valign="top">
               <div style="float:left; margin-right: 1rem">
                 <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128">
               </div>
@@ -395,9 +402,39 @@
                 <span class="personName">{{ person['name'] }}</span>
                 <span>{{ person['info'] }}</span>
               </p>
-            </div>
+            </td>
             {% endfor %}
-          </div>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          <tr>
+            <td align="center" style='border-style: solid; border-width:1px 0 0 0; border-color:darkgray;' colspan="2">
+            </td>
+          </tr>
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          {% for row in teammembers %}
+          <tr>
+            {% for person in row %}
+            <td valign="top" >
+              <div style="float:left; margin-right: 1rem">
+                <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128">
+              </div>
+              <p>
+                <span class="personName">{{ person['name'] }}</span>
+                <span>{{ person['info'] }}</span>
+              </p>
+            </td>
+            {% endfor %}
+          </tr>
+          {% if loop.index != loop.length %}
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          {% endif %}
           {% endfor %}
         </div>
       </div>
