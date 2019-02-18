@@ -19,7 +19,7 @@ html::-webkit-scrollbar {
   display: flex;
   /* occupy remain place */
   position: absolute;
-  left: 7rem; /* left sidebar */
+  /* left: 8rem;  left sidebar */
   top: 1rem;
   bottom: 1rem;
   right: 1rem;
