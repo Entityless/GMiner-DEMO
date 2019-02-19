@@ -31,7 +31,21 @@ $ ./auto-build.sh
 ```
 
 * [**Tutorials**](docs/TUTORIALS.md)
-
+### Web Demo
+#### prerequisites
+  * python 3.6
+  * flask 0.12.2 : `$> pip install flask==0.12.2`
+  * all G-Miner dependencies described above
+#### Start and stop web server
+  We suppose you have built and run G-Miner successfully now ( if not, please refer to **Build** and **Tutorial** previous to this step). Then just run following commands :
+  ```bash
+  $> cd $GMINER_HOME
+  $> ./script/start_demo_server.sh
+    * Serving Flask app "main"
+    * Running on http://127.0.0.1:2333/ (Press CTRL+C to quit)
+  $> ./script/stop_demo_monitor.sh
+  ```
+  ![demo screenshot](){:width="80%"}
 
 ## Academic Paper
 
