@@ -139,6 +139,10 @@
           </div>
         </div>
         <div id="graph-col" >
+          <div id="footer">
+            <img id="img1" src="{{ url_for('static', filename='images/gminer_text.png') }}">
+            <img id="img2" src="{{ url_for('static', filename='images/CU_short_logo.png') }}">
+          </div>
           <div id="queues" class="block">
             <div>
               <div class="row">
@@ -242,6 +246,7 @@
             <h3> Cluster Resource Monitor </h3>
             <div id="chartView"></div>
           </div>
+          
         </div>
       </div>
     </div>
@@ -353,6 +358,7 @@
       </div>
     </div>
     <div class='ui modal' id='compareModal'>
+      <i class="close icon"></i>
       <div class="header">Comparison</div>
       {% for image in slideimages %}
       <div class="compare-item content" style="display: none;">
@@ -362,7 +368,7 @@
         </div>
         </div>
         <div class="image">
-          <img src="{{ url_for('static', filename='images/{}.png'.format(image['slide'])) }}" alt="loading...">
+          <img src="{{ url_for('static', filename='images/{}.png'.format(image['slide'])) }}" alt="loading..." {% if loop.index==6 %}height="400"{% endif %}>
         </div>
         <div id="description">
         <div class='content'>
@@ -383,6 +389,7 @@
       </div>
     </div>
     <div class='ui modal' id='teamModal'>
+      <i class="close icon"></i>
       <div class="header">
         <span style="font-size: 1.8rem;">Team</span>
         <img src="{{ url_for('static',filename='./images/CU_long_logo.jpg') }}" style="float:right; height: 2.5rem;">

@@ -1,6 +1,7 @@
 #chartView {
   padding-bottom: 1.5em;
   margin-right: 1em;
+  top: 10px;
 }
 .g2-legend {
   width: calc(100% - 4px);

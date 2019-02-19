@@ -4,7 +4,7 @@ $(document).ready(function(){
   $('#appParam').hide();
   $('div[group=std],div[group=api]').hide();
   $('pre').hide().first().show();
-  $('#main-grid').css('left', $('#side').width()+3); 
+  $('#main-grid').css('left', $('#side').width()+16); 
 
   $('.compare-item').height(window.innerHeight * 0.7).first().addClass('active').show();
   $('.compare-item').css('bottom', window.innerHeight - $('#compareModal .actions').height() - $('#compreModal .actions').css('bottom'));
