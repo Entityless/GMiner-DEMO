@@ -45,7 +45,7 @@ $ ./auto-build.sh
     * Running on http://127.0.0.1:2333/ (Press CTRL+C to quit)
   $> ./script/stop_demo_monitor.sh
   ```
-  ![demo screenshot](){:width="80%"}
+  ![demo screenshot](./web/static/images/sceenshot.png "demo screenshot")
 
 ## Academic Paper
 
