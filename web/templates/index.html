@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='arrows.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/CU_short_logo.png') }}">
     <title>GMiner Demo</title>
   </head>
   <body>
@@ -138,6 +139,10 @@
           </div>
         </div>
         <div id="graph-col" >
+          <div id="footer">
+            <img id="img1" src="{{ url_for('static', filename='images/gminer_text.png') }}">
+            <img id="img2" src="{{ url_for('static', filename='images/CU_short_logo.png') }}">
+          </div>
           <div id="queues" class="block">
             <div>
               <div class="row">
@@ -241,6 +246,7 @@
             <h3> Cluster Resource Monitor </h3>
             <div id="chartView"></div>
           </div>
+          
         </div>
       </div>
     </div>
@@ -265,7 +271,7 @@
             algorithms. We model subgraph processing as independent tasks, and design a novel task pipeline to streamline task 
             processing for better CPU, network and I/O utilization.
           </p>
-          <p><a href="https://github.com/yaobaiwei/GMiner" target="_blank">G-Miner github project</a></p>
+          <p>For more details, please refer to our <a href="https://github.com/yaobaiwei/GMiner" target="_blank">github project</a>.</p>
         </div>
         </div>
       </div>
@@ -352,6 +358,7 @@
       </div>
     </div>
     <div class='ui modal' id='compareModal'>
+      <i class="close icon"></i>
       <div class="header">Comparison</div>
       {% for image in slideimages %}
       <div class="compare-item content" style="display: none;">
@@ -361,7 +368,7 @@
         </div>
         </div>
         <div class="image">
-          <img src="{{ url_for('static', filename='images/{}.png'.format(image['slide'])) }}" alt="loading...">
+          <img src="{{ url_for('static', filename='images/{}.png'.format(image['slide'])) }}" alt="loading..." {% if loop.index==6 %}height="400"{% endif %}>
         </div>
         <div id="description">
         <div class='content'>
@@ -382,12 +389,23 @@
       </div>
     </div>
     <div class='ui modal' id='teamModal'>
+      <i class="close icon"></i>
+      <div class="header">
+        <span style="font-size: 1.8rem;">Team</span>
+        <img src="{{ url_for('static',filename='./images/CU_long_logo.jpg') }}" style="float:right; height: 2.5rem;">
+      </div>
       <div class='content'>
-        <div class="ui two column divided grid">
-          {% for row in teammembers %}
-          <div class="row">
+        <table border="0">
+          <tr>
+            <td align="left"><div style="font-weight: 500; font-size: 1.6rem;">Supervisor</div></td>
+          </tr>
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          {% for row in supervisors %}
+          <tr>
             {% for person in row %}
-            <div class="column">
+            <td valign="top">
               <div style="float:left; margin-right: 1rem">
                 <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128">
               </div>
@@ -395,9 +413,39 @@
                 <span class="personName">{{ person['name'] }}</span>
                 <span>{{ person['info'] }}</span>
               </p>
-            </div>
+            </td>
             {% endfor %}
-          </div>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          <tr>
+            <td align="center" style='border-style: solid; border-width:1px 0 0 0; border-color:darkgray;' colspan="2">
+            </td>
+          </tr>
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          {% for row in teammembers %}
+          <tr>
+            {% for person in row %}
+            <td valign="top" >
+              <div style="float:left; margin-right: 1rem">
+                <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128">
+              </div>
+              <p>
+                <span class="personName">{{ person['name'] }}</span>
+                <span>{{ person['info'] }}</span>
+              </p>
+            </td>
+            {% endfor %}
+          </tr>
+          {% if loop.index != loop.length %}
+          <tr>
+            <td align="center">&nbsp;</td>
+          </tr>
+          {% endif %}
           {% endfor %}
         </div>
       </div>

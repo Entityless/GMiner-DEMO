@@ -19,15 +19,17 @@ html::-webkit-scrollbar {
   display: flex;
   /* occupy remain place */
   position: absolute;
-  left: 7rem; /* left sidebar */
+  /* left: 8rem;  left sidebar */
   top: 1rem;
   bottom: 1rem;
   right: 1rem;
-  align-items: stretch;
 }
 /* ----- Modal ----- */
-#configModal,#aboutModal,#teamModal,#compareModal {
+#teamModal,#compareModal {
   height: calc(100% - 6rem);
+}
+#configModal,#aboutModal{
+  height: calc(100% - 10rem);
 }
 .ui.modal>.header:first-of-type {
   height: 4.5rem;
@@ -44,11 +46,8 @@ html::-webkit-scrollbar {
   text-align: center;
   overflow-y: scroll;
 }
-#aboutModal>.content {
+#aboutModal>.content, #teamModal>.content {
   height: calc(100% - 4.5rem);
-}
-#teamModal>.content {
-  height: 100%;
 }
 
 #teamModal>.content,
@@ -58,11 +57,11 @@ html::-webkit-scrollbar {
 #teamModal .personName {
   font-weight: bold;
 }
+
 /* ------------------ */
 
 /* ------------- console --------------- */
 #content {
-  flex-grow: 1;
   height: 100%;
   width: 68%;
 }
@@ -150,13 +149,16 @@ div[group=api] pre{
   align-content: center; 
   width: 32%;
   padding-left:20px;
+  height: 100%;
 }
+
 #queues {
   background-color: white;
-  flex-grow: 1;
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 24rem !important;
+  height: 45%;
 }
 #queues>div:first-of-type {
   width: 90%;
@@ -185,10 +187,7 @@ div[group=api] pre{
   margin-top: 16px;
   background-color: white;
   padding-left: 5%;
-}
-
-#chartView {
-  top: 10px;
+  height: calc(45% - 2rem);
 }
 
 #side {
@@ -211,4 +210,17 @@ div[group=api] pre{
   font-size: 1.2rem;
   font-weight: 500;
   text-align: left;
+}
+
+#footer {
+  margin-bottom: 0.5rem;
+  height: 10%;
+  opacity: 0.8;
+  text-align: center;
+}
+#img2 {
+  height: 80%;
+}
+#img1 {
+  height: 80%;
 }
