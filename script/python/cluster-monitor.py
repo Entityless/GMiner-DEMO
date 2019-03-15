@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser()
 #recognized by pssh
 #should be positive integer
 parser.add_argument('-i', '-interval', '--interval', help='Hostfile', default='0.5')
-parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/dev/shm/chhuang/merge-gminer/')
+parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs')
 
 args = vars(parser.parse_args())
 

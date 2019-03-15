@@ -40,12 +40,18 @@ $ ./auto-build.sh
   We suppose you have built and run G-Miner successfully now ( if not, please refer to **Build** and **Tutorial** previous to this step). Then just run following commands :
   ```bash
   $> cd $GMINER_HOME
+  $> ./script/start_demo_monitor.sh
   $> ./script/start_demo_server.sh
     * Serving Flask app "main"
     * Running on http://127.0.0.1:2333/ (Press CTRL+C to quit)
   $> ./script/stop_demo_monitor.sh
   ```
+
+  You can configure the server by editing environment variables given in scripts.
+
   ![demo screenshot](./web/static/images/sceenshot.png "demo screenshot")
+
+  Notice that for demo purpose, datasets and their HDFS path has been hard-coded. If you want to deploy the demo server, you can edit them on your demand.
 
 ## Academic Paper
 

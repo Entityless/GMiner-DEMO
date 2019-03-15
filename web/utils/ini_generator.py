@@ -42,7 +42,7 @@ input_path['dblp']['fco'] = '/chhuang/gm_input/dblp_focus_10/'
 
 machine_file = {False : 'machines.cfg', 'ib' : 'ib_machines.cfg'}
 
-def gminer_ini_gen(param_dic):
+def gminer_ini_gen(param_dic, worker_log_path):
 
     ini_str = """#Copyright 2018 Husky Data Lab, CUHK
 #Authors: Hongzhi Chen, Miao Liu
@@ -59,7 +59,7 @@ HDFS_INPUT_PATH = {}
 HDFS_OUTPUT_PATH = /chhuang/gm_output/gminer_default_output/
 LOCAL_TEMP_PATH = /tmp
 FORCE_WRITE = TRUE    ;force to write HDFS_OUTPUT_PATH
-DEMO_LOG_PATH = /home/cghuan/gminer_demo_log/ ;change this if needed
+DEMO_LOG_PATH = {} ;change this if needed
 
 [COMPUTING]
 ;for task computing configurations
@@ -78,7 +78,7 @@ LOCAL_RATE = 0.5  ;threshold that task can be moved to other workers only if its
 AGG_SLEEP_TIME = 0        ;unit:second; do context and aggregator sync periodically during computation; if AGG_SLEEP_TIME == 0, then no sync happens during computation
 SYS_SLEEP_TIME = 1        ;unit:second; ; do system sync
 
-""".format(input_path[param_dic['dataset']][param_dic['apps']], str(param_dic['cache-size']), 
+""".format(input_path[param_dic['dataset']][param_dic['apps']], worker_log_path, str(param_dic['cache-size']), 
            str(param_dic['num-comp-thread']), str(param_dic['pipe-pop-num']), 
            str(param_dic['pop-num']), str(param_dic['subg-size-t']))
 
@@ -100,10 +100,6 @@ SYS_SLEEP_TIME = 1        ;unit:second; ; do system sync
 
     #### gen cmd
 
-    # cmd = "mpiexec -n 11 -f {} $GMINER_HOME/release/{} {}".format(machine_file[param_dic['ib']], app_cmd,
-    #                                                               ' | tee /dev/shm/chhuang/merge-gminer/{}.log')
     cmd = "mpiexec -n 11 -f {} $GMINER_HOME/release/{}".format(machine_file[param_dic['ib']], app_cmd)
-    # cmd = "mpiexec -n 11 -f {} $GMINER_HOME/release/{} {}".format(machine_file[param_dic['ib']], app_cmd,
-    #                                                               ' > /dev/shm/chhuang/merge-gminer/{}.log')
 
     return [cmd, ini_str]
