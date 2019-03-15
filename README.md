@@ -43,15 +43,14 @@ $ ./auto-build.sh
   $> ./script/start_demo_monitor.sh
   $> ./script/start_demo_server.sh
     * Serving Flask app "main"
-    * Running on http://127.0.0.1:2333/ (Press CTRL+C to quit)
+    * Running on http://127.0.0.1:5080/ (Press CTRL+C to quit)
   $> ./script/stop_demo_monitor.sh
   ```
 
-  You can configure the server by editing environment variables given in scripts.
+  Note that you should configure the path string in bash files to specify the input/output location based on your environment.
 
   ![demo screenshot](./web/static/images/sceenshot.png "demo screenshot")
 
-  Notice that for demo purpose, datasets and their HDFS path has been hard-coded. If you want to deploy the demo server, you can edit them on your demand.
 
 ## Academic Paper
 
