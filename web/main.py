@@ -12,6 +12,9 @@ app = flask.Flask(__name__)
 app_table = {}
 manager_table = {}
 
+merger_log_path = os.environ['GMINER_MERGE_LOG_PATH']
+worker_log_path = os.environ['GMINER_LOG_PATH']
+
 def get_timestamp():
     t = time.time()
     t = int(t * 1000 + 0.5);
@@ -48,10 +51,10 @@ def runApplication():
     data = json.loads(request.data)
     print(data)
     # 1. run python manager
-    proc = subprocess.Popen(['python', 'utils/gminer-manager.py', '-t', str(timestamp)], stdout=subprocess.DEVNULL)
+    proc = subprocess.Popen(['python', 'utils/gminer-manager.py', '-t', str(timestamp), '-l', worker_log_path, '-d', merger_log_path], stdout=subprocess.DEVNULL)
     manager_table[timestamp] = proc
     # 2. run gminer
-    cmd, ini_str = utils.ini_generator.gminer_ini_gen(data)
+    cmd, ini_str = utils.ini_generator.gminer_ini_gen(data, worker_log_path)
     tmpf_dir = os.path.join(myenv['GMINER_HOME'], 'tmp')
     if not os.path.exists(tmpf_dir):
         os.mkdir(tmpf_dir)
@@ -64,7 +67,8 @@ def runApplication():
     print('run command: ', cmd)
     final_cmd = 'GMINER_INI_NAME={} GMINER_START_TIMESTAMP={} {}'.\
             format(myenv['GMINER_INI_NAME'], myenv['GMINER_START_TIMESTAMP'], cmd)
-    log_file = open('/dev/shm/chhuang/merge-gminer/{}.log'.format(str(timestamp)), 'w')
+
+    log_file = open('{}/{}.log'.format(merger_log_path, str(timestamp)), 'w')
     proc = subprocess.Popen(final_cmd, shell=True, stdout=log_file)
     app_table[timestamp] = proc
 

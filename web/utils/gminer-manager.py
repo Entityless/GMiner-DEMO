@@ -11,9 +11,8 @@ import numpy as np
 parser = argparse.ArgumentParser()
 
 #recognized by pssh
-parser.add_argument('-l', '-logpath', '--logpath', help='Local path of unmerged outputs', default = '/home/cghuan/gminer_demo_log/')
-parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs', default = '/dev/shm/chhuang/merge-gminer/')
-parser.add_argument('-b', '-bkpdir', '--bkpdir', help='Merged output backup', default = '/home/cghuan/bkp_gm/')
+parser.add_argument('-l', '-logpath', '--logpath', help='Local path of unmerged outputs')
+parser.add_argument('-d', '-localdir', '--localdir', help='Local path of merging outputs')
 parser.add_argument('-i', '-interval', '--interval', help='Interval', default='0.2')
 parser.add_argument('-s', '-slave_interval', '--slave_interval', help='How many times is the interval of slaves than the master', default='1')
 parser.add_argument('-t', '-timestamp', '--timestamp', help = 'the timestamp when GMiner application was launched', required = True)
@@ -24,7 +23,6 @@ args = vars(parser.parse_args())
 
 merger_dir = args['localdir']
 args['localdir'] += '/' + args['timestamp'] + '/'
-args['bkpdir'] += '/' + args['timestamp'] + '/'
 args['logpath'] += '/' + args['timestamp'] + '/'
 
 signal_file_name = args['logpath'] + 'signal-file-gminer.' + args['timestamp']
@@ -566,23 +564,6 @@ def PostProcessing(signal_dic):
 
 #exits
 def OnSignalDisappear(signal_dic):
-    # global global_post_processing_history
-    # global global_master_dic_list
-    # global_post_processing_history = {}
-    # global_master_dic_list = []
-    # 
-
-    bkp_path = args['bkpdir']
-
-    cmd = 'mkdir -p ' + bkp_path
-    print(cmd)
-    os.system(cmd)
-
-    cmd = 'cp -r ' + args['localdir'] + "/* " + bkp_path
-    print(cmd)
-    os.system(cmd)
-
-    # cmd = 'rm -rf ' + args['localdir'] + "/*"
     # just remove slave folders
     for hostname in signal_dic['slaves']:
         cmd = 'rm -r ' + args['localdir'] + "/" + hostname
