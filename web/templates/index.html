@@ -4,6 +4,7 @@
     <meta http-equiv="x-ua-compatible"content="ie=edge">
     <meta name="viewport"content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./semantic/semantic.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./d3/d3-context-menu.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='rainbow/github.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
@@ -21,8 +22,16 @@
         <i class="outline circle icon"></i>
         Run
       </a>
-      <a class="disabled item" id='stopButton'>
+      <a class="item" id='resumeButton'>
+        <i class="play outline circle icon"></i>
+        Resume
+      </a>
+      <a class="disabled item" id='pauseButton'>
         <i class="pause outline circle icon"></i>
+        Pause
+      </a>
+      <a class="disabled item" id='stopButton'>
+        <i class="stop outline circle icon"></i>
         Stop
       </a>
       <div style="flex-grow: 1;"></div>
@@ -396,12 +405,6 @@
       </div>
       <div class='content'>
         <table border="0">
-          <tr>
-            <td align="left"><div style="font-weight: 500; font-size: 1.6rem;">Supervisor</div></td>
-          </tr>
-          <tr>
-            <td align="center">&nbsp;</td>
-          </tr>
           {% for row in supervisors %}
           <tr>
             {% for person in row %}
@@ -412,6 +415,8 @@
               <p>
                 <span class="personName">{{ person['name'] }}</span>
                 <span>{{ person['info'] }}</span>
+                <br>
+                <span>{{ person['other'] }}</span>
               </p>
             </td>
             {% endfor %}
@@ -457,6 +462,7 @@
     <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
     <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.1/dist/g2.min.js"></script>
     <script src="{{ url_for('static', filename='d3/d3.js') }}"></script>
+    <script src="{{ url_for('static', filename='d3/d3-context-menu.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/rainbow.min.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/generic.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/c.js') }}"></script>

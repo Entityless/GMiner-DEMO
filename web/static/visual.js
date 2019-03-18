@@ -25,24 +25,33 @@ function makeNodeLine(id_list, label_list, conn_list) {
   }
   return [nodes, edges];
 }
-/* ---------------------------- render functions --------------------- */
-function rendertcGraph(taskRes) {
-  var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
-  var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
-  var svg = d3.select('#maingraph');
+function makeNormalForce(nodes, edges) {
   var force = d3.forceSimulation(nodes)
         .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
-        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
-        .force("charge", d3.forceManyBody())
+        .force('forcex', d3.forceX().x(graphEnv.mw/2))
+        .force('forcey', d3.forceY().y(graphEnv.mh/2))
+        .force("charge", d3.forceManyBody());
 
-  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'black').style('stroke-width', 2);
-  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
-        .style('fill', (d, i)=> graphEnv.colorScale(i%24))
-        .call(d3.drag()
-           .on('start', function(d){dragstarted(d, force);})
-           .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}));
-  circles.append("title").text((d)=>"id:"+d.id);
+  return [force, nodes, edges];
+}
+function bindAndAlign(circles, nodes, lines, edges) {
+  lines = lines.data(edges);
+  lines.exit().remove();
+  lines.enter().append('line');
+  
+  circles = circles.data(nodes);
+  circles.enter().append('circle');
+  circles.exit().remove();
+}
+
+function restartForce(force, circles, lines) {
+  lines.style('stroke', 'black').style('stroke-width', 2);
+  circles.attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
+    .call(d3.drag()
+       .on('start', function(d){dragstarted(d, force);})
+       .on('drag', dragged)
+       .on('end', function(d){dragended(d, force);}));
+
   force.on('tick', function() {
     circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
     lines.attr('x1', (d,i)=>d.source.x)
@@ -50,6 +59,47 @@ function rendertcGraph(taskRes) {
       .attr('x2', (d,i)=>d.target.x)
       .attr('y2', (d,i)=>d.target.y);
   });
+  force.restart();
+  return force;
+}
+/* ---------------------------- render functions --------------------- */
+function rendertcGraph(taskRes) {
+  var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
+  var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
+  var [force, nodes, edges] = makeNormalForce(nodes, edges);
+  var svg = d3.select('#maingraph');
+  bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
+  svg.selectAll('circle')
+    .style('fill', (d, i)=> graphEnv.colorScale(d.id%24))
+    .append("title").text((d)=>"id:"+d.id)
+  force = restartForce(force, svg.selectAll("circle"), svg.selectAll('line'));
+
+  var circles = svg.selectAll('circle');
+  var lines = svg.selectAll('line');
+
+  var menu = [{
+    title: 'Remove Node',
+    action: function(elem, d, i) {
+      /*
+       * elem: the element occur the menu
+       * d: data bound to the elem
+       * i: index
+       */
+      console.log('d:',d);
+      nodes.splice(i, 1);
+      edges = edges.filter(function(e) {
+        return e.source != d && e.target != d;
+      });
+      bindAndAlign(circles, nodes, lines, edges);
+
+      force = restartForce(force, circles, lines);
+      circles = svg.selectAll('circle');
+      lines = svg.selectAll('line');
+      d3.event.stopPropagation();
+    }
+  }];
+
+  circles = circles.on('contextmenu', d3.contextMenu(menu));
 
   if($('#graphnote>h4').length === 0){
     $('#graphnote').append('<h4>Realtime TC Task Sample</h4>');
@@ -78,7 +128,8 @@ function rendergmGraph(taskRes) {
         .call(d3.drag()
            .on('start', function(d){dragstarted(d, force);})
            .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}));
+           .on('end', function(d){dragended(d, force);}))
+        .on('contextmenu', d3.contextMenu(menu));
   circles.append("title").text((d)=>"id: "+d.id+"\nlabel: "+d.label);
   force.on('tick', function() {
     circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
@@ -143,7 +194,8 @@ function rendermcGraph(taskRes) {
         .call(d3.drag()
            .on('start', function(d){dragstarted(d, force);})
            .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}));
+           .on('end', function(d){dragended(d, force);}))
+        .on('contextmenu', d3.contextMenu(menu));
 
   circles.append("title").text((d)=>"id:"+d.name);
   force.on('tick', function() {
@@ -169,7 +221,8 @@ function rendercdGraph(taskRes) {
         .call(d3.drag()
            .on('start', function(d){dragstarted(d, force);})
            .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}));
+           .on('end', function(d){dragended(d, force);}))
+        .on('contextmenu', d3.contextMenu(menu));
   circles.append("title").text((d)=>"id: "+d.id + "\nlabel: " + d.label);
   force.on('tick', function() {
     circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
@@ -212,14 +265,16 @@ function renderfcoGraph(taskRes) {
 
   var lines = svg.append("g").selectAll("line").data(edges).enter().append('line')
     .style('stroke', d=>d3.interpolateYlGnBu(lineLinear(d.weight)))
-    .style('stroke-width', d=>lineLinear(d.weight) * 5 + 2);
+    .style('stroke-width', d=>lineLinear(d.weight) * 5 + 2)
   console.log('edges', edges);
   var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
         .style('fill', "rgba(190,186,186,0.7)")
         .call(d3.drag()
            .on('start', function(d){dragstarted(d, force);})
            .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}));
+           .on('end', function(d){dragended(d, force);}))
+        .on('contextmenu', d3.contextMenu(menu));
+
   circles.append("title").text((d)=>"id: "+d.id);
   lines.append('title').text((d)=>"edge weight: "+d.weight);
 
@@ -267,7 +322,9 @@ function renderGraphVisualize(taskRes) {
   }
 }
 /* ----------------------- */
+// GLOBAL VARIABLE //
 var graphEnv = {};
+
 $(document).ready(function() {
   $('#gmgt').hide();
   $('#graphnote').hide();
@@ -278,6 +335,7 @@ $(document).ready(function() {
   graphEnv.mh = mh;
   graphEnv.mw = mw;
   
+  // draw ground truth pattern
   function makeGmPattern(svg) {
     var gt_nodes = [
       {name: "a", cx: 47.52, cy:48.59},
@@ -298,7 +356,7 @@ $(document).ready(function() {
       .attr('y2', (d,i)=>gt_nodes[d["target"]].cy);
     var cirs = svg.append("g").selectAll("circle").data(gt_nodes).enter().append('circle').attr('r', 10)
       .style('fill', (d, i)=> colorScale(d.name))
-      .attr('cx', (d, i)=> d.cx).attr('cy', (d,i)=>d.cy);
+      .attr('cx', (d, i)=> d.cx).attr('cy', (d,i)=>d.cy)
     cirs.append('title').text((d)=>d.name);
   }
   makeGmPattern(d3.select('#graphPanel #gmgt>svg'));

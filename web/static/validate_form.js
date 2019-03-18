@@ -66,9 +66,8 @@ var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined, apps
 
 function stopAll(data = 0) {
   $('#runButton').removeClass('disabled');
-  $('#stopButton').addClass('disabled');
+  $('#stopButton,#pauseButton').addClass('disabled');
   $('#queues .progress').addClass('disabled');
-  $('#finish-label').addClass('disabled');
   $('.arrows i').removeClass('move');
   if(typeof(ENV.timeid) != "undefined"){
     clearTimeout(ENV.timeid);
@@ -144,7 +143,7 @@ function changeComponents(data){
   console.log(data, data.status);
   if(data.status === "ok"){
     $('#content .segment').removeClass('loading');
-    $('#stopButton').removeClass('disabled');
+    $('#stopButton,#pauseButton').removeClass('disabled');
     $('#queues .progress').removeClass('disabled');
     $('.arrows i').addClass('move');
     d3.select('#maingraph').selectAll('*').remove();
@@ -188,7 +187,8 @@ function submitRunForm(fields){
     $('.arrows i').removeClass('move');
     $('#content .segment').removeClass('loading');
     $('#runButton').removeClass('disabled');
-    $('#stopButton').removeClass('red').addClass('disabled');
+    $('#stopButton,#pauseButton').addClass('disabled');
+    $('#resumeButton').hide();
   });
 }
 
@@ -272,7 +272,7 @@ $(document).ready(function(){
 
   // bind stop
   $('#stopButton').on('click', function(){
-    if(!$(this).hasClass('.disabled')){
+    if(!$(this).hasClass('disabled')){
       let stop_req = { "key": ENV.key };
       let url = '/stoprequest';
       console.log(ENV.key, " request stop");
@@ -285,6 +285,18 @@ $(document).ready(function(){
       .catch(error => {console.log('stop failed'); throw error;});
       stopAll();
     }
+  });
+
+  $('#pauseButton').on('click', function(){
+    if(!$(this).hasClass('disabled')){
+      $(this).hide();
+      $('#resumeButton').show();
+    }
+  });
+
+  $('#resumeButton').on('click', function(){
+    $(this).hide();
+    $('#stopButton').addClass('disabled');
   });
 
 });

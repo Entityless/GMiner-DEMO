@@ -25,6 +25,9 @@ html::-webkit-scrollbar {
   right: 1rem;
 }
 /* ----- Modal ----- */
+#resumeButton {
+  display: none;
+}
 #teamModal,#compareModal {
   height: calc(100% - 6rem);
 }
@@ -118,6 +121,10 @@ html::-webkit-scrollbar {
 }
 #graphnote h4 {
   text-align: center;
+}
+
+#maingraph line, circle{
+  cursor: pointer;
 }
 /* ------------------- */
 /* ------------- api --------------- */
