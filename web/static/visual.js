@@ -26,80 +26,61 @@ function makeNodeLine(id_list, label_list, conn_list) {
   return [nodes, edges];
 }
 function makeNormalForce(nodes, edges) {
-  var force = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
+  var force = d3.forceSimulation()
         .force('forcex', d3.forceX().x(graphEnv.mw/2))
         .force('forcey', d3.forceY().y(graphEnv.mh/2))
-        .force("charge", d3.forceManyBody());
-
-  return [force, nodes, edges];
+        .force("charge", d3.forceManyBody())
+        .nodes(nodes)
+        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)));
+  return force;
 }
+
 function bindAndAlign(circles, nodes, lines, edges) {
-  lines = lines.data(edges);
-  lines.exit().remove();
-  lines.enter().append('line');
+  updatelines = lines.data(edges);
+  updatelines.exit().remove();
+  updatelines.enter().append('line');
   
   circles = circles.data(nodes);
-  circles.enter().append('circle');
+  circles.enter().append('circle').append('title');
   circles.exit().remove();
 }
 
-function restartForce(force, circles, lines) {
-  lines.style('stroke', 'black').style('stroke-width', 2);
-  circles.attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
-    .call(d3.drag()
-       .on('start', function(d){dragstarted(d, force);})
-       .on('drag', dragged)
-       .on('end', function(d){dragended(d, force);}));
+function stylizeNormalGraph() {
+  var lines = graphEnv.svg.selectAll('line'),
+      circles = graphEnv.svg.selectAll('circle');
 
-  force.on('tick', function() {
-    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
-    lines.attr('x1', (d,i)=>d.source.x)
-      .attr('y1', (d,i)=>d.source.y)
-      .attr('x2', (d,i)=>d.target.x)
-      .attr('y2', (d,i)=>d.target.y);
-  });
-  force.restart();
-  return force;
+  circles.call(d3.drag()
+       .on('start', function(d){dragstarted(d, graphEnv.force);})
+       .on('drag', dragged)
+       .on('end', function(d){dragended(d, graphEnv.force);}))
+    .on('contextmenu', d3.contextMenu(node_menu))
+    .style('fill', (d, i)=> graphEnv.colorScale(d.id%24))
+    .attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
+    .select("title").text((d)=>"id:"+d.id||"");
+
+  lines.style('stroke', 'black').style('stroke-width', 2);
+}
+
+function tick() {
+  graphEnv.svg.selectAll('circle')
+    .attr('cx', (d,i)=>d.x)
+    .attr('cy', (d,i)=>d.y);
+  graphEnv.svg.selectAll('line')
+    .attr('x1', (d,i)=>d.source.x)
+    .attr('y1', (d,i)=>d.source.y)
+    .attr('x2', (d,i)=>d.target.x)
+    .attr('y2', (d,i)=>d.target.y);
 }
 /* ---------------------------- render functions --------------------- */
 function rendertcGraph(taskRes) {
   var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
-  var [force, nodes, edges] = makeNormalForce(nodes, edges);
-  var svg = d3.select('#maingraph');
+  var svg = graphEnv.svg = d3.select('#maingraph');
+  var force = graphEnv.force = makeNormalForce(nodes, edges);
   bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
-  svg.selectAll('circle')
-    .style('fill', (d, i)=> graphEnv.colorScale(d.id%24))
-    .append("title").text((d)=>"id:"+d.id)
-  force = restartForce(force, svg.selectAll("circle"), svg.selectAll('line'));
+  stylizeNormalGraph();
 
-  var circles = svg.selectAll('circle');
-  var lines = svg.selectAll('line');
-
-  var menu = [{
-    title: 'Remove Node',
-    action: function(elem, d, i) {
-      /*
-       * elem: the element occur the menu
-       * d: data bound to the elem
-       * i: index
-       */
-      console.log('d:',d);
-      nodes.splice(i, 1);
-      edges = edges.filter(function(e) {
-        return e.source != d && e.target != d;
-      });
-      bindAndAlign(circles, nodes, lines, edges);
-
-      force = restartForce(force, circles, lines);
-      circles = svg.selectAll('circle');
-      lines = svg.selectAll('line');
-      d3.event.stopPropagation();
-    }
-  }];
-
-  circles = circles.on('contextmenu', d3.contextMenu(menu));
+  force.on('tick', tick);
 
   if($('#graphnote>h4').length === 0){
     $('#graphnote').append('<h4>Realtime TC Task Sample</h4>');
@@ -114,6 +95,7 @@ function rendertcGraph(taskRes) {
   }
   $('#graphnote').show();
 }
+
 function rendergmGraph(taskRes) {
   var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
@@ -301,6 +283,31 @@ function renderfcoGraph(taskRes) {
   $('#graphnote').show();
 
 }
+// draw ground truth pattern
+function makeGmPattern(svg) {
+  var gt_nodes = [
+    {name: "a", cx: 47.52, cy:48.59},
+    {name: "b", cx: 33.44, cy: 75.08},
+    {name: "c", cx: 63.43, cy: 74.02},
+    {name: "b", cx: 49.25, cy: 100.46},
+    {name: "d", cx: 50.13, cy: 130.44}];
+  var gt_edges = [
+    {"source": 0, "target": 1}, {"source": 0, "target": 2},
+    {"source": 1, "target": 2}, {"source": 2, "target": 3},
+    {"source": 3, "target": 4}];
+  
+  var ls = svg.append("g").selectAll("line").data(gt_edges).enter().append('line')
+    .style('stroke', 'black').style('stroke-width', 2)
+    .attr('x1', (d,i)=>gt_nodes[d["source"]].cx)
+    .attr('y1', (d,i)=>gt_nodes[d["source"]].cy)
+    .attr('x2', (d,i)=>gt_nodes[d["target"]].cx)
+    .attr('y2', (d,i)=>gt_nodes[d["target"]].cy);
+  var cirs = svg.append("g").selectAll("circle").data(gt_nodes).enter().append('circle').attr('r', 10)
+    .style('fill', (d, i)=> graphEnv.colorScale(d.name))
+    .attr('cx', (d, i)=> d.cx).attr('cy', (d,i)=>d.cy)
+  cirs.append('title').text((d)=>d.name);
+}
+
 function renderGraphVisualize(taskRes) {
   console.log('graph visual: ', taskRes);
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
@@ -322,9 +329,6 @@ function renderGraphVisualize(taskRes) {
   }
 }
 /* ----------------------- */
-// GLOBAL VARIABLE //
-var graphEnv = {};
-
 $(document).ready(function() {
   $('#gmgt').hide();
   $('#graphnote').hide();
@@ -334,31 +338,6 @@ $(document).ready(function() {
   graphEnv.colorScale = colorScale;
   graphEnv.mh = mh;
   graphEnv.mw = mw;
-  
-  // draw ground truth pattern
-  function makeGmPattern(svg) {
-    var gt_nodes = [
-      {name: "a", cx: 47.52, cy:48.59},
-      {name: "b", cx: 33.44, cy: 75.08},
-      {name: "c", cx: 63.43, cy: 74.02},
-      {name: "b", cx: 49.25, cy: 100.46},
-      {name: "d", cx: 50.13, cy: 130.44}];
-    var gt_edges = [
-      {"source": 0, "target": 1}, {"source": 0, "target": 2},
-      {"source": 1, "target": 2}, {"source": 2, "target": 3},
-      {"source": 3, "target": 4}];
-    
-    var ls = svg.append("g").selectAll("line").data(gt_edges).enter().append('line')
-      .style('stroke', 'black').style('stroke-width', 2)
-      .attr('x1', (d,i)=>gt_nodes[d["source"]].cx)
-      .attr('y1', (d,i)=>gt_nodes[d["source"]].cy)
-      .attr('x2', (d,i)=>gt_nodes[d["target"]].cx)
-      .attr('y2', (d,i)=>gt_nodes[d["target"]].cy);
-    var cirs = svg.append("g").selectAll("circle").data(gt_nodes).enter().append('circle').attr('r', 10)
-      .style('fill', (d, i)=> colorScale(d.name))
-      .attr('cx', (d, i)=> d.cx).attr('cy', (d,i)=>d.cy)
-    cirs.append('title').text((d)=>d.name);
-  }
   makeGmPattern(d3.select('#graphPanel #gmgt>svg'));
 });
 
