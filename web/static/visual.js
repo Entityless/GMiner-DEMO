@@ -1,3 +1,13 @@
+function tick() {
+  graphEnv.svg.selectAll('circle')
+    .attr('cx', (d,i)=>d.x)
+    .attr('cy', (d,i)=>d.y);
+  graphEnv.svg.selectAll('line')
+    .attr('x1', (d,i)=>d.source.x)
+    .attr('y1', (d,i)=>d.source.y)
+    .attr('x2', (d,i)=>d.target.x)
+    .attr('y2', (d,i)=>d.target.y);
+}
 function dragstarted(d, force) {
   if (!d3.event.active) force.alphaTarget(0.3).restart();
   d.fx = d.x;
@@ -34,7 +44,6 @@ function makeNormalForce(nodes, edges) {
         .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)));
   return force;
 }
-
 function bindAndAlign(circles, nodes, lines, edges) {
   updatelines = lines.data(edges);
   updatelines.exit().remove();
@@ -53,24 +62,78 @@ function stylizeNormalGraph() {
        .on('start', function(d){dragstarted(d, graphEnv.force);})
        .on('drag', dragged)
        .on('end', function(d){dragended(d, graphEnv.force);}))
-    .on('contextmenu', d3.contextMenu(node_menu))
-    .style('fill', (d, i)=> graphEnv.colorScale(d.id%24))
-    .attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
-    .select("title").text((d)=>"id:"+d.id||"");
+    .on('contextmenu', d3.contextMenu(node_menu()))
+    .attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw));
+  
+  if(ENV.apps === "gm")
+    circles.style('fill', (d,i)=> graphEnv.colorScale(d.label));
+  else
+    circles.style('fill', (d,i)=> graphEnv.colorScale(d.id%24));
 
-  lines.style('stroke', 'black').style('stroke-width', 2);
+  circles.select("title").text((d)=>{
+    let a = "";
+    if(typeof d.id !== "undefined")
+      a = "id: "+d.id;
+    if(typeof d.label !== "undefined")
+      a = a + '\nlabel: '+ d.label;
+    return a;
+  });
+
+  lines.style('stroke', 'black').style('stroke-width', 2)
+    .on('contextmenu', d3.contextMenu(edge_menu));
 }
 
-function tick() {
-  graphEnv.svg.selectAll('circle')
-    .attr('cx', (d,i)=>d.x)
-    .attr('cy', (d,i)=>d.y);
-  graphEnv.svg.selectAll('line')
-    .attr('x1', (d,i)=>d.source.x)
-    .attr('y1', (d,i)=>d.source.y)
-    .attr('x2', (d,i)=>d.target.x)
-    .attr('y2', (d,i)=>d.target.y);
+function stylizeMcGraph() {
+  var lines = graphEnv.svg.selectAll('line'),
+      circles = graphEnv.svg.selectAll('circle');
+  lines.style('stroke', 'rgba(0,0,0,0.05)').style('stroke-width', 0.8)
+    .on('contextmenu', d3.contextMenu(edge_menu));
+  
+  circles.call(d3.drag()
+       .on('start', function(d){dragstarted(d, graphEnv.force);})
+       .on('drag', dragged)
+       .on('end', function(d){dragended(d, graphEnv.force);}))
+    .on('contextmenu', d3.contextMenu(node_menu()))
+    .style('fill', (d, i)=> d3.interpolateYlGnBu(-graphEnv.lineLinear(i)))
+    .attr('r', 0.01 * Math.min(graphEnv.mh, graphEnv.mw));
+
+  circles.select("title").text((d)=>{
+    let a = "";
+    if(typeof d.id !== "undefined")
+      a = "id: "+d.id;
+    if(typeof d.label !== "undefined")
+      a = a + '\nlabel: '+ d.label;
+    return a;
+  });
 }
+
+function stylizeFcoGraph() {
+  var lines = graphEnv.svg.selectAll('line'),
+      circles = graphEnv.svg.selectAll('circle');
+
+  lines.style('stroke', d=>d3.interpolateYlGnBu(graphEnv.lineLinear(d.weight)))
+    .style('stroke-width', d=>graphEnv.lineLinear(d.weight) * 5 + 2)
+    .on('contextmenu', d3.contextMenu(edge_menu));
+  lines.select('title').text((d)=>"edge weight: "+d.weight);
+  
+  circles.call(d3.drag()
+       .on('start', function(d){dragstarted(d, graphEnv.force);})
+       .on('drag', dragged)
+       .on('end', function(d){dragended(d, graphEnv.force);}))
+    .on('contextmenu', d3.contextMenu(node_menu()))
+    .style('fill', "rgba(190,186,186,0.7)")
+    .attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw));
+  
+  circles.select("title").text((d)=>{
+    let a = "";
+    if(typeof d.id !== "undefined")
+      a = "id: "+d.id;
+    if(typeof d.label !== "undefined")
+      a = a + '\nlabel: '+ d.label;
+    return a;
+  });
+}
+
 /* ---------------------------- render functions --------------------- */
 function rendertcGraph(taskRes) {
   var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
@@ -95,32 +158,15 @@ function rendertcGraph(taskRes) {
   }
   $('#graphnote').show();
 }
-
 function rendergmGraph(taskRes) {
   var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
-  var svg = d3.select('#maingraph');
-  var force = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
-        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
-        .force("charge", d3.forceManyBody())
-  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'black').style('stroke-width', 2);
-  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
-        .style('fill', (d, i)=> graphEnv.colorScale(d.label))
-        .call(d3.drag()
-           .on('start', function(d){dragstarted(d, force);})
-           .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}))
-        .on('contextmenu', d3.contextMenu(menu));
-  circles.append("title").text((d)=>"id: "+d.id+"\nlabel: "+d.label);
-  force.on('tick', function() {
-    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
-    lines.attr('x1', (d,i)=>d.source.x)
-      .attr('y1', (d,i)=>d.source.y)
-      .attr('x2', (d,i)=>d.target.x)
-      .attr('y2', (d,i)=>d.target.y);
-  });
-  
+  var svg = graphEnv.svg = d3.select('#maingraph');
+  var force = graphEnv.force = makeNormalForce(nodes, edges);
+  bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
+  stylizeNormalGraph();
+  force.on('tick', tick);
+ 
   if($('#graphnote>h4').length === 0){
     $('#graphnote').append('<h4>Realtime GM Task Sample</h4>');
     $('#graphnote').append('<table></table>');
@@ -136,7 +182,7 @@ function rendergmGraph(taskRes) {
 }
 function rendermcGraph(taskRes) {
   var {size, count}  = taskRes; 
-  var lineLinear = d3.scaleLinear();
+  var lineLinear = graphEnv.lineLinear = d3.scaleLinear();
   lineLinear.domain([0, size]).range([-0.7,-0.3]);
 
   if($('#graphnote>h4').length === 0){
@@ -161,58 +207,26 @@ function rendermcGraph(taskRes) {
       edges.push({"source": i, "target": j});
     }
   }
-  var svg = d3.select('#maingraph');
   
+  var svg = graphEnv.svg = d3.select('#maingraph');
   var wind = Math.min(graphEnv.mh, graphEnv.mw);
-  var force = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(edges).distance(0.5 * wind))
-        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
-        .force("charge", d3.forceManyBody())
-  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'rgba(0,0,0,0.05)').style('stroke-width', 0.8);
-
-
-  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.01 * wind)
-        .style('fill', (d, i)=> d3.interpolateYlGnBu(-lineLinear(i)))
-        .call(d3.drag()
-           .on('start', function(d){dragstarted(d, force);})
-           .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}))
-        .on('contextmenu', d3.contextMenu(menu));
-
-  circles.append("title").text((d)=>"id:"+d.name);
-  force.on('tick', function() {
-    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
-    lines.attr('x1', (d,i)=>d.source.x)
-      .attr('y1', (d,i)=>d.source.y)
-      .attr('x2', (d,i)=>d.target.x)
-      .attr('y2', (d,i)=>d.target.y);
-  });
+  var force = graphEnv.force = makeNormalForce(nodes, edges);
+  force.force('link').distance(0.5 * wind);
+    
+  bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
+  stylizeMcGraph();
+  force.on('tick',tick); 
 }
 function rendercdGraph(taskRes) {
   var {subg_list, label_list, conn_list, subg_size, task_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
-  var svg = d3.select('#maingraph');
-  var force = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
-        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
-        .force("charge", d3.forceManyBody())
+  var svg = graphEnv.svg = d3.select('#maingraph');
+  var force = graphEnv.force = makeNormalForce(nodes, edges);
+  
+  bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
+  stylizeNormalGraph();
 
-  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line').style('stroke', 'black').style('stroke-width', 2);
-  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
-        .style('fill', (d, i)=> graphEnv.colorScale(i%24))
-        .call(d3.drag()
-           .on('start', function(d){dragstarted(d, force);})
-           .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}))
-        .on('contextmenu', d3.contextMenu(menu));
-  circles.append("title").text((d)=>"id: "+d.id + "\nlabel: " + d.label);
-  force.on('tick', function() {
-    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
-    lines.attr('x1', (d,i)=>d.source.x)
-      .attr('y1', (d,i)=>d.source.y)
-      .attr('x2', (d,i)=>d.target.x)
-      .attr('y2', (d,i)=>d.target.y);
-  });
+  force.on('tick', tick);
   
   if($('#graphnote>h4').length === 0){
     $('#graphnote').append('<h4>Realtime CD Task Sample</h4>');
@@ -229,44 +243,23 @@ function rendercdGraph(taskRes) {
   $('#graphnote').show();
 }
 function renderfcoGraph(taskRes) {
-  var lineLinear = d3.scaleLinear();
+  var lineLinear = graphEnv.lineLinear = d3.scaleLinear();
   
   var {subg_list, label_list, conn_weight, conn_list, subg_size, task_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   for(let i = 0; i < conn_weight.length; ++ i){
     edges[i].weight = conn_weight[i];
   }
-  var svg = d3.select('#maingraph');
-  var force = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)))
-        .force('center', d3.forceCenter().x(graphEnv.mw/2).y(graphEnv.mh/2))
-        .force("charge", d3.forceManyBody())
+  var svg = graphEnv.svg = d3.select('#maingraph');
+  var force = graphEnv.force = makeNormalForce(nodes, edges);
 
   var min_weight = Math.min(...conn_weight), max_weight = Math.max(...conn_weight);
   lineLinear.domain([min_weight, max_weight + 0.0001]).range([0.3,0.7]);
 
-  var lines = svg.append("g").selectAll("line").data(edges).enter().append('line')
-    .style('stroke', d=>d3.interpolateYlGnBu(lineLinear(d.weight)))
-    .style('stroke-width', d=>lineLinear(d.weight) * 5 + 2)
-  console.log('edges', edges);
-  var circles = svg.append("g").selectAll("circle").data(nodes).enter().append('circle').attr('r', 0.02 * Math.min(graphEnv.mh, graphEnv.mw))
-        .style('fill', "rgba(190,186,186,0.7)")
-        .call(d3.drag()
-           .on('start', function(d){dragstarted(d, force);})
-           .on('drag', dragged)
-           .on('end', function(d){dragended(d, force);}))
-        .on('contextmenu', d3.contextMenu(menu));
+  bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
+  stylizeFcoGraph();
 
-  circles.append("title").text((d)=>"id: "+d.id);
-  lines.append('title').text((d)=>"edge weight: "+d.weight);
-
-  force.on('tick', function() {
-    circles.attr('cx', (d, i)=>d.x).attr('cy', (d,i)=>d.y);
-    lines.attr('x1', (d,i)=>d.source.x)
-      .attr('y1', (d,i)=>d.source.y)
-      .attr('x2', (d,i)=>d.target.x)
-      .attr('y2', (d,i)=>d.target.y);
-  });
+  force.on('tick',tick); 
 
   if($('#graphnote>h4').length === 0){
     $('#graphnote').append('<h4>Realtime FCO Task Sample</h4>');
@@ -281,7 +274,6 @@ function renderfcoGraph(taskRes) {
     $('#fcosize').text(subg_size);
   }
   $('#graphnote').show();
-
 }
 // draw ground truth pattern
 function makeGmPattern(svg) {

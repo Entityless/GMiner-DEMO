@@ -1,33 +1,89 @@
 // GLOBAL VARIABLE //
 var graphEnv = {force: undefined, svg: undefined};
-var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined, apps: undefined};
+var ENV = { 
+  stdpt: 0 , key: undefined, timeid: undefined, 
+  chart: undefined, apps: undefined};
 // Graph //
-var node_menu = [{
-  title: 'Remove Node',
-  action: function(elem, d, i) {
-    /*
-     * elem: the element occur the menu
-     * d: data bound to the elem
-     * i: index
-     */
+var node_menu = function(){
+  if(graphEnv.force.nodes().length > 1){
+    return [{
+      title: 'Remove Node',
+      action: function(elem, d, i) {
+        /*
+         * elem: the element occur the menu
+         * d: data bound to the elem
+         * i: index
+         */
+        console.log('delete node:',d);
+        var svg = graphEnv.svg,
+            force = graphEnv.force,
+            nodes = force.nodes(),
+            edges = force.force('link').links();
+        force.stop();
+
+        edges = edges.filter(function(e) {
+          return e.source != d && e.target != d;
+        });
+        nodes.splice(i, 1);
+
+        force.force('link').links(edges);
+        bindAndAlign(svg.selectAll('circle'), nodes, svg.selectAll('line'), edges);
+        if(ENV.apps === "mc"){
+          stylizeMcGraph();
+        }
+        else if(ENV.apps === "fco"){
+          stylizeFcoGraph();
+        }
+        else {
+          stylizeNormalGraph();
+        }
+        force.restart();
+
+        if(typeof ENV.removed_nodes === "undefined")
+          ENV.removed_nodes = [d.id];
+        else
+          ENV.removed_nodes.push(d.id);
+
+        d3.event.stopPropagation();
+      }
+    }];
+  }
+  else{
+    return [{
+      title: 'Cannot remove the last node of the task',
+      action: (a,b,c)=>{},
+      disabled: true
+    }];
+  }
+};
+var edge_menu = [{
+  title: 'Remove Edge',
+  action: function(elem, d, i){
+    console.log('delete edge: ', d);
     var svg = graphEnv.svg,
         force = graphEnv.force,
         nodes = force.nodes(),
         edges = force.force('link').links();
-
-    edges = edges.filter(function(e) {
-      return e.source != d && e.target != d;
-    });
-    nodes.splice(i, 1);
-
-    force.force('link').links(edges);
+    force.stop();
+    edges.splice(i, 1);
     bindAndAlign(svg.selectAll('circle'), nodes, svg.selectAll('line'), edges);
-    stylizeNormalGraph()
-    
+    if(ENV.apps === "mc"){
+      stylizeMcGraph();
+    }
+    else if(ENV.apps === "fco"){
+      stylizeFcoGraph();
+    }
+    else {
+      stylizeNormalGraph();
+    }
+    force.restart();
+    if(typeof ENV.removed_edges === "undefined")
+      ENV.removed_edges = [[d.source.id, d.target.id]];
+    else
+      ENV.removed_edges.push([d.source.id, d.target.id]);
     d3.event.stopPropagation();
   }
 }];
-
 // FORM FIELDS //
 var cache_field = {
   identifier: 'cache-size',
