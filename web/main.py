@@ -3,6 +3,7 @@ from flask import request
 import json
 import subprocess
 import time, os
+import signal
 
 from gminer_infos import *
 import gminer_infos
@@ -86,6 +87,28 @@ def kill_by_timestamp():
     del app_table[key]
     
     data = {'key': key, 'status': "stop"}
+    resp = flask.Response(json.dumps(data), mimetype='application/json')
+    return resp
+
+@app.route('/pauserequest', methods=['POST'])
+def pause_by_timestamp():
+    data = json.loads(request.data)
+    key = data['key']
+    app_table[key].send_signal(signal.SIGSTOP);
+    
+    data = {'key': key, 'status': "pause"}
+    resp = flask.Response(json.dumps(data), mimetype='application/json')
+    return resp
+
+@app.route('/resumerequest', methods=['POST'])
+def resume_by_timestamp():
+    data = json.loads(request.data)
+    key = data['key']
+    # write seed and edges and nodes to a file
+    # record this seed and control it when interact
+    app_table[key].send_signal(signal.SIGCONT);
+    
+    data = {'key': key, 'status': "ok"}
     resp = flask.Response(json.dumps(data), mimetype='application/json')
     return resp
 

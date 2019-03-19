@@ -1,17 +1,15 @@
-function stopAll(data = 0) {
+function stopAll() {
   $('#runButton').removeClass('disabled');
   $('#stopButton,#pauseButton').addClass('disabled');
+  $('#pauseButton').show();
+  $('#resumeButton').hide();
+
   $('#queues .progress').addClass('disabled');
   $('.arrows i').removeClass('move');
+
   if(typeof(ENV.timeid) != "undefined"){
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
-  }
-  if(typeof(ENV.chart) != "undefined") {
-    ENV.chart.scale('time', {
-      tickInterval: 120
-    });
-    ENV.chart.render();
   }
 }
 
@@ -91,7 +89,6 @@ function changeComponents(data){
     ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
     ENV.apps = data.apps;
     ENV.stdpt = 0;
-    ENV.chart.render();
     return;
   }
   stopAll();
@@ -99,17 +96,31 @@ function changeComponents(data){
   throw "changeComponents error";
 }
 
+function resumeInteraction(data) {
+  console.log(data, data.status);
+  if(data.status === "ok"){
+    $('#queues .progress').removeClass('disabled');
+    $('.arrows i').addClass('move');
+    ENV.timeid = setTimeout(manageInteraction, 100);
+  }
+  stopAll();
+  alert('Run command fail, please reset parameters and try again!');
+  throw "changeComponents error";
+}
 // life cycle start
 function submitRunForm(fields){
   console.log('start submit');
+
   $('#stdConsole>p').text('');
   $('#graphnote').hide();
   $('#graphnote *').remove();
-  var url = '/runrequest';
-  var data = JSON.stringify(fields);
-  console.log(data);
+  
   $('#runButton').addClass('disabled');
   $('#content>.segment').addClass('loading');
+  
+  var url = '/runrequest';
+  var data = JSON.stringify(fields);
+  console.log('[submitRunForm]',data);
   fetch(url, {
     method: 'POST',
     body: data,
@@ -118,14 +129,34 @@ function submitRunForm(fields){
   .then(resp => resp.json())
   .then(changeComponents)
   .catch(function(e) {
-    $('.arrows i').removeClass('move');
+    stopAll();
     $('#content .segment').removeClass('loading');
-    $('#runButton').removeClass('disabled');
-    $('#stopButton,#pauseButton').addClass('disabled');
-    $('#resumeButton').hide();
   });
 }
-
+function submitResumeRequest() {
+  let url = '/resumerequest';
+  let resume_req = {'key': ENV.key };
+  if(typeof ENV.removed_nodes === "undefined"
+    && typeof ENV.removed_edges === "undefined"){
+    // 1. run as normal
+    $('#pauseButton').show();
+    resume_req.removed_nodes = resume_req.removed_edges = [];
+  }
+  else{
+    $('#pauseButton').addClass('disabled').show();
+    $('#stopButton').addClass('disabled');
+    resume_req.removed_nodes = ENV.removed_nodes;
+    resume_req.removed_edges = ENV.removed_edges;
+  }
+  fetch(url, {
+    method: "POST",
+    body: JSON.stringify(resume_req),
+    headers: new Headers({'Content-Type': 'application/json'})
+  })
+  .then(resp => resp.json())
+  .then(resumeInteraction)
+  .catch(e => stopAll());
+}
 function validateFormWithDefault() {
   let now_field_values = $('#config .ui.form').form('get values');
   console.log(now_field_values);
@@ -209,7 +240,7 @@ $(document).ready(function(){
     if(!$(this).hasClass('disabled')){
       let stop_req = { "key": ENV.key };
       let url = '/stoprequest';
-      console.log(ENV.key, " request stop");
+      // console.log(ENV.key, " request stop");
       $(this).addClass('disabled');
       fetch(url, {
         method: 'POST',
@@ -225,12 +256,28 @@ $(document).ready(function(){
     if(!$(this).hasClass('disabled')){
       $(this).hide();
       $('#resumeButton').show();
+      $('#runButton').addClass('disabled');
+      
+      let pause_req = {"key": ENV.key };
+      let url = '/pauserequest';
+      fetch(url, {
+        method: "POST",
+        body: JSON.stringify(pause_req),
+        headers: new Headers({'Content-Type': 'application/json'})
+      })
+      .catch(error => {console.log('pause failed'); throw error;});
+      
+      $('#queues .progress').addClass('disabled');
+      $('.arrows i').removeClass('move');
+      if(typeof(ENV.timeid) != "undefined"){
+        clearTimeout(ENV.timeid);
+        ENV.timeid = undefined;
+      }
     }
   });
 
   $('#resumeButton').on('click', function(){
     $(this).hide();
-    $('#stopButton').addClass('disabled');
+    submitResumeRequest();
   });
-
 });
