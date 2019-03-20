@@ -202,9 +202,9 @@ function rendermcGraph(taskRes) {
   var nodes = []
   var edges = []
   for(let i=0; i < raw_node.length; ++ i){
-    nodes.push({name: raw_node[i]});
+    nodes.push({id: raw_node[i]});
     for(let j=i + 1; j < raw_node.length; ++j){
-      edges.push({"source": i, "target": j});
+      edges.push({"source": raw_node[i], "target": raw_node[j]});
     }
   }
   

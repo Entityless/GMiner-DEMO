@@ -1,7 +1,7 @@
 # Run this script in the root dir of the repo
 
 # port of the web server
-PORT=23333
+PORT=2333
 unset FLASK_APP
 export FLASK_APP=main.py
 
