@@ -186,6 +186,19 @@ unsigned long long TASK_IN_DISK_NUM=0;
 
 mutex global_lock;
 
+void rm_dumped_tasks(string dirpath){
+	DIR* dir = opendir(path.c_str());
+	struct dirent * file;
+	while ((file = readdir(dir)) != NULL)
+	{
+		if(strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0)
+			continue;
+		string filename = path + "/" + file->d_name;
+		remove(filename.c_str());
+	}
+	dec_task_num_in_disk(TASK_IN_DISK_NUM);
+}
+
 void inc_task_num_in_disk(int num)
 {
 	lock_guard<mutex> lck(global_lock);

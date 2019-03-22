@@ -48,7 +48,6 @@ def submit_bg_cmd(command):
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     return proc
 
-
 def test_wait_bg_cmd(proc):
     #return a dic, ['ok']
     if(proc.poll() == None):
@@ -511,9 +510,9 @@ def PostProcessing(signal_dic):
         # result_dic = json.loads(SlavesLineReader(signal_dic))
         result_line = SlavesLineReader(signal_dic)
         # if(len(result_line) == 0 or signal_dic['app_name'] == 'GC' or signal_dic['app_name'] == 'CD'):
-        if(len(result_line) == 0):
+        # if(len(result_line) == 0):
             #print default
-            result_line = default_line_dic[signal_dic['app_name']]
+            #result_line = default_line_dic[signal_dic['app_name']]
 
         # # sometimes wrong
         # try:

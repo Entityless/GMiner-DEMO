@@ -29,7 +29,7 @@ public:
 	int size();
 	bool empty();
 	void close();
-
+	void clear();
 private:
 	deque<T> m_queue_;
 	mutex m_mutex_;
