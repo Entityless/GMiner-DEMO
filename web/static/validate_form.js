@@ -140,13 +140,14 @@ function submitResumeRequest() {
     && typeof ENV.removed_edges == "undefined"){
     // 1. run as normal
     $('#pauseButton').show();
-    resume_req.removed_nodes = resume_req.removed_edges = [];
+    resume_req.seed_id = -1;
   }
   else{
     $('#pauseButton').addClass('disabled').show();
     $('#stopButton').addClass('disabled');
     resume_req.removed_nodes = ENV.removed_nodes;
     resume_req.removed_edges = ENV.removed_edges;
+    resume_req.seed_id = ENV.seed_id;
   }
   fetch(url, {
     method: "POST",

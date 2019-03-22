@@ -1,8 +1,10 @@
 // GLOBAL VARIABLE //
 var graphEnv = {force: undefined, svg: undefined};
 var ENV = { 
-  stdpt: 0 , key: undefined, timeid: undefined, 
-  chart: undefined, apps: undefined};
+  stdpt: 0 , key: undefined, timeid: undefined, apps: undefined, // reset in changeComponents
+  chart: undefined, 
+  removed_edges: undefined, removed_nodes: undefined, seed_id: undefined // reset in renderGraphVisualize
+};
 // Graph //
 var node_menu = function(){
   if(graphEnv.force.nodes().length > 1){

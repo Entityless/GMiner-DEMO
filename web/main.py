@@ -18,12 +18,12 @@ worker_log_path = os.environ['GMINER_LOG_PATH']
 
 def get_timestamp():
     t = time.time()
-    t = int(t * 1000 + 0.5);
+    t = int(t * 1000 + 0.5)
     return t
 
 @app.route('/')
 def main():
-    persons = gminer_infos.gminer_persons;
+    persons = gminer_infos.gminer_persons
     persons = [persons[i * 2:i * 2 + 2] for i in range(7//2 + 1)]
     supervisors = gminer_infos.gminer_supervisors
     supervisors = [supervisors[i * 2:i * 2 + 2] for i in range(7//2 + 1)]
@@ -73,7 +73,7 @@ def runApplication():
     proc = subprocess.Popen(final_cmd, shell=True, stdout=log_file)
     app_table[timestamp] = proc
 
-    data.update({'key': timestamp, 'status': "ok"});
+    data.update({'key': timestamp, 'status': "ok"})
     
     resp = flask.Response(json.dumps(data), mimetype='application/json')
     return resp
@@ -94,7 +94,7 @@ def kill_by_timestamp():
 def pause_by_timestamp():
     data = json.loads(request.data)
     key = data['key']
-    app_table[key].send_signal(signal.SIGSTOP);
+    app_table[key].send_signal(signal.SIGSTOP)
     
     data = {'key': key, 'status': "pause"}
     resp = flask.Response(json.dumps(data), mimetype='application/json')
@@ -106,7 +106,11 @@ def resume_by_timestamp():
     key = data['key']
     # write seed and edges and nodes to a file
     # record this seed and control it when interact
-    app_table[key].send_signal(signal.SIGCONT);
+    if data['seed_id'] == -1:
+        app_table[key].send_signal(signal.SIGCONT)
+    else:
+        # TODO: write to a signal file
+        app_table[key].send_signal(signal.SIGCONT)
     
     data = {'key': key, 'status': "ok"}
     resp = flask.Response(json.dumps(data), mimetype='application/json')
@@ -140,7 +144,7 @@ def send_infos():
     fname = 'runtime-infos/{}/slaves.json'.format(key)
     if os.path.exists(fname):
         with open(fname) as f:
-            graph = json.load(f);
+            graph = json.load(f)
             res['taskRes'] = graph
     else:
         res['taskRes']=""

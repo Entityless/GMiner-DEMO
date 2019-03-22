@@ -303,6 +303,8 @@ function makeGmPattern(svg) {
 function renderGraphVisualize(taskRes) {
   console.log('graph visual: ', taskRes);
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
+  ENV.removed_edges = ENV.removed_nodes = undefined;
+  ENV.seed_id = taskRes['seed_id'];
   d3.select('#maingraph').selectAll('*').remove();
   if (ENV.apps === "tc"){
     rendertcGraph(taskRes);
