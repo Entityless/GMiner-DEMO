@@ -15,7 +15,12 @@ void Subgraph<NodeT>::add_edge(NodeT & a, NodeT & b)
 	a.add_neighbor(b);
 	b.add_neighbor(a);
 }
-
+template <class NodeT>
+void Subgraph<NodeT>::del_edge(NodeT & a, NodeT & b)
+{
+	a.del_neighbor(b);
+	b.del_neighbor(a);
+}
 template <class NodeT>
 void Subgraph<NodeT>::del_node(VertexID vid)
 {

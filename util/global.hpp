@@ -161,6 +161,7 @@ extern string MERGE_DIR;
 void mk_dir(const char *dir);
 void rm_dir(string path);
 void check_dir(string path, bool force_write);
+void rm_dumped_tasks(string path);
 //=========================================================
 
 //=================multi-thread============================
@@ -201,6 +202,7 @@ const int AGG_RES_CHANNEL=204;
 const int MSCOMMUN_CHANNEL=205;
 const int SCHEDULE_HEARTBEAT_CHANNEL=206;
 const int SCHEDULE_REPORT_CHANNEL=207;
+const int DEMO_RESUME_CHANNEL=208;
 
 const int COMMUN_TIME=1;
 

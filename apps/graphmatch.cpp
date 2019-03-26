@@ -455,8 +455,9 @@ public:
 		to_output_ = true;
 		if(!to_output_)
 			return;
-
-		demo_str_ = "{\"subg\":[";
+		
+		demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
+		demo_str_ += ",\"subg\":[";
 		unsigned long long count = 0;
 
 		back_track(0, subG, Q_to_dump_, c_nodes_to_dump_, count);
@@ -568,7 +569,7 @@ public:
 				task->subG.add_node(node);
 				task->context.count = 0;
 				task->context.round = 0;
-
+				task->seed_key = v->id;
 				return task;
 			}
 			else

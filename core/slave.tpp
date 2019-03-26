@@ -138,7 +138,46 @@ void Slave<TaskT, AggregatorT>::load_graph(const char* inpath)
 	hdfsCloseFile(fs, in);
 	hdfsDisconnect(fs);
 }
+template <class TaskT,  class AggregatorT>
+void Slave<TaskT, AggregatorT>::demo_resume_handle() {
+	KeyT seed_id;
+	slave_bcast(seed_id);
+	task_pipeline_.close(); // stop task pipeline
 
+	// find in local_table_
+	VertexT* seed_vertex = local_table_.get(seed_id);
+	if(seed_vertex == NULL) return;
+	// recv resume info
+	map<string, vector<KeyT>> resume_info = recv_data<map<string, vector<KeyT>>>(MASTER_RANK, DEMO_RESUME_CHANNEL);
+	this->resume_info = move(resume_info);
+	this->resume_task = true;
+
+	rm_dumped_tasks(MERGE_DIR);
+	task_pipeline_.clear();
+	
+	TaskVec tasks;
+	TaskT * t = create_task(seed_vertex);
+	if(t != NULL)
+	{
+		t->set_to_request();
+		//all adjacents are in cache
+		if(t->is_request_empty())
+		{
+			t->task_counter_ = GetAndIncreaseCounter();
+			IncreaseComputingTaskCount();
+			t = recursive_compute(t, 0);
+			DecreaseComputingTaskCount();
+		}
+		if(t != NULL)
+		{
+			tasks.push_back(t);
+			if(tasks.size() >=  global_merge_limit)
+				dump_tasks(tasks);
+		}
+	}
+
+	task_pipeline_.open();
+}
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
 {
@@ -154,7 +193,6 @@ void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
 			//all adjacents are in cache
 			if(t->is_request_empty())
 			{
-				// t->task_counter_ = thread_demo_var_[tid].GetAndIncreaseCounter();
 				t->task_counter_ = GetAndIncreaseCounter();
 				IncreaseComputingTaskCount();
 				t = recursive_compute(t, tid);
@@ -292,13 +330,28 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 	for(int i = 0 ; i < task->to_pull.size(); i++)
 	{
 		AdjVertex& v=task->to_pull[i];
+		if(this->resume_task && (
+			find(this->resume_info["nodes"].begin(), this->resume_info["nodes"].end(), v.id) != resume_info["nodes"].end() ||
+			find(this->resume_info["src"].begin(), this->resume_info["src"].end(), v.id) != resume_info["src"].end()||
+			find(this->resume_info["dst"].begin(), this->resume_info["dst"].end(), v.id) != resume_info["dst"].end()
+		)){
+			continue;	
+		}
 		VertexT *pvtx=NULL;
 		v.wid == _my_rank? pvtx=local_table_.get(v.id) : pvtx=cache_table_.get(v.id);
 		frontier.push_back(pvtx);
 	}
-	//clear task.to_pull, reset it in compute
-	task->to_pull.clear();
-
+	// delete resume nodes and edges in subgraph
+  if(resume_task){
+    for(int i = 0; i < resume_info["src"].size(); ++ i){
+      task->subG.del_edge(
+        *(task->subG.get_node(resume_info["src"][i])), *(task->subG.get_node(resume_info["dst"][i]))
+        );
+    }
+    for(int i = 0; i < resume_info["nodes"].size(); ++ i){
+      task->subG.del_node(resume_info["nodes"][i]);
+    }
+  }
 	if(task->compute(task->subG, task->context, frontier))
 	{
 		task->set_to_request();
@@ -941,6 +994,8 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	//for debugging
 	thread debugger(&Slave::debug, this);
 
+	// for demo resume
+	// thread demo_resumer(&Slave::demo_resume_handle, this);
 	//seeding tasks in parallel
 	local_table_.load();
 
@@ -1026,6 +1081,7 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	//end the pipeline threads
 	reqThread.join();
 	respThread.join();
+  // demo_resumer.detach();
 	for( auto &t : threadpool_ ) t.join();
 	threadpool_.clear();
 

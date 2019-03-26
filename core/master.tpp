@@ -7,7 +7,47 @@ Master<AggregatorT>::Master()
 {
 	is_end_ = false;
 }
-
+template <class AggregatorT>
+void Master<AggregatorT>::check_resume_file(){
+	const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
+	const char* RESUME_PATH = getenv("GMINER_MERGE_LOG_PATH");
+	string filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt"; // must be a finished file
+	VertexID seed_id;
+	map<string, vector<VertexID>> resume_info = {
+		{"nodes", vector<VertexID>()},
+		{"src", vector<VertexID>()},
+		{"dst", vector<VertexID>()}
+	};
+	while(1){
+		ifstream in(filename);
+		if(in.is_open()){
+			VertexID src, dst;
+			in >> seed_id;
+      cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
+			// read nodes
+			while(!in.eof()){
+				in >> src;
+				if(src == finish_tag) break;
+        cout << "[check_resume_file] delete node "<<src<<endl;
+				resume_info["nodes"].push_back(src);
+			}
+			// read edges
+			while(!in.eof()){
+				in >> src >> dst;
+        cout << "[check_resume_file] delete edge " << src << " " << dst << endl;
+				resume_info["src"].push_back(src);
+				resume_info["dst"].push_back(dst);
+			}
+			//master_bcast(seed_id);
+			//int slave_id = recv_data<int>(MPI_ANY_SOURCE, DEMO_RESUME_CHANNEL);
+			//send_data<map<string, vector<VertexID>>>(resume_info, slave_id, DEMO_RESUME_CHANNEL);
+			// delete file stdio
+			remove(filename.c_str());
+      break;
+		}
+		this_thread::sleep_for(chrono::milliseconds(1000));
+	}
+}
 template <class AggregatorT>
 void Master<AggregatorT>::sys_sync()
 {
@@ -369,6 +409,7 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 	get_running_wtime();
 
 	//============================ RUN ============================
+	thread demo_resumer(&Master::check_resume_file, this);
 	thread sync(&Master::context_sync, this);
 	thread listen(&Master::schedule_listen,this);
 	// MPI_Barrier(MPI_COMM_WORLD);
@@ -392,6 +433,7 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 	sync.join();
 	listen.join();
 	steal.join();
+	demo_resumer.detach();
 	
 	printf("G-Miner application finished. Thanks for using.\n");
 	fflush(stdout);

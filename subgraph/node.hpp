@@ -74,6 +74,9 @@ struct Node
 
 	void add_neighbor(AdjNodeT& node);
 	void add_neighbor(Node& node);
+  
+  void del_neighbor(AdjNodeT& node);
+	void del_neighbor(Node& node);
 	AdjList&  get_adjlist();
 
 };

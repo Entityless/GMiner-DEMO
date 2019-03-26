@@ -52,7 +52,7 @@ public:
 	size_t taskbuf_size();
 
 	void close();
-	void clear_all() {
+	void clear() {
 		priority_queue_.clear();
 		communication_queue_.clear();
 		computation_queue_.clear();

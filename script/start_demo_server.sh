@@ -11,10 +11,13 @@ export GMINER_LOG_PATH=/home/cghuan/gminer_demo_log/
 export GMINER_MERGE_LOG_PATH=/dev/shm/chhuang/merge-gminer/
 export GMINER_HOME=$PWD
 
-rm web/runtime-infos
-ln -s $GMINER_MERGE_LOG_PATH web/runtime-infos
+#rm -rf web/runtime-infos/*
+#rm  web/runtime-infos
+#rm -r tmp/*
+#ln -s $GMINER_MERGE_LOG_PATH web/runtime-infos
 
-mpirun -n 11 -ppn 1 -f web/machines.cfg python script/python/cluster-monitor.py -d $GMINER_MERGE_LOG_PATH > /dev/null 2>&1 &
+
+mpirun -n 11 -ppn 1 -f machines.cfg python $GMINER_HOME/script/python/cluster-monitor.py -d $GMINER_MERGE_LOG_PATH > /dev/null &
 cd web/
 ls main.py
 flask run --port $PORT

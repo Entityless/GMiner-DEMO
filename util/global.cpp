@@ -186,7 +186,7 @@ unsigned long long TASK_IN_DISK_NUM=0;
 
 mutex global_lock;
 
-void rm_dumped_tasks(string dirpath){
+void rm_dumped_tasks(string path){
 	DIR* dir = opendir(path.c_str());
 	struct dirent * file;
 	while ((file = readdir(dir)) != NULL)

@@ -108,6 +108,23 @@ void Node<TaskT>::add_neighbor(Node<TaskT>& node)
 	adjlist.push_back(item);
 }
 
+  template <class TaskT>
+void Node<TaskT>::del_neighbor(typename Node<TaskT>::AdjNodeT& node)
+{
+  auto it = find(adjlist.begin(), adjlist.end(), node);
+  if(it != adjlist.end())
+    adjlist.erase(it);
+}
+
+template <class TaskT>
+void Node<TaskT>::del_neighbor(Node<TaskT>& node){
+  AdjNodeT item;
+  item.id = node.id;
+  auto it = find(adjlist.begin(), adjlist.end(), item);
+  if(it != adjlist.end())
+    adjlist.erase(it);
+}
+
 template <class TaskT>
 typename Node<TaskT>::AdjList& Node<TaskT>::get_adjlist()
 {

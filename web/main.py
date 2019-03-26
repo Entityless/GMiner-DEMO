@@ -94,6 +94,7 @@ def kill_by_timestamp():
 def pause_by_timestamp():
     data = json.loads(request.data)
     key = data['key']
+    print('[pauserequest] key: ',key)
     app_table[key].send_signal(signal.SIGSTOP)
     
     data = {'key': key, 'status': "pause"}
@@ -110,6 +111,17 @@ def resume_by_timestamp():
         app_table[key].send_signal(signal.SIGCONT)
     else:
         # TODO: write to a signal file
+        with open('runtime-infos/{}/resume_file.txt'.format(key),'w') as f:
+            f.write(str(data['seed_id']))
+            if data.get('removed_nodes'):
+                f.write('\n')
+                for node in data['removed_nodes']:
+                    f.write(str(node)+' ')
+                f.write('-1')
+            if data.get('removed_edges'):
+                f.write('\n')
+                for src, dst in data['removed_edges']:
+                    f.write(str(src) + ' ' + str(dst) + '\n')
         app_table[key].send_signal(signal.SIGCONT)
     
     data = {'key': key, 'status': "ok"}

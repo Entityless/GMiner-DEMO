@@ -54,7 +54,7 @@ function confirmContinue(is_end){
     stopAll();
     return;
   }
-  ENV.timeid = setTimeout(manageInteraction, 1000);
+  ENV.timeid = setTimeout(manageInteraction, 500);
 }
 
 function manageInteraction(){
@@ -85,7 +85,7 @@ function changeComponents(data){
       $('#gmgt').hide();      
     }
     ENV.key = data.key;
-    ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
+    ENV.timeid = setTimeout(manageInteraction, 500);
     ENV.apps = data.apps;
     ENV.stdpt = 0;
     return;
@@ -99,7 +99,7 @@ function resumeInteraction(data) {
   if(data.status === "ok"){
     $('#queues .progress').removeClass('disabled');
     $('.arrows i').addClass('move');
-    ENV.timeid = setTimeout(manageInteraction, 100);
+    ENV.timeid = setTimeout(manageInteraction, 500);
     return;
   }
   alert('[resumeInteraction] Resume command fail, please reset parameters and try again!');
@@ -144,11 +144,11 @@ function submitResumeRequest() {
   }
   else{
     $('#pauseButton').addClass('disabled').show();
-    $('#stopButton').addClass('disabled');
     resume_req.removed_nodes = ENV.removed_nodes;
     resume_req.removed_edges = ENV.removed_edges;
     resume_req.seed_id = ENV.seed_id;
   }
+  console.log('[submitResumeRequest] ', resume_req)
   fetch(url, {
     method: "POST",
     body: JSON.stringify(resume_req),

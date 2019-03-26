@@ -6,7 +6,7 @@ import os
 import subprocess
 import io
 import time
-
+gminer_root = os.environ['GMINER_HOME']
 input_path = {}
 input_path['skitter'] = {}
 input_path['youtube'] = {}
@@ -40,7 +40,7 @@ input_path['youtube']['fco'] = '/chhuang/gm_input/youtube_focus_10/'
 input_path['orkut']['fco'] = '/chhuang/gm_input/orkut_focus_10/'
 input_path['dblp']['fco'] = '/chhuang/gm_input/dblp_focus_10/'
 
-machine_file = {False : 'machines.cfg', 'ib' : 'ib_machines.cfg'}
+machine_file = {False : os.path.join(gminer_root, 'machines.cfg'), 'ib' : 'ib_machines.cfg'}
 
 def gminer_ini_gen(param_dic, worker_log_path):
 

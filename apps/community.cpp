@@ -376,7 +376,8 @@ public:
 
 			if(attrQ.size() > 0)
 			{
-				demo_str_ = "{\"subg_size\" : " + to_string(attrQ.size()) + ", \"subg_list\" : [";
+				demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
+				demo_str_ += ",\"subg_size\" : " + to_string(attrQ.size()) + ", \"subg_list\" : [";
 
 				string label_str = "[";
 
@@ -483,7 +484,7 @@ public:
 			task->context.com_attr_set.insert(attr_vec.begin(), attr_vec.end());
 
 			task->context.creator_id = v->id;
-
+			task->seed_key = v->id;
 			return task;
 		}
 		return NULL;

@@ -187,9 +187,8 @@ public:
 
 		int size = frontier.size();
 
-		// demo_str_ = "{\"subg\":[";
-
-		demo_str_ = "{\"subg\":[";
+		demo_str_ = "{\"seed_id\":" + to_string(this->seed_key);
+		demo_str_ += ",\"subg\":[";
 		unsigned long long count = 0;
 
 		map<VertexID, set<VertexID>> edges_map;
@@ -328,7 +327,7 @@ public:
 			task->context.count = 0;
 			task->context.last_id = adjlist[adjlist.size() - 1].id;
 			task->context.creator_id = v->id;
-
+			task->seed_key = v->id;
 			return task;
 		}
 		return NULL;
@@ -366,7 +365,6 @@ public:
 		cout << "The sum of all triangles is " << *agg << endl;
 	}
 };
-
 
 class TriangleWorker :public Worker<TriangleMaster, TriangleSlave, CountAgg> {};
 

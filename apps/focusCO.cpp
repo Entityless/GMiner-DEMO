@@ -374,8 +374,9 @@ public:
 				bool to_demo = true; // for GC, do not need to sample the output
 				if(context.edges.size() > 2000)
 					to_demo = false;
-
-				demo_str_ = "{\"subg_size\" : " + to_string(cluster.size()) + ", \"subg_list\" : [";
+				
+				demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
+				demo_str_ += ",\"subg_size\" : " + to_string(cluster.size()) + ", \"subg_list\" : [";
 
 				//print
 				string to_print = "my_rank = " + to_string(_my_rank);
@@ -627,6 +628,7 @@ public:
 			iter_id++;
 		}
 		task->pull(core_node_cands);
+		task->seed_key = v->id;
 		return task;
 	}
 

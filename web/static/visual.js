@@ -86,14 +86,12 @@ function stylizeNormalGraph() {
 function stylizeMcGraph() {
   var lines = graphEnv.svg.selectAll('line'),
       circles = graphEnv.svg.selectAll('circle');
-  lines.style('stroke', 'rgba(0,0,0,0.05)').style('stroke-width', 0.8)
-    .on('contextmenu', d3.contextMenu(edge_menu));
+  lines.style('stroke', 'rgba(0,0,0,0.05)').style('stroke-width', 0.8);
   
   circles.call(d3.drag()
        .on('start', function(d){dragstarted(d, graphEnv.force);})
        .on('drag', dragged)
        .on('end', function(d){dragended(d, graphEnv.force);}))
-    .on('contextmenu', d3.contextMenu(node_menu()))
     .style('fill', (d, i)=> d3.interpolateYlGnBu(-graphEnv.lineLinear(i)))
     .attr('r', 0.01 * Math.min(graphEnv.mh, graphEnv.mw));
 
@@ -301,8 +299,8 @@ function makeGmPattern(svg) {
 }
 
 function renderGraphVisualize(taskRes) {
-  console.log('graph visual: ', taskRes);
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
+  console.log('graph visual: ', taskRes);
   ENV.removed_edges = ENV.removed_nodes = undefined;
   ENV.seed_id = taskRes['seed_id'];
   d3.select('#maingraph').selectAll('*').remove();

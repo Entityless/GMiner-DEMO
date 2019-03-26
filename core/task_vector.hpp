@@ -26,6 +26,8 @@ public:
 
 	bool empty();
 
+  void clear();
+
 private:
 	vector<T> vector1_;
 	vector<T> vector2_;
