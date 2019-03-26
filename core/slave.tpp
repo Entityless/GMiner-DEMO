@@ -141,7 +141,7 @@ void Slave<TaskT, AggregatorT>::load_graph(const char* inpath)
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::demo_resume_handle() {
 	KeyT seed_id;
-	slave_bcast(seed_id);
+	seed_id = recv_data<KeyT>(MASTER_RANK, DEMO_RESUME_CHANNEL);
 	task_pipeline_.close(); // stop task pipeline
 
 	// find in local_table_
@@ -995,7 +995,7 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	thread debugger(&Slave::debug, this);
 
 	// for demo resume
-	// thread demo_resumer(&Slave::demo_resume_handle, this);
+	thread demo_resumer(&Slave::demo_resume_handle, this);
 	//seeding tasks in parallel
 	local_table_.load();
 
@@ -1081,7 +1081,7 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	//end the pipeline threads
 	reqThread.join();
 	respThread.join();
-  // demo_resumer.detach();
+  demo_resumer.detach();
 	for( auto &t : threadpool_ ) t.join();
 	threadpool_.clear();
 

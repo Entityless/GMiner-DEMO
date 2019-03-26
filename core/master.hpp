@@ -58,7 +58,7 @@ public:
 
 	void WriteSignalFile();
 	void run(const WorkerParams& params);
-  void check_resume_file();
+  	void check_resume_file();
 
 private:
 	static const VertexID finish_tag = -1;

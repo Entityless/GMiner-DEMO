@@ -23,27 +23,27 @@ void Master<AggregatorT>::check_resume_file(){
 		if(in.is_open()){
 			VertexID src, dst;
 			in >> seed_id;
-      cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
+      		cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
 			// read nodes
 			while(!in.eof()){
 				in >> src;
 				if(src == finish_tag) break;
-        cout << "[check_resume_file] delete node "<<src<<endl;
+        		cout << "[check_resume_file] delete node "<<src<<endl;
 				resume_info["nodes"].push_back(src);
 			}
 			// read edges
 			while(!in.eof()){
 				in >> src >> dst;
-        cout << "[check_resume_file] delete edge " << src << " " << dst << endl;
+        		cout << "[check_resume_file] delete edge " << src << " " << dst << endl;
 				resume_info["src"].push_back(src);
 				resume_info["dst"].push_back(dst);
 			}
-			//master_bcast(seed_id);
-			//int slave_id = recv_data<int>(MPI_ANY_SOURCE, DEMO_RESUME_CHANNEL);
-			//send_data<map<string, vector<VertexID>>>(resume_info, slave_id, DEMO_RESUME_CHANNEL);
+			master_bcast_point(seed_id, DEMO_RESUME_CHANNEL);
+			int slave_id = recv_data<int>(MPI_ANY_SOURCE, DEMO_RESUME_CHANNEL);
+			send_data<map<string, vector<VertexID>>>(resume_info, slave_id, DEMO_RESUME_CHANNEL);
 			// delete file stdio
 			remove(filename.c_str());
-      break;
+      		break;
 		}
 		this_thread::sleep_for(chrono::milliseconds(1000));
 	}
