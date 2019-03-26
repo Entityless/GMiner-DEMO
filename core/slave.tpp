@@ -18,6 +18,7 @@ Slave<TaskT, AggregatorT>::Slave()
     task_count_ = 0;
     task_counter_ = _my_rank;
     pthread_spin_init(&task_counter_lock_, 0);
+    resume_task = false;
 }
 
 //PART 2 =======================================================
@@ -142,18 +143,29 @@ template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::demo_resume_handle() {
 	KeyT seed_id;
 	seed_id = recv_data<KeyT>(MASTER_RANK, DEMO_RESUME_CHANNEL);
-	task_pipeline_.close(); // stop task pipeline
 
-	// find in local_table_
-	VertexT* seed_vertex = local_table_.get(seed_id);
-	if(seed_vertex == NULL) return;
-	// recv resume info
-	map<string, vector<KeyT>> resume_info = recv_data<map<string, vector<KeyT>>>(MASTER_RANK, DEMO_RESUME_CHANNEL);
-	this->resume_info = move(resume_info);
-	this->resume_task = true;
+	this->resume_task = true; // must set to true before close pipeline
+  task_pipeline_.close(); // stop task pipeline
 
+  // find in local_table_
 	rm_dumped_tasks(MERGE_DIR);
 	task_pipeline_.clear();
+
+	VertexT* seed_vertex = local_table_.get(seed_id);
+  if(seed_vertex == NULL){
+    cout << "[demo_resume_handle] slave id: " << _my_rank<<" exit " << endl;
+    this->resume_task = false;
+    return;
+  }
+
+	map<string, vector<KeyT>> resume_info;
+  if(seed_vertex != NULL){
+    cout << "[demo_resume_handle] slave id: " << _my_rank<<" recv seed id " << seed_id << endl;
+    send_data(_my_rank, MASTER_RANK, DEMO_RESUME_CHANNEL);
+    resume_info = recv_data<map<string, vector<KeyT>>>(MASTER_RANK, DEMO_RESUME_CHANNEL);
+	  // recv resume info
+	  this->resume_info = move(resume_info);
+  }
 	
 	TaskVec tasks;
 	TaskT * t = create_task(seed_vertex);
@@ -175,7 +187,6 @@ void Slave<TaskT, AggregatorT>::demo_resume_handle() {
 				dump_tasks(tasks);
 		}
 	}
-
 	task_pipeline_.open();
 }
 template <class TaskT,  class AggregatorT>
@@ -351,6 +362,7 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
     for(int i = 0; i < resume_info["nodes"].size(); ++ i){
       task->subG.del_node(resume_info["nodes"][i]);
     }
+    cout << "[recursive_compute] delete node and edges end " <<endl;
   }
 	if(task->compute(task->subG, task->context, frontier))
 	{
@@ -411,7 +423,13 @@ void Slave<TaskT, AggregatorT>::pull_PQ_to_CMQ()
 		CountMap to_pull;
 
 		bool status = task_pipeline_.pq_pop_front(tasks);
-		if(!status) break;
+		if(!status){
+      if(resume_task){
+        cout << "[pull_PQ_to_CMQ] " << _my_rank << " exits" <<endl;
+        continue;
+      }
+      break;
+    }
 
 		for(int i = 0; i < tasks.size(); i++)
 		{
@@ -517,7 +535,10 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 	{
 		TaskPackage<TaskT> pkg;
 		bool status = task_pipeline_.cmq_pop_front(pkg);
-		if(!status) break;
+    if(!status){
+      if(resume_task) continue;
+      break;
+    }
 
 		vector<int>& dsts = pkg.dsts;
 		for(int i = 0; i < dsts.size(); i++)
@@ -542,6 +563,8 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 			vtx_req_cond_.notify_one();
 		}
 	}
+
+  // cout << "[pull_CMQ_to_CPQ]" << _my_rank << "  exits" <<endl;
 }
 
 template <class TaskT,  class AggregatorT>
@@ -578,7 +601,10 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 	{
 		TaskT* t;
 		bool status = task_pipeline_.cpq_pop_front(t);
-		if(!status) break;
+		if(!status){
+      if(resume_task) continue;
+      break;
+    }
 
 		vector<int> & reqs = t->to_request;
 		AdjVtxList & nbs = t->to_pull;
@@ -624,14 +650,18 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 		compute_lock_.unlock();
 		compute_cond_.notify_one();
 	}
+  // cout << "[pull_CPQ_to_taskbuf] " << _my_rank << " exits" <<endl;
 }
 
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::run_to_no_task()
 {
 	//check whether there is any task in system
-	while(get_task_num_in_memory() || get_task_num_in_disk())
+	while(get_task_num_in_memory() || get_task_num_in_disk() || resume_task)
 	{
+    if(resume_task)
+      continue;
+
 		{
 			unique_lock<mutex> lck(compute_lock_);
 			while(task_pipeline_.taskbuf_size() < global_taskBuf_size && get_task_num_in_disk())
@@ -645,6 +675,7 @@ void Slave<TaskT, AggregatorT>::run_to_no_task()
 		task_sorter_.sign_and_sort_tasks(tasks, signed_tasks);
 		task_pipeline_.pq_push_back(signed_tasks);
 	}
+  // cout << "[run_to_no_task] " << _my_rank << " exit"<<endl;
 }
 
 template <class TaskT,  class AggregatorT>
@@ -1019,84 +1050,84 @@ void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
 	thread reqThread(&Slave::pull_PQ_to_CMQ, this);
 	thread respThread(&Slave::pull_CMQ_to_CPQ, this);
 	for( unsigned i = 0; i < threadpool_size_; ++i )
-		threadpool_.emplace_back(std::thread(&Slave::pull_CPQ_to_taskbuf, this, i));
-	run_to_no_task();
+      threadpool_.emplace_back(std::thread(&Slave::pull_CPQ_to_taskbuf, this, i));
+    run_to_no_task();
 
-	// MPI_Barrier(MPI_COMM_WORLD);
-	cout << _my_rank << ": Regular Work Pipeline is Done, Start Task Stealing Stage." << endl;
+    // MPI_Barrier(MPI_COMM_WORLD);
+    cout << _my_rank << ": Regular Work Pipeline is Done, Start Task Stealing Stage." << endl;
 
 
-	//Task Stealing Step
-	queue<ibinstream> streams;
-	queue<MPI_Request> requests;
-	while(1)
-	{
-		send_data(get_worker_id(), MASTER_RANK, SCHEDULE_REPORT_CHANNEL);
-		int tgt_wid = recv_data<int>(MASTER_RANK, SCHEDULE_REPORT_CHANNEL);
-		if(tgt_wid == NO_WORKER_BUSY)
-		{
-			break;
-		}
-		else
-		{
-			//request a task from the corresponding worker
-			//and
-			//receive the task, recompute the remote vertices and do computation
-			streams.push(ibinstream());
-			requests.push(MPI_Request());
-			set_steal(streams.back());
-			send_ibinstream_nonblock(streams.back(), tgt_wid, REQUEST_CHANNEL, requests.back());
+    //Task Stealing Step
+    queue<ibinstream> streams;
+    queue<MPI_Request> requests;
+    while(1)
+    {
+      send_data(get_worker_id(), MASTER_RANK, SCHEDULE_REPORT_CHANNEL);
+      int tgt_wid = recv_data<int>(MASTER_RANK, SCHEDULE_REPORT_CHANNEL);
+      if(tgt_wid == NO_WORKER_BUSY)
+      {
+        break;
+      }
+      else
+      {
+        //request a task from the corresponding worker
+        //and
+        //receive the task, recompute the remote vertices and do computation
+        streams.push(ibinstream());
+        requests.push(MPI_Request());
+        set_steal(streams.back());
+        send_ibinstream_nonblock(streams.back(), tgt_wid, REQUEST_CHANNEL, requests.back());
 
-			TaskVec tasks;
-			int num;
+        TaskVec tasks;
+        int num;
 
-			obinstream um = recv_obinstream(tgt_wid, RESPOND_CHANNEL);
-			um >> num;
-			for(int i=0; i<num; i++)
-			{
-				TaskT * t = new TaskT;
-				um >> *t;
-				tasks.push_back(t);
-			}
-			inc_task_num_in_memory(num);
-			vector<KTpair> signed_tasks;
-			task_sorter_.sign_and_sort_tasks(tasks, signed_tasks);
-			task_pipeline_.pq_push_back(signed_tasks);
-			run_to_no_task();
+        obinstream um = recv_obinstream(tgt_wid, RESPOND_CHANNEL);
+        um >> num;
+        for(int i=0; i<num; i++)
+        {
+          TaskT * t = new TaskT;
+          um >> *t;
+          tasks.push_back(t);
+        }
+        inc_task_num_in_memory(num);
+        vector<KTpair> signed_tasks;
+        task_sorter_.sign_and_sort_tasks(tasks, signed_tasks);
+        task_pipeline_.pq_push_back(signed_tasks);
+        run_to_no_task();
 
-			if(requests.size() > 0){
-				int test_flag;
-				MPI_Test(&requests.front(), &test_flag, MPI_STATUS_IGNORE);
-				if(test_flag){
-					streams.pop();
-					requests.pop();
-				}
-			}
-		}
-	}
+        if(requests.size() > 0){
+          int test_flag;
+          MPI_Test(&requests.front(), &test_flag, MPI_STATUS_IGNORE);
+          if(test_flag){
+            streams.pop();
+            requests.pop();
+          }
+        }
+      }
+    }
 
-	//close the queues in task_pipeline
-	task_pipeline_.close();
+    //close the queues in task_pipeline
+    task_pipeline_.close();
 
-	//end the pipeline threads
-	reqThread.join();
-	respThread.join();
-  demo_resumer.detach();
-	for( auto &t : threadpool_ ) t.join();
-	threadpool_.clear();
+    //end the pipeline threads
+    reqThread.join();
+    respThread.join();
+    demo_resumer.detach();
+    for( auto &t : threadpool_ ) t.join();
+    threadpool_.clear();
 
-	//end the computation
-	end_recver();
-	end_report();
-	end_sync();
+    //end the computation
+    end_recver();
+    end_report();
+    end_sync();
 
-	//join the left threads
-	recver.join();
-	reporter.join();
-	sync.join();
+    //join the left threads
+    recver.join();
+    reporter.join();
+    sync.join();
 
-	thread_demo_str_finalize();
+    thread_demo_str_finalize();
 
-	//join the debugger threads
-	debugger.join();
+    //join the debugger threads
+    debugger.join();
 }

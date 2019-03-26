@@ -588,16 +588,15 @@ void master_bcast_point(T& to_send, int tag) {
 	StopTimer(SERIALIZATION_TIMER);
 
 	StartTimer(TRANSFER_TIMER);
-	MPI_Request* requests[_num_workers] = {NULL};
+	MPI_Request requests[_num_workers];
+
 	for(int i = 0; i < _num_workers; ++ i){
-		requests[i] = new MPI_Request();
 		if(i != MASTER_RANK)
-			send_ibinstream_nonblock(m, i, tag, *(requests[i]));
+			send_ibinstream_nonblock(m, i, tag, requests[i]);
 	}
 	for(int i = 0; i < _num_workers; ++ i){
-		if(requests[i] != NULL){
-			MPI_Wait(requests[i], MPI_STATUS_IGNORE);
-			delete requests[i];
+		if(i != MASTER_RANK){
+			MPI_Wait(&requests[i], MPI_STATUS_IGNORE);
 		}
 	}
 }

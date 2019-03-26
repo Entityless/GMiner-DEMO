@@ -40,10 +40,11 @@ void Master<AggregatorT>::check_resume_file(){
 			}
 			master_bcast_point(seed_id, DEMO_RESUME_CHANNEL);
 			int slave_id = recv_data<int>(MPI_ANY_SOURCE, DEMO_RESUME_CHANNEL);
+      cout << "[check_resume_file] confirm slave id: "<<slave_id<<endl;
 			send_data<map<string, vector<VertexID>>>(resume_info, slave_id, DEMO_RESUME_CHANNEL);
 			// delete file stdio
 			remove(filename.c_str());
-      		break;
+      break;
 		}
 		this_thread::sleep_for(chrono::milliseconds(1000));
 	}

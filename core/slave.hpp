@@ -242,6 +242,7 @@ private:
 
 	// resume
 	bool resume_task = false;
+  // mutex pq_cmq_mx, cmq_cpq_mx, cpq_buf_mx;
 	map<string, vector<VertexID>> resume_info;
 };
 
