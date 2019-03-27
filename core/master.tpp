@@ -6,6 +6,7 @@ template <class AggregatorT>
 Master<AggregatorT>::Master()
 {
 	is_end_ = false;
+	resume_task = false;
 }
 template <class AggregatorT>
 void Master<AggregatorT>::check_resume_file(){
@@ -21,6 +22,8 @@ void Master<AggregatorT>::check_resume_file(){
 	while(1){
 		ifstream in(filename);
 		if(in.is_open()){
+			resume_task = true;
+
 			VertexID src, dst;
 			in >> seed_id;
       		cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
@@ -38,15 +41,21 @@ void Master<AggregatorT>::check_resume_file(){
 				resume_info["src"].push_back(src);
 				resume_info["dst"].push_back(dst);
 			}
+			in.close();
+
 			master_bcast_point(seed_id, DEMO_RESUME_CHANNEL);
 			int slave_id = recv_data<int>(MPI_ANY_SOURCE, DEMO_RESUME_CHANNEL);
-      cout << "[check_resume_file] confirm slave id: "<<slave_id<<endl;
+      		cout << "[check_resume_file] confirm slave id: "<<slave_id<<endl;
 			send_data<map<string, vector<VertexID>>>(resume_info, slave_id, DEMO_RESUME_CHANNEL);
-			// delete file stdio
-			remove(filename.c_str());
-      break;
+			
+			string demo_str = recv_data<string>(slave_id, DEMO_RESUME_CHANNEL);
+			filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result.json";
+			ofstream out(filename);
+			out << demo_str;
+			out.close();
+      		break;
 		}
-		this_thread::sleep_for(chrono::milliseconds(1000));
+		this_thread::sleep_for(chrono::milliseconds(500));
 	}
 }
 template <class AggregatorT>
@@ -116,6 +125,8 @@ void Master<AggregatorT>::sys_sync()
 		fflush(f);
 		fclose(f);
 	}
+
+	resume_task = all_bor(resume_task); // send resume task signal
 }
 
 template <class AggregatorT>

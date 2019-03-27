@@ -68,7 +68,7 @@ private:
 	condition_variable end_cond_;
 
 	map<int, Progress> progress_map_;
-
+	bool resume_task;
 };
 
 

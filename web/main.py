@@ -12,6 +12,7 @@ import utils.ini_generator
 app = flask.Flask(__name__)
 app_table = {}
 manager_table = {}
+paused_key_set = set()
 
 merger_log_path = os.environ['GMINER_MERGE_LOG_PATH']
 worker_log_path = os.environ['GMINER_LOG_PATH']
@@ -95,6 +96,7 @@ def pause_by_timestamp():
     data = json.loads(request.data)
     key = data['key']
     print('[pauserequest] key: ',key)
+    paused_key_set.add(key)
     app_table[key].send_signal(signal.SIGSTOP)
     
     data = {'key': key, 'status': "pause"}
@@ -108,6 +110,7 @@ def resume_by_timestamp():
     # write seed and edges and nodes to a file
     # record this seed and control it when interact
     if data['seed_id'] == -1:
+        paused_key_set.discard(key)
         app_table[key].send_signal(signal.SIGCONT)
     else:
         # TODO: write to a signal file
@@ -153,13 +156,18 @@ def send_infos():
 
     # 3. read system info
     # 4. read graph info
-    fname = 'runtime-infos/{}/slaves.json'.format(key)
+    if key in paused_key_set:
+        fname = 'runtime-infos/{}/resume_result.json'.format(key)
+    else:
+        fname = 'runtime-infos/{}/slaves.json'.format(key)
+
     if os.path.exists(fname):
         with open(fname) as f:
             graph = json.load(f)
             res['taskRes'] = graph
     else:
         res['taskRes']=""
+
     global last_sub_graph
     if res['taskRes'] == last_sub_graph:
         res['taskRes'] = ""

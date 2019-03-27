@@ -141,11 +141,13 @@ void Slave<TaskT, AggregatorT>::load_graph(const char* inpath)
 }
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::demo_resume_handle() {
+	{
+		unique_lock<mutex> lck(resume_signal_mx);
+		resume_signal_cond.wait(lck);
+	}
+
 	KeyT seed_id;
 	seed_id = recv_data<KeyT>(MASTER_RANK, DEMO_RESUME_CHANNEL);
-
-	this->resume_task = true; // must set to true before close pipeline
-  task_pipeline_.close(); // stop task pipeline
 
   // find in local_table_
 	rm_dumped_tasks(MERGE_DIR);
@@ -154,40 +156,38 @@ void Slave<TaskT, AggregatorT>::demo_resume_handle() {
 	VertexT* seed_vertex = local_table_.get(seed_id);
   if(seed_vertex == NULL){
     cout << "[demo_resume_handle] slave id: " << _my_rank<<" exit " << endl;
-    this->resume_task = false;
     return;
   }
-
-	map<string, vector<KeyT>> resume_info;
-  if(seed_vertex != NULL){
+	else{
+		map<string, vector<KeyT>> resume_info;
     cout << "[demo_resume_handle] slave id: " << _my_rank<<" recv seed id " << seed_id << endl;
     send_data(_my_rank, MASTER_RANK, DEMO_RESUME_CHANNEL);
     resume_info = recv_data<map<string, vector<KeyT>>>(MASTER_RANK, DEMO_RESUME_CHANNEL);
 	  // recv resume info
 	  this->resume_info = move(resume_info);
-  }
-	
-	TaskVec tasks;
-	TaskT * t = create_task(seed_vertex);
-	if(t != NULL)
-	{
-		t->set_to_request();
-		//all adjacents are in cache
-		if(t->is_request_empty())
-		{
-			t->task_counter_ = GetAndIncreaseCounter();
-			IncreaseComputingTaskCount();
-			t = recursive_compute(t, 0);
-			DecreaseComputingTaskCount();
-		}
+  
+		TaskVec tasks;
+		TaskT * t = create_task(seed_vertex);
 		if(t != NULL)
 		{
-			tasks.push_back(t);
-			if(tasks.size() >=  global_merge_limit)
-				dump_tasks(tasks);
+			t->resume_task = true;
+			t->set_to_request();
+			//all adjacents are in cache
+			if(t->is_request_empty())
+			{
+				t->task_counter_ = GetAndIncreaseCounter();
+				IncreaseComputingTaskCount();
+				t = recursive_compute(t, 0);
+				DecreaseComputingTaskCount();
+			}
+			if(t != NULL)
+			{
+				tasks.push_back(t);
+				if(tasks.size() >=  global_merge_limit)
+					dump_tasks(tasks);
+			}
 		}
 	}
-	task_pipeline_.open();
 }
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::grow_tasks(int tid)
@@ -336,12 +336,16 @@ void Slave<TaskT, AggregatorT>::thread_demo_str_finalize()
 template <class TaskT,  class AggregatorT>
 TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 {
+	if(resume_task && !task->resume_task){
+		delete task;
+		return NULL;
+	}
 	//set frontier for UDF compute
 	vector<VertexT *> frontier;
 	for(int i = 0 ; i < task->to_pull.size(); i++)
 	{
 		AdjVertex& v=task->to_pull[i];
-		if(this->resume_task && (
+		if(resume_task && (
 			find(this->resume_info["nodes"].begin(), this->resume_info["nodes"].end(), v.id) != resume_info["nodes"].end() ||
 			find(this->resume_info["src"].begin(), this->resume_info["src"].end(), v.id) != resume_info["src"].end()||
 			find(this->resume_info["dst"].begin(), this->resume_info["dst"].end(), v.id) != resume_info["dst"].end()
@@ -402,7 +406,11 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 				thread_demo_str_compute(task->demo_str_, tid);
 			}
 		}
-
+		
+		if(resume_task && task->resume_task){
+			// send task->demo_str_,
+			send_data<string>(task->demo_str_, MASTER_RANK, DEMO_RESUME_CHANNEL);
+		}
 		delete task;
 		return NULL;
 	}
@@ -423,13 +431,7 @@ void Slave<TaskT, AggregatorT>::pull_PQ_to_CMQ()
 		CountMap to_pull;
 
 		bool status = task_pipeline_.pq_pop_front(tasks);
-		if(!status){
-      if(resume_task){
-        cout << "[pull_PQ_to_CMQ] " << _my_rank << " exits" <<endl;
-        continue;
-      }
-      break;
-    }
+		if(!status) break;
 
 		for(int i = 0; i < tasks.size(); i++)
 		{
@@ -535,10 +537,7 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 	{
 		TaskPackage<TaskT> pkg;
 		bool status = task_pipeline_.cmq_pop_front(pkg);
-    if(!status){
-      if(resume_task) continue;
-      break;
-    }
+    if(!status) break;
 
 		vector<int>& dsts = pkg.dsts;
 		for(int i = 0; i < dsts.size(); i++)
@@ -564,7 +563,6 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 		}
 	}
 
-  // cout << "[pull_CMQ_to_CPQ]" << _my_rank << "  exits" <<endl;
 }
 
 template <class TaskT,  class AggregatorT>
@@ -601,11 +599,11 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 	{
 		TaskT* t;
 		bool status = task_pipeline_.cpq_pop_front(t);
-		if(!status){
-      if(resume_task) continue;
-      break;
-    }
-
+		if(!status) break;
+		if(resume_task && !task->resume_task){
+			delete t;
+			continue;
+		}
 		vector<int> & reqs = t->to_request;
 		AdjVtxList & nbs = t->to_pull;
 		AdjVtxList refs;
@@ -657,11 +655,8 @@ template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::run_to_no_task()
 {
 	//check whether there is any task in system
-	while(get_task_num_in_memory() || get_task_num_in_disk() || resume_task)
+	while(get_task_num_in_memory() || get_task_num_in_disk())
 	{
-    if(resume_task)
-      continue;
-
 		{
 			unique_lock<mutex> lck(compute_lock_);
 			while(task_pipeline_.taskbuf_size() < global_taskBuf_size && get_task_num_in_disk())
@@ -779,6 +774,7 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 
 	// MPI_Barrier(MPI_COMM_WORLD);
 	slave_gather(part);
+	
 
 	//fake agg_sync
 	//TODO: if agg_sync just happens, then do not call this again, but utilize the result of gather in agg_sync
@@ -798,7 +794,10 @@ void Slave<TaskT, AggregatorT>::sys_sync()
 	}
 
 	thread_demo_str_period();
-
+	resume_task = all_bor(resume_task); // send resume task signal
+	if(resume_task){
+		resume_signal_cond.notify_all();
+	}
 	sys_sync_time_++;
 }
 
