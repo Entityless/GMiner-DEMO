@@ -176,7 +176,7 @@ def send_infos():
             try:
                 graph = json.load(f)
                 res['taskRes'] = graph
-                if key in paused_key_set and graph.get('status', False):
+                if key in paused_key_set and 'status' not in graph:
                     res['taskRes']['status'] = "resume"
             except json.decoder.JSONDecodeError:
                 res['taskRes'] = ""

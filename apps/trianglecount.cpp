@@ -166,6 +166,8 @@ public:
 
 	bool check_status() override
 	{
+                if(resume_task)
+                        return true;
 		if(context.count > 4 && context.count < 8)
 		{
 			return true;
@@ -176,7 +178,7 @@ public:
 	void dump_context() override
 	{
 		//filter
-		if(fine_task_counter_ % 20 != 0)
+		if(!resume_task && fine_task_counter_ % 20 != 0)
 		{
 			return;
 		}

@@ -314,7 +314,7 @@ function renderGraphVisualize(taskRes) {
     return;
   }
   else if(taskRes["status"] === "resume"){
-    resumeTaskGraphNode("Get new result");
+    resumeTaskGraphNote("Get new result");
     d3.select('#maingraph').selectAll('*').remove();
   }
   else{

@@ -437,6 +437,9 @@ public:
 
 	bool check_status() override
 	{
+        if (resume_task)
+            return true;
+
 		if(context.count > 3 && context.count < 10)
 		{
 			return true;
@@ -447,7 +450,7 @@ public:
 	void dump_context() override
 	{
 		//filter
-		if(fine_task_counter_ % 2 != 0)
+		if(resume_task ||fine_task_counter_ % 2 != 0)
 		{
 			return;
 		}

@@ -306,7 +306,7 @@ public:
 
 						bool case1 = (!has_common && (Q.size() >= K_THRESHOLD + 1));
 						bool case2 = (has_common && (Q.size() >= K_THRESHOLD));
-						if (case1 || case2)
+						if (case1 || case2 || resume_task)
 						{
 							vector<VertexID> temp(Q);
 							if (!has_common)
@@ -469,7 +469,7 @@ public:
 		candidates.insert(candidates.end(), v_iter, adjlist.end());
 
 		const vector<AttrValueT>& attr_vec = v->attr.get_attr_vec();
-		if ((candidates.size() >= K_THRESHOLD - 1) && (!attr_vec.empty()))
+		if ((candidates.size() >= K_THRESHOLD - 1 || resume_task) && (!attr_vec.empty()))
 		{
 			AdjVertex seed_vtx(v->id, get_worker_id());
 			candidates.push_back(seed_vtx);

@@ -241,10 +241,11 @@ private:
 	int last_task_finished_ = 0, last_task_recycle_ = 0, last_task_to_cmq_ = 0, last_task_to_cpq_ = 0;
 
 	// resume
-	bool resume_task = false;
   mutex resume_signal_mx;
 	condition_variable resume_signal_cond;
 	map<string, vector<VertexID>> resume_info;
+protected:
+	bool resume_task = false;
 };
 
 

@@ -3,6 +3,7 @@ function stopAll() {
   $('#stopButton,#pauseButton').addClass('disabled');
   $('#pauseButton').show();
   $('#resumeButton').hide();
+  $('#graphPanel .dimmer').removeClass('active');
 
   $('#queues .progress').addClass('disabled');
   $('.arrows i').removeClass('move');

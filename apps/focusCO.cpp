@@ -389,7 +389,7 @@ public:
 					to_print += " " + to_string(cluster[i]);
 				}
 
-				if(to_demo)
+				if(to_demo || resume_task)
 				{
 					demo_str_ += "], \"conn_list\":[";
 

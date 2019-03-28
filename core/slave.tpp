@@ -440,6 +440,7 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
         }
 
         if(resume_task && task->resume_task){
+            task->dump_context();
             if(task->demo_str_.size())
                 send_data<string>(task->demo_str_, MASTER_RANK, DEMO_RESUME_CHANNEL);
             else
