@@ -13,10 +13,15 @@ app = flask.Flask(__name__)
 app_table = {}
 manager_table = {}
 paused_key_set = set()
+finished_key_set = set()
 
 merger_log_path = os.environ['GMINER_MERGE_LOG_PATH']
 worker_log_path = os.environ['GMINER_LOG_PATH']
 
+def discardByKey(key):
+    del app_table[key]
+    paused_key_set.discard(key)
+    
 def get_timestamp():
     t = time.time()
     t = int(t * 1000 + 0.5)
@@ -112,6 +117,11 @@ def resume_by_timestamp():
     if data['seed_id'] == -1:
         paused_key_set.discard(key)
         app_table[key].send_signal(signal.SIGCONT)
+        data = {'key': key, 'status': "ok"}
+    elif key in finished_key_set:
+        finished_key_set.discard(key)
+        app_table[key].send_signal(signal.SIGCONT)
+        data = {"key": key, 'status': 'finished'}
     else:
         # TODO: write to a signal file
         with open('runtime-infos/{}/resume_file.txt'.format(key),'w') as f:
@@ -126,8 +136,8 @@ def resume_by_timestamp():
                 for src, dst in data['removed_edges']:
                     f.write(str(src) + ' ' + str(dst) + '\n')
         app_table[key].send_signal(signal.SIGCONT)
-    
-    data = {'key': key, 'status': "ok"}
+        data = {'key': key, 'status': "ok"}
+
     resp = flask.Response(json.dumps(data), mimetype='application/json')
     return resp
 
@@ -163,8 +173,13 @@ def send_infos():
 
     if os.path.exists(fname):
         with open(fname) as f:
-            graph = json.load(f)
-            res['taskRes'] = graph
+            try:
+                graph = json.load(f)
+                res['taskRes'] = graph
+                if key in paused_key_set and graph.get('status', False):
+                    res['taskRes']['status'] = "resume"
+            except json.decoder.JSONDecodeError:
+                res['taskRes'] = ""
     else:
         res['taskRes']=""
 
@@ -175,6 +190,8 @@ def send_infos():
         last_sub_graph = res['taskRes']
     # 5. if end
     res['end'] = 0 if app_table[int(key)].poll() is None else 1
+    if res['end'] == 1:
+        discardByKey(key)
     respon = flask.Response(json.dumps(res), mimetype='application/json')
     res['text'] = 'deleted'
     print('interaction info:', res)

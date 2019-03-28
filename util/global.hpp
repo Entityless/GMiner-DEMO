@@ -242,7 +242,7 @@ extern double SYS_SLEEP_TIME;
 
 //==========================DEMO Parameters==========================
 extern string DEMO_LOG_PATH;
-
+extern const string RESUME_DEMO_STR_EMPTY;
 
 void load_hdfs_config();
 void load_system_parameters(WorkerParams& param);

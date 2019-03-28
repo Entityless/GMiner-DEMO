@@ -104,13 +104,18 @@
                   </table>
                 </div>
               </div>
-              <div id="graphPanel">
+              <div id="graphPanel" class="ui segment">
+                <div class="ui inverted dimmer">
+                  <div class="ui text loader">Submit job...</div>
+                </div>
                 <div id="gmgt">
                   <h4 style="text-align:center; margin-top: 5px;">Pattern</h4>
                   <svg>
                   </svg>
                 </div>
                 <div id="graphnote">
+                </div>
+                <div id="statusTag">
                 </div>
                 <svg id="maingraph">
                 </svg>
@@ -455,7 +460,15 @@
         </div>
       </div>
     </div>
-
+    <div class="ui tiny modal" id="resumeModal">
+      <i class="close icon"></i>
+      <div class="content">
+        <p>
+        Sorry, because of <b>inevitable network delay</b>
+        , the job can not be resumed because it finished before this resume request.
+        </p>
+      </div>
+    </div>
     <!-- scripts -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="http://static.runoob.com/assets/jquery-validation-1.14.0/dist/jquery.validate.min.js"></script>

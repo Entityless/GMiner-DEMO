@@ -52,17 +52,8 @@ public:
 	size_t taskbuf_size();
 
 	void close();
-	void clear() {
-		priority_queue_.clear();
-		communication_queue_.clear();
-		computation_queue_.clear();
-		task_buffer_.clear();
-	}
-	void open() {
-		priority_queue_.open();
-		communication_queue_.open();
-		computation_queue_.open();
-	}
+    void clear();
+	
 private:
 	PQ priority_queue_;
 	CMQ communication_queue_;

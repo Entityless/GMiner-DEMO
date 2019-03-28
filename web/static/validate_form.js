@@ -22,7 +22,7 @@ function renderComponents(data){
     $('#stdConsole').scrollTop($('#stdConsole')[0].scrollHeight);
   }
   data['text'] = '';
-  console.log('[renderComponents] ', data);
+  // console.log('[renderComponents] ', data);
   ENV.stdpt = data.stdpt;
 
   arrow_label_suffix = ' Tasks/sec';
@@ -51,6 +51,7 @@ function renderComponents(data){
 
 function confirmContinue(is_end){
   if(is_end == '1'){
+    $('#statusTag').text('Job Finished .').show();
     stopAll();
     return;
   }
@@ -73,9 +74,9 @@ function manageInteraction(){
 
 function changeComponents(data){
   if(data.status === "ok"){
-    $('#content .segment').removeClass('loading');
     $('#stopButton,#pauseButton').removeClass('disabled');
     $('#queues .progress').removeClass('disabled');
+    $('#graphPanel .text.loader').text('Loading graph from HDFS...');
     $('.arrows i').addClass('move');
     d3.select('#maingraph').selectAll('*').remove();
     if(data["apps"] === "gm"){
@@ -102,6 +103,9 @@ function resumeInteraction(data) {
     ENV.timeid = setTimeout(manageInteraction, 500);
     return;
   }
+  else if(data.status === "finished"){
+    $('#resumeModal').modal('show');    
+  }
   alert('[resumeInteraction] Resume command fail, please reset parameters and try again!');
   throw "changeComponents error";
 }
@@ -112,9 +116,10 @@ function submitRunForm(fields){
   $('#stdConsole>p').text('');
   $('#graphnote').hide();
   $('#graphnote *').remove();
+  $('#statusTag').hide();
   
   $('#runButton').addClass('disabled');
-  $('#content>.segment').addClass('loading');
+  $('#graphPanel .dimmer').addClass('active');
   
   var url = '/runrequest';
   var data = JSON.stringify(fields);
@@ -129,7 +134,7 @@ function submitRunForm(fields){
   .catch(function(e) {
     submitStopRequest();
     stopAll();
-    $('#content .segment').removeClass('loading');
+    $('#graphPanel .dimmer').removeClass('active');
   });
 }
 
@@ -176,7 +181,7 @@ function submitStopRequest() {
 
 function validateFormWithDefault() {
   let now_field_values = $('#config .ui.form').form('get values');
-  console.log(now_field_values);
+  // console.log(now_field_values);
   for(let v in has_default_fields){
     let field = has_default_fields[v];
     let now_val = now_field_values[field.identifier];
@@ -233,6 +238,7 @@ $(document).ready(function(){
   });
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */
+  $('#resumeModal').modal({inverted: true, blurring: true});
   $('#configModal').modal({
     onApprove: validateFormWithDefault,
     onHidden: updateTableInfo

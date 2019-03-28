@@ -196,7 +196,6 @@ void rm_dumped_tasks(string path){
 		string filename = path + "/" + file->d_name;
 		remove(filename.c_str());
 	}
-	dec_task_num_in_disk(TASK_IN_DISK_NUM);
 }
 
 void inc_task_num_in_disk(int num)
@@ -270,7 +269,7 @@ double SYS_SLEEP_TIME=0;
 
 //==========================DEMO Parameters==========================
 string DEMO_LOG_PATH;
-
+const string RESUME_DEMO_STR_EMPTY="{\"status\": \"empty\"}";
 
 void load_hdfs_config()
 {

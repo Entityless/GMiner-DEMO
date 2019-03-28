@@ -39,8 +39,8 @@ function makeNormalForce(nodes, edges) {
   var force = d3.forceSimulation()
         .force('forcex', d3.forceX().x(graphEnv.mw/2))
         .force('forcey', d3.forceY().y(graphEnv.mh/2))
-        .force("charge", d3.forceManyBody())
         .nodes(nodes)
+        .force('body', d3.forceManyBody().strength(-90))
         .force('link', d3.forceLink(edges).id((d)=>d.id).distance(0.4 * Math.min(graphEnv.mh, graphEnv.mw)));
   return force;
 }
@@ -132,6 +132,10 @@ function stylizeFcoGraph() {
   });
 }
 
+function resumeTaskGraphNote(state) {
+  $('#graphnote table').append(
+    ['<tr><td>resume status: <span id="resumeState">', state,'</span></td></tr>'].join(''));
+}
 /* ---------------------------- render functions --------------------- */
 function rendertcGraph(taskRes) {
   var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
@@ -300,10 +304,25 @@ function makeGmPattern(svg) {
 
 function renderGraphVisualize(taskRes) {
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
+  if(taskRes.task_id === -1) return;
+
+  $('#graphPanel .dimmer').removeClass('active');
+
   console.log('graph visual: ', taskRes);
-  ENV.removed_edges = ENV.removed_nodes = undefined;
-  ENV.seed_id = taskRes['seed_id'];
-  d3.select('#maingraph').selectAll('*').remove();
+  if(taskRes["status"] === "empty"){
+    resumeTaskGraphNote("No result was generated.");
+    return;
+  }
+  else if(taskRes["status"] === "resume"){
+    resumeTaskGraphNode("Get new result");
+    d3.select('#maingraph').selectAll('*').remove();
+  }
+  else{
+    ENV.removed_edges = ENV.removed_nodes = undefined;
+    ENV.seed_id = taskRes['seed_id'];
+    d3.select('#maingraph').selectAll('*').remove();
+  }
+
   if (ENV.apps === "tc"){
     rendertcGraph(taskRes);
   }
@@ -322,8 +341,6 @@ function renderGraphVisualize(taskRes) {
 }
 /* ----------------------- */
 $(document).ready(function() {
-  $('#gmgt').hide();
-  $('#graphnote').hide();
   var colorScale = d3.scaleOrdinal(d3.schemeSet1).domain(d3.range('a'.charCodeAt(0), 'z'.charCodeAt(0)));
   var mh = $('#graphPanel').height(), mw = $('#graphPanel #maingraph').width();
   var mainsvg = d3.select('#graphPanel #maingraph').style('height', mh);

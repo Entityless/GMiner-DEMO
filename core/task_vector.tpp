@@ -17,14 +17,7 @@ void TaskVector<T>::push_back(T& item)
 	else
 		vector2_.push_back(item);
 }
-template <class T>
-void TaskVector<T>::clear()
-{
-	lock_guard<mutex> lck(m_mutex_);
-	vector1_.clear();
-	vector2_.clear();
-	pointer_ = 0;
-}
+
 template <class T>
 void TaskVector<T>::content(vector<T>& copy)
 {
@@ -51,6 +44,15 @@ int TaskVector<T>::size()
 		return vector1_.size();
 	else
 		return vector2_.size();
+}
+
+template <class T>
+void TaskVector<T>::clear()
+{
+    lock_guard<mutex> lck(m_mutex_);
+    vector1_.clear();
+    vector2_.clear();
+    pointer_ = 0;
 }
 
 template <class T>
