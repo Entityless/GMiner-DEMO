@@ -46,6 +46,19 @@ void PQueue<KeyT, TaskT>::push_back(vector<PQueue<KeyT, TaskT>::KTpair>& tasks)
 }
 
 template <class KeyT, class TaskT>
+void PQueue<KeyT, TaskT>::clear() {
+    m_mutex_.lock();
+    fmeta_list_.clear();
+    file_cache_.clear(); 
+    mem_cache_.clear();
+    tmp_buffer_.clear();
+    next_file_no_ = 0;
+    task_num_ = 0;
+    fpos_ = fmeta_list_.begin();
+    m_mutex_.unlock();
+}
+
+template <class KeyT, class TaskT>
 void PQueue<KeyT, TaskT>::add_block(vector<PQueue<KeyT, TaskT>::KTpair> & tasks)
 {
 	m_mutex_.lock();

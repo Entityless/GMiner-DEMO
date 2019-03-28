@@ -1,84 +1,16 @@
-var cache_field = {
-  identifier: 'cache-size',
-  rules: [{ type: 'integer[10000..10000000]'}]
-};
-var comp_th_field = {
-  identifier: 'num-comp-thread',
-  rules: [{type: 'integer[1..50]'}]
-};
-var pipe_pop_field = {
-  identifier: 'pipe-pop-num',
-  rules: [{type: 'integer[10..1000]'}]
-};
-var pop_field = {
-  identifier: 'pop-num',
-  rules: [{type: 'integer[10..1000]'}]
-}
-var subg_field = {
-  identifier: 'subg-size-t',
-  rules: [{type: 'integer[1..1000]'}]
-};
-var gc_mweight_field = {
-  identifier: 'min-weight',
-  optional: true,
-  rules: [{type: 'regExp', value: /^(0+\.?|0*\.\d+|0*1(\.0*)?)$/}]
-};
-var gc_diff_ratio_field = {
-  identifier: 'diff-ratio',
-  optional: true,
-  rules: [{type: 'regExp', value: /^(0+\.?|0*\.\d+|0*1(\.0*)?)$/}]
-};
-var gc_mcore_field = {
-  identifier: 'min-core-size',
-  rules: [{type: 'integer[1..]'}]
-};
-var gc_mres_field = {
-  identifier: 'min-result-size',
-  rules: [{type: 'integer[1..]'}]
-};
-var gc_iter_field = {
-  identifier: 'iter-round-max',
-  rules: [{type: 'integer[1..3000]'}]
-};
-var gc_cand_field = {
-  identifier: 'cand-max-time',
-  rules: [{type: 'integer[1..3000]'}]
-};
-var cd_thre_field = {
-  identifier: 'k-threshold',
-  rules: [{type: 'integer[2..1000000]'}]
-};
-var has_default_fields = {
-  cache: cache_field,
-  thread: comp_th_field,
-  pipe: pipe_pop_field,
-  pop: pop_field,
-  subg: subg_field,
-  cd:cd_thre_field,
-  min_weight: gc_mweight_field,
-  diffr: gc_diff_ratio_field,
-  mcore: gc_mcore_field,
-  mres: gc_mres_field,
-  iter: gc_iter_field,
-  cand: gc_cand_field
-}
-var ENV = { stdpt: 0 , key: undefined, timeid: undefined, chart: undefined, apps: undefined}; // global environment
-
-function stopAll(data = 0) {
+function stopAll() {
   $('#runButton').removeClass('disabled');
-  $('#stopButton').addClass('disabled');
+  $('#stopButton,#pauseButton').addClass('disabled');
+  $('#pauseButton').show();
+  $('#resumeButton').hide();
+  $('#graphPanel .dimmer').removeClass('active');
+
   $('#queues .progress').addClass('disabled');
-  $('#finish-label').addClass('disabled');
   $('.arrows i').removeClass('move');
+
   if(typeof(ENV.timeid) != "undefined"){
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
-  }
-  if(typeof(ENV.chart) != "undefined") {
-    ENV.chart.scale('time', {
-      tickInterval: 120
-    });
-    ENV.chart.render();
   }
 }
 
@@ -91,7 +23,7 @@ function renderComponents(data){
     $('#stdConsole').scrollTop($('#stdConsole')[0].scrollHeight);
   }
   data['text'] = '';
-  console.log(data);
+  // console.log('[renderComponents] ', data);
   ENV.stdpt = data.stdpt;
 
   arrow_label_suffix = ' Tasks/sec';
@@ -120,10 +52,11 @@ function renderComponents(data){
 
 function confirmContinue(is_end){
   if(is_end == '1'){
+    $('#statusTag').text('Job Finished .').show();
     stopAll();
     return;
   }
-  ENV.timeid = setTimeout(manageInteraction, 1000);
+  ENV.timeid = setTimeout(manageInteraction, 500);
 }
 
 function manageInteraction(){
@@ -141,11 +74,10 @@ function manageInteraction(){
 }
 
 function changeComponents(data){
-  console.log(data, data.status);
   if(data.status === "ok"){
-    $('#content .segment').removeClass('loading');
-    $('#stopButton').removeClass('disabled');
+    $('#stopButton,#pauseButton').removeClass('disabled');
     $('#queues .progress').removeClass('disabled');
+    $('#graphPanel .text.loader').text('Loading graph from HDFS...');
     $('.arrows i').addClass('move');
     d3.select('#maingraph').selectAll('*').remove();
     if(data["apps"] === "gm"){
@@ -155,28 +87,44 @@ function changeComponents(data){
       $('#gmgt').hide();      
     }
     ENV.key = data.key;
-    ENV.timeid = setTimeout(manageInteraction, 1000); // run after 1s
+    ENV.timeid = setTimeout(manageInteraction, 500);
     ENV.apps = data.apps;
     ENV.stdpt = 0;
-    ENV.chart.render();
     return;
   }
-  stopAll();
-  alert('Run command fail, please reset parameters and try again!');
+  alert('[changeComponents] Run command fail, please reset parameters and try again!');
   throw "changeComponents error";
 }
 
+function resumeInteraction(data) {
+  console.log('[resumeInteraction] ',data);
+  if(data.status === "ok"){
+    $('#queues .progress').removeClass('disabled');
+    $('.arrows i').addClass('move');
+    ENV.timeid = setTimeout(manageInteraction, 500);
+    return;
+  }
+  else if(data.status === "finished"){
+    $('#resumeModal').modal('show');    
+  }
+  alert('[resumeInteraction] Resume command fail, please reset parameters and try again!');
+  throw "changeComponents error";
+}
 // life cycle start
 function submitRunForm(fields){
-  console.log('start submit');
+  console.log('[submitRunForm] start submit');
+
   $('#stdConsole>p').text('');
   $('#graphnote').hide();
   $('#graphnote *').remove();
+  $('#statusTag').hide();
+  
+  $('#runButton').addClass('disabled');
+  $('#graphPanel .dimmer').addClass('active');
+  
   var url = '/runrequest';
   var data = JSON.stringify(fields);
-  console.log(data);
-  $('#runButton').addClass('disabled');
-  $('#content>.segment').addClass('loading');
+  console.log('[submitRunForm]',data);
   fetch(url, {
     method: 'POST',
     body: data,
@@ -185,16 +133,56 @@ function submitRunForm(fields){
   .then(resp => resp.json())
   .then(changeComponents)
   .catch(function(e) {
-    $('.arrows i').removeClass('move');
-    $('#content .segment').removeClass('loading');
-    $('#runButton').removeClass('disabled');
-    $('#stopButton').removeClass('red').addClass('disabled');
+    submitStopRequest();
+    stopAll();
+    $('#graphPanel .dimmer').removeClass('active');
   });
+}
+
+function submitResumeRequest() {
+  let url = '/resumerequest';
+  let resume_req = {'key': ENV.key };
+  if(typeof ENV.removed_nodes == "undefined"
+    && typeof ENV.removed_edges == "undefined"){
+    // 1. run as normal
+    $('#pauseButton').show();
+    resume_req.seed_id = -1;
+  }
+  else{
+    $('#pauseButton').addClass('disabled').show();
+    resume_req.removed_nodes = ENV.removed_nodes;
+    resume_req.removed_edges = ENV.removed_edges;
+    resume_req.seed_id = ENV.seed_id;
+  }
+  console.log('[submitResumeRequest] ', resume_req)
+  fetch(url, {
+    method: "POST",
+    body: JSON.stringify(resume_req),
+    headers: new Headers({'Content-Type': 'application/json'})
+  })
+  .then(resp => resp.json())
+  .then(resumeInteraction)
+  .catch(e => {submitStopRequest(); stopAll();});
+}
+
+function submitStopRequest() {
+  if(typeof ENV.key != "undefined"){
+    let stop_req = { "key": ENV.key };
+    let url = '/stoprequest';
+    // console.log(ENV.key, " request stop");
+    $(this).addClass('disabled');
+    fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(stop_req),
+      headers: new Headers({'Content-Type': 'application/json'})
+    })
+    .catch(error => {console.log('stop failed'); throw error;});
+  }
 }
 
 function validateFormWithDefault() {
   let now_field_values = $('#config .ui.form').form('get values');
-  console.log(now_field_values);
+  // console.log(now_field_values);
   for(let v in has_default_fields){
     let field = has_default_fields[v];
     let now_val = now_field_values[field.identifier];
@@ -209,7 +197,6 @@ function validateFormWithDefault() {
 }
 function updateTableInfo() {
   let now_field_values = $('#config .ui.form').form('get values');
-  console.log('updateTableInfo: ',now_field_values);
   for(let v in now_field_values){
     let selector = '#table' + v;
     let table_item = $(selector);
@@ -252,6 +239,7 @@ $(document).ready(function(){
   });
   $('.ui.form').form('add fields', has_default_fields);
   /* actions */
+  $('#resumeModal').modal({inverted: true, blurring: true});
   $('#configModal').modal({
     onApprove: validateFormWithDefault,
     onHidden: updateTableInfo
@@ -272,19 +260,39 @@ $(document).ready(function(){
 
   // bind stop
   $('#stopButton').on('click', function(){
-    if(!$(this).hasClass('.disabled')){
-      let stop_req = { "key": ENV.key };
-      let url = '/stoprequest';
-      console.log(ENV.key, " request stop");
-      $(this).addClass('disabled');
-      fetch(url, {
-        method: 'POST',
-        body: JSON.stringify(stop_req),
-        headers: new Headers({'Content-Type': 'application/json'})
-      })
-      .catch(error => {console.log('stop failed'); throw error;});
+    if(!$(this).hasClass('disabled')){
+      submitStopRequest();
       stopAll();
     }
   });
 
+  $('#pauseButton').on('click', function(){
+    if(!$(this).hasClass('disabled')){
+      $(this).hide();
+      $('#resumeButton').show();
+      $('#runButton').addClass('disabled');
+      
+      $('#queues .progress').addClass('disabled');
+      $('.arrows i').removeClass('move');
+
+      let pause_req = {"key": ENV.key };
+      let url = '/pauserequest';
+      fetch(url, {
+        method: "POST",
+        body: JSON.stringify(pause_req),
+        headers: new Headers({'Content-Type': 'application/json'})
+      })
+      .catch(error => {console.log('pause failed'); throw error;});
+      
+      if(typeof(ENV.timeid) != "undefined"){
+        clearTimeout(ENV.timeid);
+        ENV.timeid = undefined;
+      }
+    }
+  });
+
+  $('#resumeButton').on('click', function(){
+    $(this).hide();
+    submitResumeRequest();
+  });
 });

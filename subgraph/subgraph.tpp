@@ -15,7 +15,12 @@ void Subgraph<NodeT>::add_edge(NodeT & a, NodeT & b)
 	a.add_neighbor(b);
 	b.add_neighbor(a);
 }
-
+template <class NodeT>
+void Subgraph<NodeT>::del_edge(NodeT & a, NodeT & b)
+{
+	a.del_neighbor(b);
+	b.del_neighbor(a);
+}
 template <class NodeT>
 void Subgraph<NodeT>::del_node(VertexID vid)
 {
@@ -26,7 +31,18 @@ void Subgraph<NodeT>::del_node(VertexID vid)
 		node_map_.erase(nodeIter);
 	}
 }
-
+template <class NodeT>
+void Subgraph<NodeT>::del_node_fully(VertexID vid)
+{
+    typename NodeMap::iterator nodeIter = node_map_.find(vid);
+    if(nodeIter != node_map_.end())
+    {
+        for(auto node: nodes_)
+            node.del_neighbor(*(nodeIter->second));
+        nodes_.erase(nodeIter->second);
+        node_map_.erase(nodeIter);
+    }
+}
 template <class NodeT>
 bool Subgraph<NodeT>::has_node(VertexID vid)
 {

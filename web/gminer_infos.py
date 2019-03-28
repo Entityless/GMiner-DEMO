@@ -56,7 +56,7 @@ cache_size = {
 num_comp_th = {
         'name': 'num-comp-thread',
         'help': 'number of threads in threadpool for task computation',
-        'default': 10
+        'default': 24
         }
 pipe_pop_num = {
         'name': 'pipe-pop-num',
@@ -85,7 +85,7 @@ gminer_apps = [
             ]
 
 gminer_supervisors = [
-    {'name': 'James Cheng', 'img':'jcheng.jpg', 'info':''},
+    {'name': 'James Cheng', 'img':'jcheng.jpg', 'info':'', 'other':'Supervisor'},
     {'name': 'Hongzhi Cheng', 'img': 'chz.jpg', 'info': ' is a PhD student in the Department of Computer Science and Engineering, The Chinese University of Hong Kong. His research interests cover the broad area of distributed systems and databases, with special emphasis on large-scale graph processing systems, distributed data analytics systems.'}
     ]
 gminer_persons = [

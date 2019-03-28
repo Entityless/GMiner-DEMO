@@ -13,3 +13,4 @@ __pycache__/
 web/runtime-infos
 machines.cfg
 tmp/
+/script/.*

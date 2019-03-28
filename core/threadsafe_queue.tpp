@@ -15,6 +15,15 @@ void ThreadsafeQueue<T>::push_back(T& item)
 }
 
 template <class T>
+void ThreadsafeQueue<T>::clear()
+{
+	m_mutex_.lock();
+	m_queue_.clear();
+	m_mutex_.unlock();
+	m_condv_.notify_all();
+}
+
+template <class T>
 void ThreadsafeQueue<T>::push_back(vector<T>& items)
 {
 	m_mutex_.lock();
@@ -85,6 +94,15 @@ void ThreadsafeQueue<T>::close()
 {
 	m_mutex_.lock();
 	stop_ = true;
+	m_mutex_.unlock();
+	m_condv_.notify_all();
+}
+
+template <class T>
+void ThreadsafeQueue<T>::open()
+{
+	m_mutex_.lock();
+	stop_ = false;
 	m_mutex_.unlock();
 	m_condv_.notify_all();
 }

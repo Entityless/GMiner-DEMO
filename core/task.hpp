@@ -19,7 +19,8 @@ template <class KeyT, class ContextT = char, class AttrT=char>
 class Task
 {
 public:
-
+	// comment: only KeyT = VertexID is supported completely,
+	// because Subgraph only support VertexID to add\delete\find Node
 	typedef KeyT KeyType;
 	typedef ContextT ContextType;
 	typedef AttrT AttrType;
@@ -37,6 +38,8 @@ public:
 	typedef typename NodeT::AdjList AdjNodeList;
 	typedef typename NodeT::AdjIter AdjNodeIter;
 
+	KeyT seed_key;
+	bool resume_task;
 	SubgraphT subG;
 	vector<int> to_request;  // vertex to pull from remote workers
 	AdjVtxList to_pull;  // vertices to be pulled for using in the next round

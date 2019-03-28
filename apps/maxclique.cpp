@@ -426,6 +426,7 @@ public:
 			task->context.mc = 0;
 			task->context.mcount = 0;
 			task->context.track.resize(0);
+			task->seed_key = v->id;
 
 			return task;
 		}

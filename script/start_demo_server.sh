@@ -1,7 +1,7 @@
 # Run this script in the root dir of the repo
 
 # port of the web server
-PORT=23333
+PORT=2333
 unset FLASK_APP
 export FLASK_APP=main.py
 
@@ -11,10 +11,17 @@ export GMINER_LOG_PATH=/home/cghuan/gminer_demo_log/
 export GMINER_MERGE_LOG_PATH=/dev/shm/chhuang/merge-gminer/
 export GMINER_HOME=$PWD
 
-rm web/runtime-infos
-ln -s $GMINER_MERGE_LOG_PATH web/runtime-infos
+if [[ -e web/runtime-infos ]]; then
+  rm -r web/runtime-infos/*
+else
+  ln -s $GMINER_MERGE_LOG_PATH web/runtime-infos
+fi
 
-mpirun -n 11 -ppn 1 -f web/machines.cfg python script/python/cluster-monitor.py -d $GMINER_MERGE_LOG_PATH > /dev/null 2>&1 &
+if [[ -d tmp ]]; then
+  rm -r tmp/*
+fi
+
+mpirun -n 11 -ppn 1 -f machines.cfg python $GMINER_HOME/script/python/cluster-monitor.py -d $GMINER_MERGE_LOG_PATH > /dev/null &
 cd web/
 ls main.py
 flask run --port $PORT

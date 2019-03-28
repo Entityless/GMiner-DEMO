@@ -28,6 +28,7 @@ public:
 
 	void del_node(VertexID vid);
 	void del_edge(NodeT & a, NodeT & b);
+    void del_node_fully(VertexID vid);
 
 	bool has_node(VertexID vid);
 	NodeT * get_node(VertexID id);

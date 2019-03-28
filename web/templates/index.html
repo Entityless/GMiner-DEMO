@@ -4,6 +4,7 @@
     <meta http-equiv="x-ua-compatible"content="ie=edge">
     <meta name="viewport"content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./semantic/semantic.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./d3/d3-context-menu.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='rainbow/github.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
@@ -21,8 +22,16 @@
         <i class="outline circle icon"></i>
         Run
       </a>
-      <a class="disabled item" id='stopButton'>
+      <a class="item" id='resumeButton'>
+        <i class="play outline circle icon"></i>
+        Resume
+      </a>
+      <a class="disabled item" id='pauseButton'>
         <i class="pause outline circle icon"></i>
+        Pause
+      </a>
+      <a class="disabled item" id='stopButton'>
+        <i class="stop outline circle icon"></i>
         Stop
       </a>
       <div style="flex-grow: 1;"></div>
@@ -95,13 +104,18 @@
                   </table>
                 </div>
               </div>
-              <div id="graphPanel">
+              <div id="graphPanel" class="ui segment">
+                <div class="ui inverted dimmer">
+                  <div class="ui text loader">Submit job...</div>
+                </div>
                 <div id="gmgt">
                   <h4 style="text-align:center; margin-top: 5px;">Pattern</h4>
                   <svg>
                   </svg>
                 </div>
                 <div id="graphnote">
+                </div>
+                <div id="statusTag">
                 </div>
                 <svg id="maingraph">
                 </svg>
@@ -396,12 +410,6 @@
       </div>
       <div class='content'>
         <table border="0">
-          <tr>
-            <td align="left"><div style="font-weight: 500; font-size: 1.6rem;">Supervisor</div></td>
-          </tr>
-          <tr>
-            <td align="center">&nbsp;</td>
-          </tr>
           {% for row in supervisors %}
           <tr>
             {% for person in row %}
@@ -412,6 +420,8 @@
               <p>
                 <span class="personName">{{ person['name'] }}</span>
                 <span>{{ person['info'] }}</span>
+                <br>
+                <span>{{ person['other'] }}</span>
               </p>
             </td>
             {% endfor %}
@@ -450,16 +460,26 @@
         </div>
       </div>
     </div>
-
+    <div class="ui tiny modal" id="resumeModal">
+      <i class="close icon"></i>
+      <div class="content">
+        <p>
+        Sorry, because of <b>inevitable network delay</b>
+        , the job can not be resumed because it finished before this resume request.
+        </p>
+      </div>
+    </div>
     <!-- scripts -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="http://static.runoob.com/assets/jquery-validation-1.14.0/dist/jquery.validate.min.js"></script>
     <script src="{{ url_for('static', filename='./semantic/semantic.min.js') }}"></script>
     <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.4.1/dist/g2.min.js"></script>
     <script src="{{ url_for('static', filename='d3/d3.js') }}"></script>
+    <script src="{{ url_for('static', filename='d3/d3-context-menu.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/rainbow.min.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/generic.js') }}"></script>
     <script src="{{ url_for('static', filename='rainbow/c.js') }}"></script>
+    <script src="{{ url_for('static', filename='global.js') }}"></script>
     <script src="{{ url_for('static', filename='common.js') }}"></script>
     <script src="{{ url_for('static', filename='validate_form.js') }}"></script>
     <script src="{{ url_for('static', filename='cpumonitor.js') }}"></script>

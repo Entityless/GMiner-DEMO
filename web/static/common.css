@@ -25,6 +25,9 @@ html::-webkit-scrollbar {
   right: 1rem;
 }
 /* ----- Modal ----- */
+#resumeButton {
+  display: none;
+}
 #teamModal,#compareModal {
   height: calc(100% - 6rem);
 }
@@ -85,11 +88,16 @@ html::-webkit-scrollbar {
   flex-grow: 1;
   width: 100%;
   position: relative;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  box-shadow: 0 0 0 0;
 }
 #graphPanel #maingraph {
   width: 100%;
 }
-#graphPanel #gmgt {
+#gmgt {
+  display: none;
   position: absolute;
   margin-top: 1rem;
   width: 100;
@@ -105,19 +113,32 @@ html::-webkit-scrollbar {
   position: absolute;
   top: 0;
 }
-#graphPanel #graphnote {
+#graphnote {
   position: absolute;
   margin-top: 1rem;
-  right: 1rem;
+  padding: 1rem;
+  right: 0;
   background-color: #FFFFCC;
   border-style: solid;
   border-width: 1px;
   border-color: #FFCC00;
   border-radius: 5px;
-  padding: 1rem;
+  max-width: 25%;
+  display: none;
 }
 #graphnote h4 {
   text-align: center;
+}
+#statusTag {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  padding-top: 1rem;
+  font-size: 1.5rem;
+  display: none;
+}
+#maingraph line, circle{
+  cursor: pointer;
 }
 /* ------------------- */
 /* ------------- api --------------- */

@@ -47,6 +47,15 @@ int TaskVector<T>::size()
 }
 
 template <class T>
+void TaskVector<T>::clear()
+{
+    lock_guard<mutex> lck(m_mutex_);
+    vector1_.clear();
+    vector2_.clear();
+    pointer_ = 0;
+}
+
+template <class T>
 bool TaskVector<T>::empty()
 {
 	lock_guard<mutex> lck(m_mutex_);

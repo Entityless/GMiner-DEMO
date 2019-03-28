@@ -48,6 +48,8 @@ public:
 
 	void close();
 
+    void clear();
+
 	void pop_front_to_remote(vector<TaskT *> & remote_tasks);
 
 	int get_capacity();

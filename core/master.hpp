@@ -14,6 +14,7 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <fstream>
 
 #include "util/aggregator.hpp"
 #include "util/communication.hpp"
@@ -57,16 +58,17 @@ public:
 
 	void WriteSignalFile();
 	void run(const WorkerParams& params);
+  	void check_resume_file();
 
 private:
-
+	static const VertexID finish_tag = -1;
 	bool is_end_; // agg_sync
 
 	mutex end_lock_;
 	condition_variable end_cond_;
 
 	map<int, Progress> progress_map_;
-
+	bool resume_task;
 };
 
 

@@ -306,7 +306,7 @@ public:
 
 						bool case1 = (!has_common && (Q.size() >= K_THRESHOLD + 1));
 						bool case2 = (has_common && (Q.size() >= K_THRESHOLD));
-						if (case1 || case2)
+						if (case1 || case2 || resume_task)
 						{
 							vector<VertexID> temp(Q);
 							if (!has_common)
@@ -376,7 +376,8 @@ public:
 
 			if(attrQ.size() > 0)
 			{
-				demo_str_ = "{\"subg_size\" : " + to_string(attrQ.size()) + ", \"subg_list\" : [";
+				demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
+				demo_str_ += ",\"subg_size\" : " + to_string(attrQ.size()) + ", \"subg_list\" : [";
 
 				string label_str = "[";
 
@@ -468,7 +469,7 @@ public:
 		candidates.insert(candidates.end(), v_iter, adjlist.end());
 
 		const vector<AttrValueT>& attr_vec = v->attr.get_attr_vec();
-		if ((candidates.size() >= K_THRESHOLD - 1) && (!attr_vec.empty()))
+		if ((candidates.size() >= K_THRESHOLD - 1 || resume_task) && (!attr_vec.empty()))
 		{
 			AdjVertex seed_vtx(v->id, get_worker_id());
 			candidates.push_back(seed_vtx);
@@ -483,7 +484,7 @@ public:
 			task->context.com_attr_set.insert(attr_vec.begin(), attr_vec.end());
 
 			task->context.creator_id = v->id;
-
+			task->seed_key = v->id;
 			return task;
 		}
 		return NULL;

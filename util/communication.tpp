@@ -577,6 +577,30 @@ void slave_gather(T& to_send)
 //================================================================
 //bcast
 template <class T>
+void master_bcast_point(T& to_send, int tag) {
+	//broadcast
+	StartTimer(COMMUNICATION_TIMER);
+
+	StartTimer(SERIALIZATION_TIMER);
+	ibinstream m;
+	m << to_send;
+	int size = m.size();
+	StopTimer(SERIALIZATION_TIMER);
+
+	StartTimer(TRANSFER_TIMER);
+	MPI_Request requests[_num_workers];
+
+	for(int i = 0; i < _num_workers; ++ i){
+		if(i != MASTER_RANK)
+			send_ibinstream_nonblock(m, i, tag, requests[i]);
+	}
+	for(int i = 0; i < _num_workers; ++ i){
+		if(i != MASTER_RANK){
+			MPI_Wait(&requests[i], MPI_STATUS_IGNORE);
+		}
+	}
+}
+template <class T>
 void master_bcast(T& to_send)
 {
 	//broadcast

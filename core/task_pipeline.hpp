@@ -52,7 +52,8 @@ public:
 	size_t taskbuf_size();
 
 	void close();
-
+    void clear();
+	
 private:
 	PQ priority_queue_;
 	CMQ communication_queue_;

@@ -186,6 +186,18 @@ unsigned long long TASK_IN_DISK_NUM=0;
 
 mutex global_lock;
 
+void rm_dumped_tasks(string path){
+	DIR* dir = opendir(path.c_str());
+	struct dirent * file;
+	while ((file = readdir(dir)) != NULL)
+	{
+		if(strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0)
+			continue;
+		string filename = path + "/" + file->d_name;
+		remove(filename.c_str());
+	}
+}
+
 void inc_task_num_in_disk(int num)
 {
 	lock_guard<mutex> lck(global_lock);
@@ -257,7 +269,7 @@ double SYS_SLEEP_TIME=0;
 
 //==========================DEMO Parameters==========================
 string DEMO_LOG_PATH;
-
+const string RESUME_DEMO_STR_EMPTY="{\"status\": \"empty\"}";
 
 void load_hdfs_config()
 {

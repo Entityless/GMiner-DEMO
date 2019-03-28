@@ -158,6 +158,7 @@ private:
 	int GetAndIncreaseCounter();
 	void IncreaseComputingTaskCount();
 	void DecreaseComputingTaskCount();
+  void demo_resume_handle();
 
 	//PART 5 =======================================================
 	//members
@@ -238,6 +239,13 @@ private:
 	// volatile int demo_task_store_ = 0, demo_candidate_retriever_ = 0, demo_task_executor_ = 0;//dedicated for demo monitor
 	volatile int computing_task_count_ = 0;
 	int last_task_finished_ = 0, last_task_recycle_ = 0, last_task_to_cmq_ = 0, last_task_to_cpq_ = 0;
+
+	// resume
+  mutex resume_signal_mx;
+	condition_variable resume_signal_cond;
+	map<string, vector<VertexID>> resume_info;
+protected:
+	bool resume_task = false;
 };
 
 
