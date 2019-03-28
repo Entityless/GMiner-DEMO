@@ -454,7 +454,7 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 	sync.join();
 	listen.join();
 	steal.join();
-	demo_resumer.detach();
+	demo_resumer.join();
 	
 	printf("G-Miner application finished. Thanks for using.\n");
 	fflush(stdout);

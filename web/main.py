@@ -26,6 +26,14 @@ def get_timestamp():
     t = time.time()
     t = int(t * 1000 + 0.5)
     return t
+def correctSubgList(graph_json):
+    help_set = set();
+    for src, dst in graph_json["conn_list"]:
+        help_set.add(src)
+        help_set.add(dst)
+    graph_json["subg_list"] = list(help_set)
+    graph_json["subg_size"] = len(help_set)
+    return graph_json
 
 @app.route('/')
 def main():
@@ -178,6 +186,7 @@ def send_infos():
                 res['taskRes'] = graph
                 if key in paused_key_set and 'status' not in graph:
                     res['taskRes']['status'] = "resume"
+                    res["taskRes"] = correctSubgList(graph)
             except json.decoder.JSONDecodeError:
                 res['taskRes'] = ""
     else:

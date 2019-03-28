@@ -382,10 +382,23 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
             find(this->resume_info["src"].begin(), this->resume_info["src"].end(), v.id) != resume_info["src"].end()||
             find(this->resume_info["dst"].begin(), this->resume_info["dst"].end(), v.id) != resume_info["dst"].end()
         )){
-            continue;   
+            continue;
         }
         VertexT *pvtx=NULL;
         v.wid == _my_rank? pvtx=local_table_.get(v.id) : pvtx=cache_table_.get(v.id);
+        if(resume_task && task->resume_task){
+            for(auto id: resume_info["nodes"])
+                pvtx->del_neighbor(id);
+
+            for(int j = 0; j < resume_info["src"].size(); ++ j){
+                if(resume_info["src"][j] == pvtx->id){
+                    pvtx->del_neighbor(resume_info["dst"][j]);
+                }
+                if(resume_info["dst"][j] == pvtx->id){
+                    pvtx->del_neighbor(resume_info["src"][j]);
+                }
+            }
+        }
         frontier.push_back(pvtx);
     }
     // delete resume nodes and edges in subgraph
@@ -396,7 +409,7 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
             );
         }
         for(int i = 0; i < resume_info["nodes"].size(); ++ i){
-            task->subG.del_node(resume_info["nodes"][i]);
+            task->subG.del_node_fully(resume_info["nodes"][i]);
         }
         cout << "[recursive_compute] "<< _my_rank << " delete node and edges end, seed_id: "<< task->seed_key <<endl;
     }
