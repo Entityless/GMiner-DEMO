@@ -177,22 +177,22 @@ obinstream::obinstream() : buf_(NULL), size_(0), index_(0) {};
 obinstream::obinstream(char* b, size_t s) : buf_(b), size_(s), index_(0) {};
 obinstream::obinstream(char* b, size_t s, size_t idx) : buf_(b), size_(s), index_(idx) {};
 obinstream::obinstream(const obinstream& ob){
-    *this = ob;
-    /*
-    size_ = ob.size_;
-    index_ = ob.index_;
-    buf_ = new char[size_];
-    memcpy(buf_, ob.buf_, size_);
-    */
+	*this = ob;
+	/*
+	size_ = ob.size_;
+	index_ = ob.index_;
+	buf_ = new char[size_];
+	memcpy(buf_, ob.buf_, size_);
+	*/
 }
 obinstream::obinstream(obinstream&& ob){
-    *this = ob;
-    /*
-    size_ = ob.size_;
-    index_ = ob.index_;
-    buf_ = ob.buf_;
-    ob.buf_ = NULL;
-    */
+	*this = ob;
+	/*
+	size_ = ob.size_;
+	index_ = ob.index_;
+	buf_ = ob.buf_;
+	ob.buf_ = NULL;
+	*/
 }
 obinstream::~obinstream()
 {

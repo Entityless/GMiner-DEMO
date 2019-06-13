@@ -154,7 +154,7 @@ public:
 			}
 		}
 
-		if(check_status())
+		if(if_filtered_for_demo())
 		{
 			frontier_to_dump_ = &frontier;
 		}
@@ -164,26 +164,25 @@ public:
 
 	vector<VertexT *>* frontier_to_dump_;
 
-	bool check_status() override
+	bool if_filtered_for_demo() override
 	{
-                if(resume_task)
-                        return true;
-		if(context.count > 4 && context.count < 8)
+        if(resume_task)
+            return true;
+		if(context.count > 4 && context.count < 100)
 		{
 			return true;
 		}
 		return false;
 	}
 
-	void dump_context() override
+	void dump_context_for_demo() override
 	{
 		//filter
-		if(!resume_task && fine_task_counter_ % 20 != 0)
+		if(!resume_task && filtered_task_counter_ % 20 != 0)
 		{
 			return;
 		}
 
-		//one hop here, stateless
 		vector<VertexT *> & frontier = *frontier_to_dump_;
 		SubgraphT & g = subG;
 

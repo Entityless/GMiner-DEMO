@@ -6,6 +6,9 @@
 
 #include "core/subg-dev.hpp"
 
+#include <unordered_map>
+#include <unordered_set>
+
 using namespace std;
 
 
@@ -190,9 +193,8 @@ public:
 					if (adj[j].attr == 'd')
 					{
 						Q.push_back(adj[j].id);
-						//print_Q(Q);
-						
-						// //append demo string; to_output_ is set by dump_context
+
+						//append demo string; to_output_ is set true by dump_context_for_demo
 						if(to_output_)
 						{
 							string to_append;
@@ -213,6 +215,8 @@ public:
 							}
 							to_append += "]";
 							demo_str_ += to_append;
+
+							matched_subgs_.push_back(Q);
 						}
 
 						count++;
@@ -420,9 +424,9 @@ public:
 
 			back_track(0, g, Q, c_nodes, count);
 
-			if(check_status())
+			if(if_filtered_for_demo())
 			{
-				//backup variables for back_track, enables dump_context
+				//backup variables for back_track, enables back_track in dump_context_for_demo
 				Q_to_dump_ = Q;
 				c_nodes_to_dump_ = c_nodes;
 			}
@@ -434,23 +438,24 @@ public:
 	//for dump context
 	bool to_output_ = false;
 	vector<VertexID> Q_to_dump_, c_nodes_to_dump_;
+	vector<vector<VertexID>> matched_subgs_;
 
-	bool check_status() override
+	bool if_filtered_for_demo() override
 	{
-        if (resume_task)
-            return true;
+		if (resume_task)
+			return true;
 
-		if(context.count > 3 && context.count < 10)
+		if(context.count > 3 && context.count < 100)
 		{
 			return true;
 		}
 		return false;
 	}
 
-	void dump_context() override
+	void dump_context_for_demo() override
 	{
 		//filter
-		if(resume_task ||fine_task_counter_ % 2 != 0)
+		if(!resume_task && filtered_task_counter_ % 2 != 0)
 		{
 			return;
 		}
@@ -463,78 +468,80 @@ public:
 		demo_str_ += ",\"subg\":[";
 		unsigned long long count = 0;
 
+		matched_subgs_.resize(0);
 		back_track(0, subG, Q_to_dump_, c_nodes_to_dump_, count);
 
 		demo_str_ += "], \"count\" : " + to_string(count);
 		assert(count == context.count);
 
-		list<NodeT> & nodes = subG.get_nodes();
+		unordered_map<VertexID, unordered_set<VertexID>> conn_dic;
+		unordered_map<VertexID, string> label_dic;
 
-		//subG node list
-		int tmp_cnt = 0;
-		int nodes_sz = nodes.size();
+		for (auto subg : matched_subgs_)
+			for (auto v : subg)
+				conn_dic[v];
 
-		vector<pair<VertexID, VertexID>> edges;
-
-		// set<VertexID> vtx_id_set; // adj must in this set
-		// for (auto node : nodes)
-		// {
-		// 	vtx_id_set.insert(node.id);
-		// }
-
-		demo_str_ += ", \"subg_size\" : " + to_string(nodes_sz) + ", \"subg_list\" : [";
-		for (auto node : nodes)
+		for (auto subg : matched_subgs_)
 		{
-			demo_str_ += to_string(node.id);
-			if(tmp_cnt != nodes_sz - 1)
-			{
-				demo_str_ += ",";
-			}
+			label_dic[subg[0]] = "\"a\"";
+			label_dic[subg[1]] = "\"c\"";
+			label_dic[subg[2]] = "\"b\"";
+			label_dic[subg[3]] = "\"b\"";
+			label_dic[subg[4]] = "\"d\"";
 
-			for(auto adj : node.adjlist)
+			conn_dic[subg[0]].insert(subg[1]);
+			conn_dic[subg[1]].insert(subg[0]);
+
+			conn_dic[subg[0]].insert(subg[2]);
+			conn_dic[subg[2]].insert(subg[0]);
+
+			conn_dic[subg[1]].insert(subg[2]);
+			conn_dic[subg[2]].insert(subg[1]);
+
+			conn_dic[subg[1]].insert(subg[3]);
+			conn_dic[subg[3]].insert(subg[1]);
+
+			conn_dic[subg[4]].insert(subg[3]);
+			conn_dic[subg[3]].insert(subg[4]);
+		}
+
+		string label_str, v_str;
+		int subg_size = 0;
+		for (auto vid_label_kv : label_dic)
+		{
+			if (subg_size != 0)
 			{
-				// if(vtx_id_set.count(adj.id) == 0)
-				// {
-				// 	continue;
-				// }
-				if(adj.id > node.id)
+				label_str += ",";
+				v_str += ",";
+			}
+			v_str += to_string(vid_label_kv.first);
+			label_str += vid_label_kv.second;
+			subg_size++;
+		}
+
+		string conn_str;
+		int conn_size = 0;
+		for (auto v_set_pair : conn_dic)
+		{
+			for (auto adj : v_set_pair.second)
+			{
+				if (adj > v_set_pair.first)
 				{
-					edges.push_back(make_pair(node.id, adj.id));
+					if (conn_size != 0)
+					{
+						conn_str += ",";
+					}
+					conn_size++;
+					conn_str += "[" + to_string(v_set_pair.first) + "," + to_string(adj) + "]";
 				}
 			}
-
-			tmp_cnt++;
 		}
 
-		demo_str_ += "], \"label_list\" : [";
-		char tmp_str[2];
-		tmp_str[1] = 0;
-		tmp_cnt = 0;
-		for (auto node : nodes)
-		{
-			// demo_str_ += "\"" + to_string(node.attr) + "\"";
-			tmp_str[0] = node.attr;
-			demo_str_ += "\"" + string(tmp_str) + "\"";
-			if(tmp_cnt != nodes_sz - 1)
-			{
-				demo_str_ += ",";
-			}
-			tmp_cnt++;
-		}
-		//print the label
-
-		demo_str_ += "], \"conn_list\" : [";
-
-		for(int i = 0; i < edges.size(); i++)
-		{
-			demo_str_ += "[" + to_string(edges[i].first) + "," + to_string(edges[i].second) + "]";
-			if(i != edges.size() - 1)
-			{
-				demo_str_ += ",";
-			}
-		}
-
-		demo_str_ += "], \"conn_size\" : " + to_string(edges.size());
+		demo_str_ += ", \"subg_size\" : " + to_string(subg_size);
+		demo_str_ += ", \"conn_size\" : " + to_string(conn_size);
+		demo_str_ += ", \"subg_list\" : [" + v_str + "]";
+		demo_str_ += ", \"label_list\" : [" + label_str + "]";
+		demo_str_ += ", \"conn_list\" : [" + conn_str + "]";
 
 		demo_str_ += ", \"task_id\" : " + to_string(task_counter_);
 

@@ -96,12 +96,12 @@ typename Vertex<TaskT>::AdjList& Vertex<TaskT>::get_adjlist()
 
 template <class TaskT>
 void Vertex<TaskT>::del_neighbor(KeyT id){
-    AdjList tmp;
-    for(int i = 0; i < adjlist.size(); ++i){
-        if(adjlist[i].id != id)
-            tmp.push_back(adjlist[i]);
-    }
-    swap(tmp, adjlist);
+	AdjList tmp;
+	for(int i = 0; i < adjlist.size(); ++i){
+		if(adjlist[i].id != id)
+			tmp.push_back(adjlist[i]);
+	}
+	swap(tmp, adjlist);
 }
 template <class TaskT>
 bool operator==(const Vertex<TaskT>& a, const Vertex<TaskT>& b)

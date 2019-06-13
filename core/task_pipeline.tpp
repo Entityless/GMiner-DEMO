@@ -104,10 +104,11 @@ inline void TaskPipeline<TaskT>::close()
 	communication_queue_.close();
 	computation_queue_.close();
 }
+
 template <class TaskT>
 inline void TaskPipeline<TaskT>::clear(){
-    priority_queue_.clear();
-    communication_queue_.clear();
-    computation_queue_.clear();
-    task_buffer_.clear();
+	priority_queue_.clear();
+	communication_queue_.clear();
+	computation_queue_.clear();
+	task_buffer_.clear();
 }

@@ -34,14 +34,14 @@ void Subgraph<NodeT>::del_node(VertexID vid)
 template <class NodeT>
 void Subgraph<NodeT>::del_node_fully(VertexID vid)
 {
-    typename NodeMap::iterator nodeIter = node_map_.find(vid);
-    if(nodeIter != node_map_.end())
-    {
-        for(auto node: nodes_)
-            node.del_neighbor(*(nodeIter->second));
-        nodes_.erase(nodeIter->second);
-        node_map_.erase(nodeIter);
-    }
+	typename NodeMap::iterator nodeIter = node_map_.find(vid);
+	if(nodeIter != node_map_.end())
+	{
+		for(auto node: nodes_)
+			node.del_neighbor(*(nodeIter->second));
+		nodes_.erase(nodeIter->second);
+		node_map_.erase(nodeIter);
+	}
 }
 template <class NodeT>
 bool Subgraph<NodeT>::has_node(VertexID vid)

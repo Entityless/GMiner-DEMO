@@ -104,8 +104,10 @@ def GraphMatchingPostProcess(dic):
             if (adj > v):
                 new_conn_list.append([v, adj])
 
+    dic['subg_size'] = len(new_subg_list)
     dic['subg_list'] = new_subg_list
     dic['label_list'] = new_label_list
+    dic['conn_size'] = len(new_conn_list)
     dic['conn_list'] = new_conn_list
 
     return dic
@@ -350,7 +352,7 @@ class Slave:
 
         # post process data from GMiner
         self.post_process_func = {}
-        self.post_process_func['GM'] = GraphMatchingPostProcess
+        # self.post_process_func['GM'] = GraphMatchingPostProcess
 
 
     def ReadLog(self):

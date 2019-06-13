@@ -76,7 +76,8 @@ def runApplication():
     print(data)
     # 1. run python manager
     merger_log_file = open('{}/merger_{}.log'.format(merger_log_path, str(timestamp)), 'w')
-    merger_cmd = 'mpiexec -n 11 -f machines.cfg python utils/gminer-demo-coordinator-mpi.py -t {}'.format(timestamp)
+    num_worker = os.environ['NUM_WORKER']
+    merger_cmd = 'mpiexec -n {} -f machines.cfg python utils/gminer-demo-coordinator-mpi.py -t {}'.format(num_worker, timestamp)
     print('merger_cmd = {}'.format(merger_cmd))
     proc = subprocess.Popen(merger_cmd, shell=True, stdout=merger_log_file)
     # proc = subprocess.Popen(['python', 'utils/gminer-manager.py', '-t', str(timestamp), '-l', worker_log_path, '-d', merger_log_path], stdout=subprocess.DEVNULL)
@@ -101,7 +102,7 @@ def runApplication():
     app_table[timestamp] = proc
 
     data.update({'key': timestamp, 'status': "ok"})
-    
+
     resp = flask.Response(json.dumps(data), mimetype='application/json')
     return resp
 
