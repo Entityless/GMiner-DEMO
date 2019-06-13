@@ -334,7 +334,7 @@ void Slave<TaskT, AggregatorT>::thread_demo_str_period()
         //write a flag file indicates that switch complete
         string file_name = DEMO_LOG_PATH + "demo_node_" + to_string(_my_rank) + "_part_" + to_string(filename_part_ - 1) + "_finish.log";
         FILE* f = fopen(file_name.c_str(), "w");
-        fprintf(f, "0\n");//anyway, write something. TODO: write something meaningful
+        fprintf(f, "0\n");
         fclose(f);
     }
 }

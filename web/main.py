@@ -10,6 +10,12 @@ import gminer_infos
 import utils.ini_generator
 
 app = flask.Flask(__name__)
+
+# app.logger.setLevel(40)
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 app_table = {}
 manager_table = {}
 paused_key_set = set()
@@ -18,14 +24,17 @@ finished_key_set = set()
 merger_log_path = os.environ['GMINER_MERGE_LOG_PATH']
 worker_log_path = os.environ['GMINER_LOG_PATH']
 
+dev_debug = False
+
 def discardByKey(key):
     del app_table[key]
     paused_key_set.discard(key)
-    
+
 def get_timestamp():
     t = time.time()
     t = int(t * 1000 + 0.5)
     return t
+
 def correctSubgList(graph_json):
     help_set = set();
     for src, dst in graph_json["conn_list"]:
@@ -66,10 +75,14 @@ def runApplication():
     data = json.loads(request.data)
     print(data)
     # 1. run python manager
-    proc = subprocess.Popen(['python', 'utils/gminer-manager.py', '-t', str(timestamp), '-l', worker_log_path, '-d', merger_log_path], stdout=subprocess.DEVNULL)
+    merger_log_file = open('{}/merger_{}.log'.format(merger_log_path, str(timestamp)), 'w')
+    merger_cmd = 'mpiexec -n 11 -f machines.cfg python utils/gminer-demo-coordinator-mpi.py -t {}'.format(timestamp)
+    print('merger_cmd = {}'.format(merger_cmd))
+    proc = subprocess.Popen(merger_cmd, shell=True, stdout=merger_log_file)
+    # proc = subprocess.Popen(['python', 'utils/gminer-manager.py', '-t', str(timestamp), '-l', worker_log_path, '-d', merger_log_path], stdout=subprocess.DEVNULL)
     manager_table[timestamp] = proc
     # 2. run gminer
-    cmd, ini_str = utils.ini_generator.gminer_ini_gen(data, worker_log_path)
+    cmd, ini_str = utils.ini_generator.gminer_ini_gen(data)
     tmpf_dir = os.path.join(myenv['GMINER_HOME'], 'tmp')
     if not os.path.exists(tmpf_dir):
         os.mkdir(tmpf_dir)
@@ -153,7 +166,8 @@ last_sub_graph = ""
 @app.route('/interaction', methods=['POST'])
 def send_infos():
     data = json.loads(request.data)
-    print('recv interaction ',data)
+    if (dev_debug):
+        print('recv interaction ',data)
     key = data["key"]
     res = {}
     fname = os.path.join('runtime-infos', '{}.log'.format(key))
@@ -168,9 +182,35 @@ def send_infos():
 
     # 2. read queue data
     que = 'runtime-infos/{}/master_5q.json'.format(key)
-    with open(que) as f:
-        que = json.load(f)
-        res.update(que)
+    try:
+        with open(que) as f:
+            que = json.load(f)
+            res.update(que)
+    except Exception:
+        q_dic = {}
+        q_dic['task_num_in_memory'] = 0
+        q_dic['task_num_in_disk'] = 0
+        q_dic['cmq_size'] = 0
+        q_dic['cpq_size'] = 0
+        q_dic['taskbuf_size'] = 0
+
+        q_dic['task_num_in_memory_float'] = 0.0
+        q_dic['task_num_in_disk_float'] = 0.0
+        q_dic['cmq_size_float'] = 0.0
+        q_dic['cpq_size_float'] = 0.0
+        q_dic['taskbuf_size_float'] = 0.0
+
+        q_dic['task_store_to_cmq'] = 0
+        q_dic['cmq_to_cpq'] = 0
+        q_dic['cpq_to_task_store'] = 0
+        q_dic['cpq_finished'] = 0
+
+        q_dic['task_transfer_1'] = 0
+        q_dic['task_transfer_2'] = 0
+        q_dic['task_transfer_3'] = 0
+        q_dic['task_transfer_4'] = 0
+
+        res.update(q_dic)
 
     # 3. read system info
     # 4. read graph info
@@ -203,6 +243,7 @@ def send_infos():
         discardByKey(key)
     respon = flask.Response(json.dumps(res), mimetype='application/json')
     res['text'] = 'deleted'
-    print('interaction info:', res)
+    if (dev_debug):
+        print('interaction info:', res)
     return respon
 

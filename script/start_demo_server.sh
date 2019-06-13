@@ -1,9 +1,10 @@
 # Run this script in the root dir of the repo
 
 # port of the web server
-PORT=2333
+export PORT=5080
 unset FLASK_APP
 export FLASK_APP=main.py
+export FLASK_ENV=deployment
 
 # on worker nodes, indicates where G-Miner workers writes logs
 export GMINER_LOG_PATH=/home/cghuan/gminer_demo_log/

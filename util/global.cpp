@@ -7,7 +7,6 @@
 int _my_rank;
 int _num_workers;
 string _given_timestamp_str;
-volatile bool _global_dbg_flag = false;
 
 double get_running_wtime()
 {
@@ -391,20 +390,21 @@ void load_system_parameters(WorkerParams& param)
 	}
 	_given_timestamp_str = ts_str;
 
-	str = iniparser_getstring(ini,"PATH:DEMO_LOG_PATH", str_not_found);
-	if(strcmp(str, str_not_found)!=0)
-	{
-		DEMO_LOG_PATH = str;
 
-		DEMO_LOG_PATH += "/" + ts_str + "/";
+	const char* GMINER_LOG_PATH = getenv("GMINER_LOG_PATH");
+	if(GMINER_LOG_PATH == NULL)
+	{
+		fprintf(stderr, "must enter the LOCAL_TEMP_PATH. exits.\n");
+		exit(-1);
+		// DEMO_LOG_PATH = "";
+	}
+	else
+	{
+		DEMO_LOG_PATH = string(GMINER_LOG_PATH) + "/" + ts_str + "/";
 
 		string cmd = "mkdir -p ";
 		cmd += DEMO_LOG_PATH;
 		system(cmd.c_str());
-	}
-	else
-	{
-		DEMO_LOG_PATH = "";
 	}
 
 	val = iniparser_getboolean(ini, "", val_not_found);

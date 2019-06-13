@@ -466,6 +466,7 @@ public:
 		back_track(0, subG, Q_to_dump_, c_nodes_to_dump_, count);
 
 		demo_str_ += "], \"count\" : " + to_string(count);
+		assert(count == context.count);
 
 		list<NodeT> & nodes = subG.get_nodes();
 

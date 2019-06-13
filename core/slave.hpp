@@ -150,15 +150,19 @@ private:
 
 	void debug();
 
+	// init file pointers for demo usage
 	void thread_demo_str_init();
-	void thread_demo_str_period();//call in sys_sync, to switch file name
+	// call in sys_sync
+	// 1. Switch file name, avoiding the log file getting to large
+	// 2. flush demo log files
+	void thread_demo_str_period();
 	void thread_demo_str_compute(const string& demo_str, int tid);
 	void thread_demo_str_finalize();
 
 	int GetAndIncreaseCounter();
 	void IncreaseComputingTaskCount();
 	void DecreaseComputingTaskCount();
-  void demo_resume_handle();
+	void demo_resume_handle();
 
 	//PART 5 =======================================================
 	//members
@@ -205,7 +209,6 @@ private:
 		FILE* log_file = NULL;
 		pthread_spinlock_t file_lock, task_counter_lock;
 		volatile int task_counter = 0, fine_task_counter = 0;
-		bool force_output = false;
 		ThreadDemoT()
 		{
 			pthread_spin_init(&file_lock, 0);

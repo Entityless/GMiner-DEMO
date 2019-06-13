@@ -108,9 +108,7 @@ void Master<AggregatorT>::sys_sync()
 			// printf("before master gather\n");
 			fflush(stdout);
 			MPI_Barrier(MPI_COMM_WORLD);
-			_global_dbg_flag = true;
 			master_gather(parts);
-			_global_dbg_flag = false;
 			MPI_Barrier(MPI_COMM_WORLD);
 			// printf("after master gather\n");
 			fflush(stdout);
