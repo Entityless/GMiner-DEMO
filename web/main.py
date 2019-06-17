@@ -227,7 +227,7 @@ def send_infos():
                 res['taskRes'] = graph
                 if key in paused_key_set and 'status' not in graph:
                     res['taskRes']['status'] = "resume"
-                    res["taskRes"] = correctSubgList(graph)
+                    # res["taskRes"] = correctSubgList(graph)
             except json.decoder.JSONDecodeError:
                 res['taskRes'] = ""
     else:
