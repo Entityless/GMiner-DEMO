@@ -6,7 +6,6 @@
 
 using namespace std;
 
-
 struct TriangleContext
 {
 	int count;
@@ -123,6 +122,7 @@ private:
 class TriangleTask :public Task<VertexID, TriangleContext>
 {
 public:
+	static int sample_min_, sample_max_;
 
 	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
@@ -168,7 +168,7 @@ public:
 	{
         if(resume_task)
             return true;
-		if(context.count > 4 && context.count < 100)
+		if(context.count >= sample_min_ && context.count <= sample_max_)
 		{
 			return true;
 		}
@@ -287,6 +287,8 @@ public:
 
 };
 
+int TriangleTask::sample_min_ = 4;
+int TriangleTask::sample_max_ = 10;
 
 class TriangleSlave :public Slave<TriangleTask, CountAgg>
 {
@@ -372,6 +374,17 @@ class TriangleWorker :public Worker<TriangleMaster, TriangleSlave, CountAgg> {};
 
 int main(int argc, char* argv[])
 {
+	const char* TC_SAMPLING_MIN = getenv("TC_SAMPLING_MIN");
+	const char* TC_SAMPLING_MAX = getenv("TC_SAMPLING_MAX");
+	if (TC_SAMPLING_MIN != nullptr)
+	{
+		TriangleTask::sample_min_ = atoi(TC_SAMPLING_MIN);
+	}
+	if (TC_SAMPLING_MAX != nullptr)
+	{
+		TriangleTask::sample_max_ = atoi(TC_SAMPLING_MAX);
+	}
+
 	init_worker(&argc, &argv);
 
 	WorkerParams param;

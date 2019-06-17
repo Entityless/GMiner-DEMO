@@ -50,8 +50,6 @@ $ ./auto-build.sh
     * Serving Flask app "main"
   ```
 
-  Note that you should configure the path string in bash files to specify the input/output location based on your environment.
-
   ![demo screenshot](./web/static/images/sceenshot.png "demo screenshot")
 
 

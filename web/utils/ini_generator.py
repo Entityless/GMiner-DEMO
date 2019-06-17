@@ -58,7 +58,7 @@ HDFS_HOST_ADDRESS = master
 HDFS_PORT = 9000
 HDFS_INPUT_PATH = {}
 HDFS_OUTPUT_PATH = /gminer_default_output/  ;just for partition, will not be used in this demo
-LOCAL_TEMP_PATH = /tmp
+LOCAL_TEMP_PATH = /tmp/{}-gminer-dump
 FORCE_WRITE = TRUE    ;force to write HDFS_OUTPUT_PATH
 
 [COMPUTING]
@@ -78,7 +78,7 @@ LOCAL_RATE = 0.5  ;threshold that task can be moved to other workers only if its
 AGG_SLEEP_TIME = 0        ;unit:second; do context and aggregator sync periodically during computation; if AGG_SLEEP_TIME == 0, then no sync happens during computation
 SYS_SLEEP_TIME = 1        ;unit:second; ; do system sync
 
-""".format(input_path[param_dic['dataset']][param_dic['apps']], str(param_dic['cache-size']), 
+""".format(input_path[param_dic['dataset']][param_dic['apps']], os.environ['USER'], str(param_dic['cache-size']), 
            str(param_dic['num-comp-thread']), str(param_dic['pipe-pop-num']), 
            str(param_dic['pop-num']), str(param_dic['subg-size-t']))
 

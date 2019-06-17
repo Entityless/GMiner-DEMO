@@ -189,6 +189,7 @@ void Slave<TaskT, AggregatorT>::demo_resume_handle()
 				compute_lock_.lock();
 				inc_task_num_in_memory(1);
 				task_pipeline_.taskbuf_push_back(t);
+				task_recycle_count_++;
 				compute_lock_.unlock();
 				compute_cond_.notify_one();
 				cout << "[demo_resume_handle] seed id: " << seed_id << " to taskbuf." << endl;
@@ -694,7 +695,7 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 			cache_table_.dec_item_ref(refs[j].id);
 		}
 
-		if(cache_overflow_)
+		if(cache_overflow_ && (!resume_task))
 		{
 			cache_overflow_ = false;
 			cache_table_.resize(cache_size_);

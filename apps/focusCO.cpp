@@ -171,6 +171,7 @@ private:
 class FocusTask :public Task<VertexID, FocusContext, Attribute<AttrValueT> >
 {
 public:
+	static int sample_min_, sample_max_;
 
 	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
@@ -371,9 +372,12 @@ public:
 						}
 					}
 				}
-				bool to_demo = true; // for GC, do not need to sample the output
-				if(context.edges.size() > 2000)
-					to_demo = false;
+				bool to_demo = false; // for GC, do not need to sample the output
+				// if(context.edges.size() > 2000)
+				// 	to_demo = false;
+
+				if (resume_task || (cluster.size() >= sample_min_ && cluster.size() <= sample_max_))
+					to_demo = true;
 				
 				demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
 				demo_str_ += ",\"subg_size\" : " + to_string(cluster.size()) + ", \"subg_list\" : [";
@@ -582,6 +586,9 @@ private:
 	}
 };
 
+int FocusTask::sample_min_ = 4;
+int FocusTask::sample_max_ = 20;
+
 //-----------------------------------------------------------------
 
 class FocusSlave :public Slave<FocusTask, CountAgg>
@@ -709,6 +716,17 @@ class FocusWorker :public Worker<FocusMaster, FocusSlave, CountAgg> {};
 
 int main(int argc, char* argv[])
 {
+	const char* GC_SAMPLING_MIN = getenv("GC_SAMPLING_MIN");
+	const char* GC_SAMPLING_MAX = getenv("GC_SAMPLING_MAX");
+	if (GC_SAMPLING_MIN != nullptr)
+	{
+		FocusTask::sample_min_ = atoi(GC_SAMPLING_MIN);
+	}
+	if (GC_SAMPLING_MAX != nullptr)
+	{
+		FocusTask::sample_max_ = atoi(GC_SAMPLING_MAX);
+	}
+
 	init_worker(&argc, &argv);
 
 	if (argc >= 2)

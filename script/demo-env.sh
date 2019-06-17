@@ -6,13 +6,23 @@ export FLASK_PORT=5080
 export NUM_WORKER=11
 
 # gminer
-export GMINER_LOG_PATH=/tmp/gminer-demo-log/
-export GMINER_MERGE_LOG_PATH=/dev/shm/gminer-demo-output-merged/
+export GMINER_LOG_PATH=/tmp/${USER}-gminer-demo-log/
+export GMINER_MERGE_LOG_PATH=/dev/shm/${USER}-gminer-demo-output-merged/
 
 # cluster monitor
 export NETWORK_DEVICE=em1
 export MAX_NETWORK_THROUGHPUT_MB=256
 export MAX_DISK_THROUGHPUT_MB=519.424
+
+# sampling before visualization
+export TC_SAMPLING_MIN=4
+export TC_SAMPLING_MAX=200
+export GM_SAMPLING_MIN=4
+export GM_SAMPLING_MAX=200
+export CD_SAMPLING_MIN=4
+export CD_SAMPLING_MAX=50
+export GC_SAMPLING_MIN=10
+export GC_SAMPLING_MAX=50
 
 # HDFS data path
 ## for TC and MC

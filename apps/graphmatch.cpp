@@ -121,6 +121,8 @@ private:
 class gMatchTask :public Task<VertexID, gMatchContext, char>
 {
 public:
+	static int sample_min_, sample_max_;
+
 	bool has_label(NodeT & node, char label)
 	{
 		AdjNodeList & adjlist = node.get_adjlist();
@@ -445,7 +447,7 @@ public:
 		if (resume_task)
 			return true;
 
-		if(context.count > 3 && context.count < 100)
+		if(context.count >= sample_min_ && context.count <= sample_max_)
 		{
 			return true;
 		}
@@ -463,7 +465,7 @@ public:
 		to_output_ = true;
 		if(!to_output_)
 			return;
-		
+
 		demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
 		demo_str_ += ",\"subg\":[";
 		unsigned long long count = 0;
@@ -551,6 +553,9 @@ public:
 	}
 };
 
+int gMatchTask::sample_min_ = 4;
+int gMatchTask::sample_max_ = 10;
+
 class gMatchSlave :public Slave<gMatchTask, CountAgg>
 {
 public:
@@ -633,6 +638,17 @@ class gMatchWorker :public Worker<gMatchMaster, gMatchSlave, CountAgg> {};
 
 int main(int argc, char* argv[])
 {
+	const char* GM_SAMPLING_MIN = getenv("GM_SAMPLING_MIN");
+	const char* GM_SAMPLING_MAX = getenv("GM_SAMPLING_MAX");
+	if (GM_SAMPLING_MIN != nullptr)
+	{
+		gMatchTask::sample_min_ = atoi(GM_SAMPLING_MIN);
+	}
+	if (GM_SAMPLING_MAX != nullptr)
+	{
+		gMatchTask::sample_max_ = atoi(GM_SAMPLING_MAX);
+	}
+
 	init_worker(&argc, &argv);
 
 	WorkerParams param;

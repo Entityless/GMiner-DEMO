@@ -111,7 +111,9 @@ def kill_by_timestamp():
     key = data['key']
     app_table[key].kill()
     coordinator_table[key].kill()
-    del app_table[key]
+    # os.kill(app_table[key].pid, 15)
+    # os.kill(coordinator_table[key].pid, 15)
+    # del app_table[key]
     
     data = {'key': key, 'status': "stop"}
     resp = flask.Response(json.dumps(data), mimetype='application/json')
@@ -235,6 +237,7 @@ def send_infos():
                 res['taskRes'] = ""
             if (resume_finished):
                 app_table[key].kill()
+                # os.kill(app_table[key].pid, 15)
     else:
         res['taskRes']=""
 
