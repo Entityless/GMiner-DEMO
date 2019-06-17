@@ -53,6 +53,16 @@ function bindAndAlign(circles, nodes, lines, edges) {
   circles.enter().append('circle').append('title');
   circles.exit().remove();
 }
+function bindAndAlignFco(circles, nodes, lines, edges) {
+  lines = lines.data(edges);
+  lines.exit().remove();
+  lines.enter().append('line').append('title');
+  
+  circles = circles.data(nodes);
+  circles.enter().append('circle').append('title');
+  circles.exit().remove();
+}
+
 
 function stylizeNormalGraph() {
   var lines = graphEnv.svg.selectAll('line'),
@@ -267,7 +277,7 @@ function renderfcoGraph(taskRes) {
   var min_weight = Math.min(...conn_weight), max_weight = Math.max(...conn_weight);
   lineLinear.domain([min_weight, max_weight + 0.0001]).range([0.3,0.7]);
 
-  bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
+  bindAndAlignFco(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
   stylizeFcoGraph();
 
   force.on('tick',tick); 
