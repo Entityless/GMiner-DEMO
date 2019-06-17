@@ -138,7 +138,7 @@ function resumeTaskGraphNote(state) {
 }
 /* ---------------------------- render functions --------------------- */
 function rendertcGraph(taskRes) {
-  var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_list, count, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = graphEnv.svg = d3.select('#maingraph');
   var force = graphEnv.force = makeNormalForce(nodes, edges);
@@ -153,15 +153,18 @@ function rendertcGraph(taskRes) {
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
       ['<tr><td>task triangle count: <span id="tccount">', count,'</span></td></tr>'].join(''));
   }else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#tccount').text(count);
   }
   $('#graphnote').show();
 }
 function rendergmGraph(taskRes) {
-  var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_list, count, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = graphEnv.svg = d3.select('#maingraph');
   var force = graphEnv.force = makeNormalForce(nodes, edges);
@@ -175,9 +178,12 @@ function rendergmGraph(taskRes) {
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
       ['<tr><td>task matched pattern count: <span id="gmcount">', count,'</span></td></tr>'].join(''));
   }else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#gmcount').text(count);
   }
   $('#graphnote').show();
@@ -220,7 +226,7 @@ function rendermcGraph(taskRes) {
   force.on('tick',tick); 
 }
 function rendercdGraph(taskRes) {
-  var {subg_list, label_list, conn_list, subg_size, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_list, subg_size, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = graphEnv.svg = d3.select('#maingraph');
   var force = graphEnv.force = makeNormalForce(nodes, edges);
@@ -236,10 +242,13 @@ function rendercdGraph(taskRes) {
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
       ['<tr><td>community size: <span id="cdsize">', subg_size,'</span></td></tr>'].join(''));
   }
   else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#cdsize').text(subg_size);
   }
   $('#graphnote').show();
@@ -247,7 +256,7 @@ function rendercdGraph(taskRes) {
 function renderfcoGraph(taskRes) {
   var lineLinear = graphEnv.lineLinear = d3.scaleLinear();
   
-  var {subg_list, label_list, conn_weight, conn_list, subg_size, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_weight, conn_list, subg_size, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   for(let i = 0; i < conn_weight.length; ++ i){
     edges[i].weight = conn_weight[i];
@@ -269,10 +278,13 @@ function renderfcoGraph(taskRes) {
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
       ['<tr><td>cluster size: <span id="fcosize">', subg_size,'</span></td></tr>'].join(''));
   }
   else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#fcosize').text(subg_size);
   }
   $('#graphnote').show();

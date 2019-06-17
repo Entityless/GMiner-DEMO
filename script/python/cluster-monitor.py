@@ -290,7 +290,8 @@ if __name__ == "__main__":
 
             cur_time = time.time()
             for ele in online_list_of_dic_to_write:
-                ele['time'] -= (cur_time - last_time)
+                # ele['time'] -= (cur_time - last_time)
+                ele['time'] -= sleep_interval
             last_time = cur_time
 
             for key in my_info_dic:

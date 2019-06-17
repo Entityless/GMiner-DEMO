@@ -5,10 +5,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/demo-env.sh
 
 # port of the web server
-FLASK_APP=main.py
-FLASK_ENV=deployment
+export FLASK_APP=main.py
+export FLASK_ENV=deployment
 
-GMINER_HOME=$DIR/../
+export GMINER_HOME=$DIR/../
 cd $GMINER_HOME
 
 mkdir -p $GMINER_MERGE_LOG_PATH
