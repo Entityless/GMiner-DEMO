@@ -5,6 +5,7 @@ function stopAll() {
   $('#resumeButton').hide();
   $('#graphPanel .dimmer').removeClass('active');
 
+  clearQueue();
   $('#queues .progress').addClass('disabled');
   $('.arrows i').removeClass('move');
 
@@ -12,6 +13,26 @@ function stopAll() {
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
   }
+}
+
+function clearQueue(){
+  $('#pq').progress({
+    text: {percent: String(0) },
+    percent: Number(0) * 100
+  });
+  $('#pq .arrow-label').text(String(0));
+  $('#cmq').progress({
+    text: {percent: String(0)},
+    percent: Number(0) * 100
+  });
+  $('#cpq').progress({
+    text: {percent: String(0)},
+    percent: Number(0) * 100
+  });
+  $('#qlabel1').text(String(0));
+  $('#qlabel2').text(String(0));
+  $('#qlabel3').text(String(0));
+  $('#qlabel4').text(String(0));
 }
 
 function renderComponents(data){
