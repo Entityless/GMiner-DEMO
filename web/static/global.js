@@ -16,6 +16,9 @@ var node_menu = function(){
          * d: data bound to the elem
          * i: index
          */
+        if (d.id == ENV.seed_id) {
+          return;
+        }
         console.log('delete node:',d);
         var svg = graphEnv.svg,
             force = graphEnv.force,
