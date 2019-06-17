@@ -17,7 +17,7 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 app_table = {}
-manager_table = {}
+coordinator_table = {}
 paused_key_set = set()
 finished_key_set = set()
 
@@ -74,14 +74,13 @@ def runApplication():
     # try:
     data = json.loads(request.data)
     print(data)
-    # 1. run python manager
+    # 1. run python coordinator
     merger_log_file = open('{}/merger_{}.log'.format(merger_log_path, str(timestamp)), 'w')
     num_worker = os.environ['NUM_WORKER']
     merger_cmd = 'mpiexec -n {} -f machines.cfg python utils/gminer-demo-coordinator-mpi.py -t {}'.format(num_worker, timestamp)
     print('merger_cmd = {}'.format(merger_cmd))
     proc = subprocess.Popen(merger_cmd, shell=True, stdout=merger_log_file)
-    # proc = subprocess.Popen(['python', 'utils/gminer-manager.py', '-t', str(timestamp), '-l', worker_log_path, '-d', merger_log_path], stdout=subprocess.DEVNULL)
-    manager_table[timestamp] = proc
+    coordinator_table[timestamp] = proc
     # 2. run gminer
     cmd, ini_str = utils.ini_generator.gminer_ini_gen(data)
     tmpf_dir = os.path.join(myenv['GMINER_HOME'], 'tmp')
@@ -111,7 +110,7 @@ def kill_by_timestamp():
     data = json.loads(request.data)
     key = data['key']
     app_table[key].kill()
-    manager_table[key].kill()
+    coordinator_table[key].kill()
     del app_table[key]
     
     data = {'key': key, 'status': "stop"}
@@ -217,8 +216,10 @@ def send_infos():
 
     # 3. read system info
     # 4. read graph info
+    resume_finished = False
     if key in paused_key_set:
         fname = 'runtime-infos/{}/resume_result.json'.format(key)
+        resume_finished = True
     else:
         fname = 'runtime-infos/{}/slaves.json'.format(key)
 
@@ -232,6 +233,8 @@ def send_infos():
                     # res["taskRes"] = correctSubgList(graph)
             except json.decoder.JSONDecodeError:
                 res['taskRes'] = ""
+            if (resume_finished):
+                app_table[key].kill()
     else:
         res['taskRes']=""
 

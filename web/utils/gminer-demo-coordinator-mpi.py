@@ -129,6 +129,7 @@ class Master:
 
         # the input path
         self.queue_file_path = '{}/master_5q.log'.format(self.log_path)
+        self.resume_result_path = '{}/resume_result.json'.format(self.merged_path)
 
         # the output path for different files
         self.slaves_final_path = '{}/slaves.json'.format(self.merged_path)
@@ -166,12 +167,13 @@ class Master:
 
         return signal_dic
 
-    def CheckSignalFileExistance(self):
-        # 
-        if (os.path.isfile(self.signal_file_name)):
+    def CheckAppFinished(self):
+        if (not os.path.isfile(self.signal_file_name)):
             return True
-        else:
-            return False
+        if (os.path.isfile(self.resume_result_path)):
+            return True
+
+        return False
 
     def WriteInitJsonFile(self):
         # write queue files
@@ -443,10 +445,10 @@ if __name__ == "__main__":
 
             comm.Barrier()
 
-            signal_existance = me.CheckSignalFileExistance()
-            signal_existance = comm.bcast(signal_existance, root = master_rank)
+            app_finished = me.CheckAppFinished()
+            app_finished = comm.bcast(app_finished, root = master_rank)
 
-            if (not signal_existance):
+            if (app_finished):
                 break
             time.sleep(sleep_interval)
 
@@ -467,9 +469,9 @@ if __name__ == "__main__":
             
             comm.Barrier()
 
-            signal_existance = False
-            signal_existance = comm.bcast(signal_existance, root = master_rank)
+            app_finished = True
+            app_finished = comm.bcast(app_finished, root = master_rank)
 
-            if (not signal_existance):
+            if (app_finished):
                 break
             time.sleep(sleep_interval)
