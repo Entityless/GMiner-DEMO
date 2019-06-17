@@ -147,16 +147,18 @@ def resume_by_timestamp():
     else:
         # TODO: write to a signal file
         with open('runtime-infos/{}/resume_file.txt'.format(key),'w') as f:
+            print("resume requested: {}".format(data))
             f.write(str(data['seed_id']))
             if data.get('removed_nodes'):
                 f.write('\n')
                 for node in data['removed_nodes']:
                     f.write(str(node)+' ')
-                f.write('-1')
+            f.write('-1')
             if data.get('removed_edges'):
                 f.write('\n')
                 for src, dst in data['removed_edges']:
                     f.write(str(src) + ' ' + str(dst) + '\n')
+            f.write('-1')
         app_table[key].send_signal(signal.SIGCONT)
         data = {'key': key, 'status': "ok"}
 

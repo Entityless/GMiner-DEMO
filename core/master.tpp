@@ -38,14 +38,18 @@ void Master<AggregatorT>::check_resume_file()
 			while(!in.eof())
 			{
 				in >> src;
-				if(src == finish_tag) break;
+				if(src == finish_tag_)
+					break;
 				cout << "[check_resume_file] delete node "<<src<<endl;
 				resume_info["nodes"].push_back(src);
 			}
 			// read edges
 			while(!in.eof())
 			{
-				in >> src >> dst;
+				in >> src;
+				if(src == finish_tag_)
+					break;
+				in >> dst;
 				cout << "[check_resume_file] delete edge " << src << " " << dst << endl;
 				resume_info["src"].push_back(src);
 				resume_info["dst"].push_back(dst);

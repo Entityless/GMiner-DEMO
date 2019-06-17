@@ -126,6 +126,19 @@ void Node<TaskT>::del_neighbor(Node<TaskT>& node){
 }
 
 template <class TaskT>
+void Node<TaskT>::del_neighbor_by_id(const typename Node<TaskT>::KeyT& id) {
+	int pos = 0;
+	vector<AdjNodeT> new_adjlist;
+
+	for(auto adj_node : adjlist) {
+		if (adj_node.id != id)
+			new_adjlist.push_back(adj_node);
+	}
+
+	adjlist.swap(new_adjlist);
+}
+
+template <class TaskT>
 typename Node<TaskT>::AdjList& Node<TaskT>::get_adjlist()
 {
 	return adjlist;

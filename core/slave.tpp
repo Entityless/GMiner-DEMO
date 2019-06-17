@@ -368,15 +368,20 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 		delete task;
 		return NULL;
 	}
+	// if (resume_task && task->resume_task)
+	// {
+	// 	printf("[recursive_compute] begin resume recursive_compute\n");
+	// 	fflush(stdout);
+	// }
 	//set frontier for UDF compute
 	vector<VertexT *> frontier;
 	for(int i = 0 ; i < task->to_pull.size(); i++)
 	{
 		AdjVertex& v=task->to_pull[i];
 		if(resume_task && task->resume_task && (
-			find(this->resume_info["nodes"].begin(), this->resume_info["nodes"].end(), v.id) != resume_info["nodes"].end() ||
-			find(this->resume_info["src"].begin(), this->resume_info["src"].end(), v.id) != resume_info["src"].end()||
-			find(this->resume_info["dst"].begin(), this->resume_info["dst"].end(), v.id) != resume_info["dst"].end()
+			find(this->resume_info["nodes"].begin(), this->resume_info["nodes"].end(), v.id) != resume_info["nodes"].end()
+			// || find(this->resume_info["src"].begin(), this->resume_info["src"].end(), v.id) != resume_info["src"].end()
+			// || find(this->resume_info["dst"].begin(), this->resume_info["dst"].end(), v.id) != resume_info["dst"].end()
 		))
 		{
 			continue;
@@ -402,20 +407,37 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 		}
 		frontier.push_back(pvtx);
 	}
+	// if (resume_task && task->resume_task)
+	// {
+	// 	printf("[recursive_compute] frontier resume recursive_compute\n");
+	// 	fflush(stdout);
+	// }
 	// delete resume nodes and edges in subgraph
 	if(resume_task && task->resume_task)
 	{
 		for(int i = 0; i < resume_info["src"].size(); ++ i)
 		{
-			task->subG.del_edge(
-				*(task->subG.get_node(resume_info["src"][i])), *(task->subG.get_node(resume_info["dst"][i]))
-			);
+			auto* src = task->subG.get_node(resume_info["src"][i]);
+			if (src != nullptr)
+				src->del_neighbor_by_id(resume_info["dst"][i]);
+			auto* dst = task->subG.get_node(resume_info["dst"][i]);
+			if (dst != nullptr)
+				dst->del_neighbor_by_id(resume_info["src"][i]);
 		}
+		// printf("[recursive_compute] subG delete edges finished\n");
+		// fflush(stdout);
 		for(int i = 0; i < resume_info["nodes"].size(); ++ i){
 			task->subG.del_node_fully(resume_info["nodes"][i]);
 		}
-		cout << "[recursive_compute] "<< _my_rank << " delete node and edges end, seed_id: "<< task->seed_key <<endl;
+		// printf("[recursive_compute] subG delete nodes finished\n");
+		// fflush(stdout);
 	}
+
+	// if (resume_task && task->resume_task)
+	// {
+	// 	printf("[recursive_compute] fully resume recursive_compute\n");  // won't be printed when del node & del edge
+	// 	fflush(stdout);
+	// }
 
 	if(task->compute(task->subG, task->context, frontier))
 	{

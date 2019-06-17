@@ -61,7 +61,7 @@ public:
 	void check_resume_file();
 
 private:
-	static const VertexID finish_tag = -1;
+	static const VertexID finish_tag_ = -1;
 	bool is_end_; // agg_sync
 
 	mutex end_lock_;
