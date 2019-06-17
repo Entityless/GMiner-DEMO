@@ -36,15 +36,18 @@ $ ./auto-build.sh
   * python 3.6
   * flask 0.12.2 : `$> pip install flask==0.12.2`
   * all G-Miner dependencies described above
+
+#### configuration
+* `$GMINER_HOME/script/demo-env.sh`: The port of web server, the output path and etc.
+* `$GMINER_HOME/web/machines.cfg`: The machinefile using ethernet devices. Note that the last node in the machinefile will be the Master node of GMiner, and it should be the same node that the web server is running on.
+* `$GMINER_HOME/web/ib_machines.cfg`: The machinefile using infiniband devices.
+
 #### Start and stop web server
   We suppose you have built and run G-Miner successfully now ( if not, please refer to **Build** and **Tutorial** previous to this step). Then just run following commands :
   ```bash
   $> cd $GMINER_HOME
-  $> ./script/start_demo_monitor.sh
   $> ./script/start_demo_server.sh
     * Serving Flask app "main"
-    * Running on http://127.0.0.1:5080/ (Press CTRL+C to quit)
-  $> ./script/stop_demo_monitor.sh
   ```
 
   Note that you should configure the path string in bash files to specify the input/output location based on your environment.
