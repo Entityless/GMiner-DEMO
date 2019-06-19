@@ -136,6 +136,38 @@ var gc_cand_field = {
   identifier: 'cand-max-time',
   rules: [{type: 'integer[1..3000]'}]
 };
+var tc_sample_min = {
+  identifier: 'tc-sample-min',
+  rules: [{type: 'integer[4..200]'}]
+};
+var tc_sample_max = {
+  identifier: 'tc-sample-max',
+  rules: [{type: 'integer[4..200]'}]
+};
+var gm_sample_min = {
+  identifier: 'gm-sample-min',
+  rules: [{type: 'integer[4..200]'}]
+};
+var gm_sample_max = {
+  identifier: 'gm-sample-max',
+  rules: [{type: 'integer[4..200]'}]
+};
+var cd_sample_min = {
+  identifier: 'cd-sample-min',
+  rules: [{type: 'integer[4..100]'}]
+};
+var cd_sample_max = {
+  identifier: 'cd-sample-max',
+  rules: [{type: 'integer[4..100]'}]
+};
+var gc_sample_min = {
+  identifier: 'gc-sample-min',
+  rules: [{type: 'integer[4..100]'}]
+};
+var gc_sample_max = {
+  identifier: 'gc-sample-max',
+  rules: [{type: 'integer[4..100]'}]
+};
 var cd_thre_field = {
   identifier: 'k-threshold',
   rules: [{type: 'integer[2..1000000]'}]
@@ -152,6 +184,14 @@ var has_default_fields = {
   mcore: gc_mcore_field,
   mres: gc_mres_field,
   iter: gc_iter_field,
-  cand: gc_cand_field
+  cand: gc_cand_field,
+  tc_min: tc_sample_min,
+  tc_max: tc_sample_max,
+  gm_min: gm_sample_min,
+  gm_max: gm_sample_max,
+  cd_min: cd_sample_min,
+  cd_max: cd_sample_max,
+  gc_min: gc_sample_min,
+  gc_max: gc_sample_max
 }
 

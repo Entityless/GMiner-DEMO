@@ -48,6 +48,64 @@ cand_max_time = {
         'default': 3
         }
 
+# visualization sampling
+
+tc_sample_min = {
+        'name': 'tc-sample-min',
+        'type': None,
+        'help': 'tc-sample-min',
+        'default': 4
+        }
+
+tc_sample_max = {
+        'name': 'tc-sample-max',
+        'type': None,
+        'help': 'tc-sample-max',
+        'default': 100
+        }
+
+gm_sample_min = {
+        'name': 'gm-sample-min',
+        'type': None,
+        'help': 'gm-sample-min',
+        'default': 4
+        }
+
+gm_sample_max = {
+        'name': 'gm-sample-max',
+        'type': None,
+        'help': 'gm-sample-max',
+        'default': 100
+        }
+
+cd_sample_min = {
+        'name': 'cd-sample-min',
+        'type': None,
+        'help': 'cd-sample-min',
+        'default': 4
+        }
+
+cd_sample_max = {
+        'name': 'cd-sample-max',
+        'type': None,
+        'help': 'cd-sample-max',
+        'default': 50
+        }
+
+gc_sample_min = {
+        'name': 'gc-sample-min',
+        'type': None,
+        'help': 'gc-sample-min',
+        'default': 8
+        }
+
+gc_sample_max = {
+        'name': 'gc-sample-max',
+        'type': None,
+        'help': 'gc-sample-max',
+        'default': 50
+        }
+
 cache_size = {
         'name': 'cache-size',
         'help': 'the size of cachetable in each worker',
@@ -77,11 +135,11 @@ subg_size_t = {
 gminer_datasets = ['youtube', 'skitter', 'orkut', 'friendster', 'dblp', 'tencent']
 
 gminer_apps = [
-            {'tc': {'name':'Triangle Counting', 'param':None}} , 
-            {'mc': {'name':'Max Clique', 'param':None}} , 
-            {'gm': {'name':'Graph Matching', 'param':None}} , 
-            {'cd': {'name': 'Community Detection', 'param': [cd_param]}}, 
-            {'fco': {'name': 'Graph Clustering', 'param': [min_weight, min_core_size, min_result_size, diff_ratio, iter_round_max, cand_max_time]}}
+            {'tc': {'name':'Triangle Counting', 'param': [tc_sample_min, tc_sample_max]}} , 
+            {'mc': {'name':'Max Clique', 'param': None}} , 
+            {'gm': {'name':'Graph Matching', 'param': [gm_sample_min, gm_sample_max]}} , 
+            {'cd': {'name': 'Community Detection', 'param': [cd_param, cd_sample_min, cd_sample_max]}}, 
+            {'fco': {'name': 'Graph Clustering', 'param': [min_weight, min_core_size, min_result_size, diff_ratio, iter_round_max, cand_max_time, gc_sample_min, gc_sample_max]}}
             ]
 
 gminer_supervisors = [

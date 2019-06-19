@@ -6,6 +6,7 @@
 
 #include "core/subg-dev.hpp"
 #include <tuple>
+#include <unordered_set>
 
 using namespace std;
 
@@ -348,8 +349,13 @@ public:
 				//A expected cluster
 				cluster.clear();
 				list<NodeT>& nodes = g.get_nodes();
-				for (list<NodeT>::iterator iter = nodes.begin(); iter != nodes.end(); ++iter)
+
+				unordered_set<VertexID> cluster_nodes;
+
+				for (list<NodeT>::iterator iter = nodes.begin(); iter != nodes.end(); ++iter) {
 					cluster.push_back(iter->id);
+					cluster_nodes.insert(iter->id);
+				}
 
 				//insert edges at once
 				for(auto vtx_id : cluster)
@@ -399,16 +405,22 @@ public:
 
 					string conn_weight_str;
 
+					int conn_size = 0;
 					for(int i = 0; i < context.edges.size(); i++)
 					{
 						auto edge_item = context.edges[i];
-						if(i != 0)
+
+						if (cluster_nodes.count(get<0>(edge_item)) == 0 || cluster_nodes.count(get<1>(edge_item)) == 0)
+							continue;
+
+						if(conn_size != 0)
 						{
 							conn_weight_str += ",";
 							demo_str_ += ",";
 						}
 
 						conn_weight_str += to_string(get<2>(edge_item));
+						conn_size++;
 						demo_str_ += "[" + to_string(get<0>(edge_item)) + "," + to_string(get<1>(edge_item)) +"]";
 					}
 

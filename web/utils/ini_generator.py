@@ -40,6 +40,16 @@ input_path['skitter']['fco'] = os.environ['SKITTER_FCO_GRAPH']
 input_path['orkut']['fco'] = os.environ['ORKUT_FCO_GRAPH']
 input_path['dblp']['fco'] = os.environ['DBLP_FCO_GRAPH']
 
+threshold_sampling_dic = {'tc':{}, 'gm':{}, 'cd':{}, 'fco':{}}
+threshold_sampling_dic['tc']['tc-sample-min'] = 'TC_SAMPLING_MIN'
+threshold_sampling_dic['tc']['tc-sample-max'] = 'TC_SAMPLING_MAX'
+threshold_sampling_dic['gm']['gm-sample-min'] = 'GM_SAMPLING_MIN'
+threshold_sampling_dic['gm']['gm-sample-max'] = 'GM_SAMPLING_MAX'
+threshold_sampling_dic['cd']['cd-sample-min'] = 'CD_SAMPLING_MIN'
+threshold_sampling_dic['cd']['cd-sample-max'] = 'CD_SAMPLING_MAX'
+threshold_sampling_dic['fco']['gc-sample-min'] = 'GC_SAMPLING_MIN'
+threshold_sampling_dic['fco']['gc-sample-max'] = 'GC_SAMPLING_MAX'
+
 machine_file = {False : 'machines.cfg', 'ib' : 'ib_machines.cfg'}
 # machine_file = {False : os.path.join(gminer_root, 'machines.cfg'), 'ib' : 'ib_machines.cfg'}
 
@@ -98,9 +108,16 @@ SYS_SLEEP_TIME = 1        ;unit:second; ; do system sync
         app_cmd = 'fco {} {} {} {} {} {} '.format(str(param_dic['min-weight']), str(param_dic['min-core-size']), str(param_dic['min-result-size']),
                                                  str(param_dic['diff-ratio']), str(param_dic['iter-round-max']), str(param_dic['cand-max-time']))
 
-    #### gen cmd
 
+
+    threshold_str = ''
+    #### threshold for sampling
+    if (param_dic['apps'] in threshold_sampling_dic):
+        for env_key in threshold_sampling_dic[param_dic['apps']]:
+            threshold_str = '{} {}={}'.format(threshold_str, threshold_sampling_dic[param_dic['apps']][env_key], param_dic[env_key])
+
+    #### gen cmd
     num_worker = os.environ['NUM_WORKER']
-    cmd = "mpiexec -n {} -f {} $GMINER_HOME/release/{}".format(num_worker, machine_file[param_dic['ib']], app_cmd)
+    cmd = "{} mpiexec -n {} -f {} $GMINER_HOME/release/{}".format(threshold_str, num_worker, machine_file[param_dic['ib']], app_cmd)
 
     return [cmd, ini_str]
