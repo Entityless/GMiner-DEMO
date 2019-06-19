@@ -197,7 +197,7 @@ public:
 
 	string sys_print_header() override
 	{
-		return "Current max clique size: ";
+		return "Current max clique: ";
 	}
 
 private:

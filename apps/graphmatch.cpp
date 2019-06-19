@@ -444,7 +444,7 @@ public:
 
 	bool if_filtered_for_demo() override
 	{
-		if (resume_task)
+		if (resume_task_)
 			return true;
 
 		if(context.count >= sample_min_ && context.count <= sample_max_)
@@ -457,7 +457,7 @@ public:
 	void dump_context_for_demo() override
 	{
 		//filter
-		if(!resume_task && filtered_task_counter_ % 2 != 0)
+		if(!resume_task_ && filtered_task_counter_ % 2 != 0)
 		{
 			return;
 		}

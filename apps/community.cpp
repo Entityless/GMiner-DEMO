@@ -308,7 +308,7 @@ public:
 
 						bool case1 = (!has_common && (Q.size() >= K_THRESHOLD + 1));
 						bool case2 = (has_common && (Q.size() >= K_THRESHOLD));
-						if (case1 || case2 || resume_task)
+						if (case1 || case2 || resume_task_)
 						{
 							vector<VertexID> temp(Q);
 							if (!has_common)
@@ -377,7 +377,7 @@ public:
 			community(tempG, listR, color, Q, max_size, attrQ, K_THRESHOLD, vertex_idx_map, com_attr_set); //pass the map
 
 			bool to_demo = false;
-			if (resume_task || (attrQ.size() >= sample_min_ && attrQ.size() <= sample_max_))
+			if (resume_task_ || (attrQ.size() >= sample_min_ && attrQ.size() <= sample_max_))
 				to_demo = true;
 
 			if(attrQ.size() > 0 && to_demo)
@@ -478,7 +478,7 @@ public:
 		candidates.insert(candidates.end(), v_iter, adjlist.end());
 
 		const vector<AttrValueT>& attr_vec = v->attr.get_attr_vec();
-		if ((candidates.size() >= K_THRESHOLD - 1 || resume_task) && (!attr_vec.empty()))
+		if ((candidates.size() >= K_THRESHOLD - 1 || resume_task_) && (!attr_vec.empty()))
 		{
 			AdjVertex seed_vtx(v->id, get_worker_id());
 			candidates.push_back(seed_vtx);

@@ -6,7 +6,9 @@ template <class AggregatorT>
 Master<AggregatorT>::Master()
 {
 	is_end_ = false;
-	resume_task = false;
+	resume_task_ = false;
+	to_resume_ = false;
+	resume_file_detected_ = false;
 }
 
 template <class AggregatorT>
@@ -25,11 +27,23 @@ void Master<AggregatorT>::check_resume_file()
 	bool resumed_req = false;
 	while(!is_end_)
 	{
+		bool resume_file_detected = resume_file_detected_;
+		if (!resume_file_detected) {
+			this_thread::sleep_for(chrono::milliseconds(100));
+			continue;
+		}
+		bool to_resume = to_resume_;
+		if (!to_resume) {
+			// tell the frontend
+			demo_str = RESUME_DEMO_STR_EMPTY;
+			resumed_req = true;
+			break;
+		}
 		ifstream in(filename);
 		if(in.is_open())
 		{
 			resumed_req = true;
-			resume_task = true;
+			resume_task_ = true;
 
 			VertexID src, dst;
 			in >> seed_id;
@@ -65,10 +79,11 @@ void Master<AggregatorT>::check_resume_file()
 			
 			break;
 		}
-		this_thread::sleep_for(chrono::milliseconds(500));
 	}
 
-	cout << "[check_resume_file] demo_str :" << demo_str << " resumed req: "<< resumed_req<<endl;
+	to_resume_ = false;
+	if (debug_)
+		cout << "[check_resume_file] demo_str :" << demo_str << " resumed req: "<< resumed_req<<endl;
 	if(!resumed_req) return;
 	filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result_tmp.json";
 	ofstream out(filename);
@@ -81,7 +96,7 @@ void Master<AggregatorT>::check_resume_file()
 template <class AggregatorT>
 void Master<AggregatorT>::sys_sync()
 {
-	vector<SysSyncInfoT> parts(get_num_workers());
+	vector<SysSyncGatherInfoT> parts(get_num_workers());
 
 	master_gather(parts);
 
@@ -146,7 +161,43 @@ void Master<AggregatorT>::sys_sync()
 		fclose(f);
 	}
 
-	resume_task = all_bor(resume_task); // send resume task signal
+
+	SysSyncBcastInfoT bcast_info;
+	bcast_info.global_stealing_finished = true;
+	int cnt = 0;
+	for(auto v : parts)
+	{
+		if(cnt == parts.size() - 1)
+			break;
+		cnt++;
+		bcast_info.global_stealing_finished = (bcast_info.global_stealing_finished && v.status.stealing_finished);
+	}
+
+	bool to_resume = to_resume_;
+
+	// won't close task_pipeline_ if to_resume_
+	bcast_info.global_stealing_finished = (bcast_info.global_stealing_finished && (!to_resume));
+
+	// before bcasting, decide if to resume
+	bool resume_file_detected = resume_file_detected_;
+	if (!resume_file_detected) {
+		const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
+		const char* RESUME_PATH = getenv("GMINER_MERGE_LOG_PATH");
+		string filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt";  // must be a finished task
+		ifstream in(filename);
+		if(in.is_open()) {
+			// decide if to resume
+			resume_file_detected_ = true;
+
+			if (!bcast_info.global_stealing_finished) {
+				to_resume_ = true;
+			}
+		}
+		in.close();
+	}
+
+	bcast_info.resume_task = resume_task_;
+	master_bcast(bcast_info);
 
 	sys_sync_time_++;
 }

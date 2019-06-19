@@ -97,7 +97,7 @@ static inline obinstream& operator >> (obinstream& m, QueueMonitorT& v)
 
 struct SlaveStatus
 {
-	bool stealing_finished;
+	bool stealing_finished = false;
 };
 
 static inline ibinstream& operator << (ibinstream& m, const SlaveStatus& v)
@@ -112,22 +112,42 @@ static inline obinstream& operator >> (obinstream& m, SlaveStatus& v)
 	return m;
 }
 
-struct SysSyncInfoT {
+struct SysSyncGatherInfoT
+{
 	QueueMonitorT queue;
 	SlaveStatus status;
 };
 
-static inline ibinstream& operator << (ibinstream& m, const SysSyncInfoT& v)
+static inline ibinstream& operator << (ibinstream& m, const SysSyncGatherInfoT& v)
 {
 	m << v.queue << v.status;
 	return m;
 }
 
-static inline obinstream& operator >> (obinstream& m, SysSyncInfoT& v)
+static inline obinstream& operator >> (obinstream& m, SysSyncGatherInfoT& v)
 {
 	m >> v.queue >> v.status;
 	return m;
 }
+
+struct SysSyncBcastInfoT
+{
+	bool resume_task;
+	bool global_stealing_finished;
+};
+
+static inline ibinstream& operator << (ibinstream& m, const SysSyncBcastInfoT& v)
+{
+	m << v.global_stealing_finished << v.resume_task;
+	return m;
+}
+
+static inline obinstream& operator >> (obinstream& m, SysSyncBcastInfoT& v)
+{
+	m >> v.global_stealing_finished >> v.resume_task;
+	return m;
+}
+
 
 #include "type.tpp"
 

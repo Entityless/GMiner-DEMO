@@ -3,7 +3,7 @@
 
 
 template <class KeyT, class ContextT, class AttrT>
-Task<KeyT, ContextT, AttrT>::Task():resume_task(false), seed_key(-1) {}
+Task<KeyT, ContextT, AttrT>::Task():resume_task_(false), seed_key(-1) {}
 
 // to be used by users in UDF compute(.)
 template <class KeyT, class ContextT, class AttrT>
@@ -57,7 +57,7 @@ ibinstream& operator<<(ibinstream& m, const Task<KeyT, ContextT, AttrT>& v)
 {
   	
 	m << v.seed_key;
-	m << v.resume_task;
+	m << v.resume_task_;
 	m << v.subG;
 	m << v.to_pull;
 	m << v.context;
@@ -68,7 +68,7 @@ template <class KeyT, class ContextT = char, class AttrT=char>
 obinstream& operator>>(obinstream& m, Task<KeyT, ContextT, AttrT>& v)
 {
   	m >> v.seed_key;
-	m >> v.resume_task;
+	m >> v.resume_task_;
 	m >> v.subG;
 	m >> v.to_pull;
 	m >> v.context;
@@ -80,7 +80,7 @@ template <class KeyT, class ContextT = char, class AttrT=char>
 ifbinstream& operator<<(ifbinstream& m, const Task<KeyT, ContextT, AttrT>& v)
 {
   	m << v.seed_key;
-	m << v.resume_task;
+	m << v.resume_task_;
 	m << v.subG;
 	m << v.to_pull;
 	m << v.context;
@@ -91,7 +91,7 @@ template <class KeyT, class ContextT = char, class AttrT=char>
 ofbinstream& operator>>(ofbinstream& m, Task<KeyT, ContextT, AttrT>& v)
 {
   	m >> v.seed_key;
-	m >> v.resume_task;
+	m >> v.resume_task_;
 	m >> v.subG;
 	m >> v.to_pull;
 	m >> v.context;

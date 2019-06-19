@@ -61,57 +61,12 @@ def PrintWithFlush(*args):
     sys.stdout.flush()
 
 def GraphMatchingPostProcess(dic):
-    conn_dic = {}  # dic of adjacent set
-    label_dic = {}  # dic of vtx label
+    if ('subg' in dic):
+        dic.pop('subg')
 
-    for subg in dic['subg']:
-        for v in subg:
-            conn_dic[v] = set()
-
-    for subg in dic['subg']:
-        label_dic[subg[0]] = "a"
-        label_dic[subg[1]] = "c"
-        label_dic[subg[2]] = "b"
-        label_dic[subg[3]] = "b"
-        label_dic[subg[4]] = "d"
-
-        conn_dic[subg[0]].add(subg[1])
-        conn_dic[subg[1]].add(subg[0])
-
-        conn_dic[subg[0]].add(subg[2])
-        conn_dic[subg[2]].add(subg[0])
-
-        conn_dic[subg[1]].add(subg[2])
-        conn_dic[subg[2]].add(subg[1])
-
-        conn_dic[subg[1]].add(subg[3])
-        conn_dic[subg[3]].add(subg[1])
-
-        conn_dic[subg[4]].add(subg[3])
-        conn_dic[subg[3]].add(subg[4])
-
-    new_subg_list = []
-    new_label_list = []
-
-    for v in label_dic:
-        new_subg_list.append(v)
-        new_label_list.append(label_dic[v])
-
-    new_conn_list = []
-
-    for v in conn_dic:
-        for adj in conn_dic[v]:
-            if (adj > v):
-                new_conn_list.append([v, adj])
-
-    dic['subg_size'] = len(new_subg_list)
-    dic['subg_list'] = new_subg_list
-    dic['label_list'] = new_label_list
-    dic['conn_size'] = len(new_conn_list)
-    dic['conn_list'] = new_conn_list
-
-    return dic
-
+def TriangleCountingPostProcess(dic):
+    if ('subg' in dic):
+        dic.pop('subg')
 
 class Master:
     # 
@@ -283,7 +238,7 @@ class Master:
         # for mc tasks
         if (len(self.aggstr_dic_list) and self.signal_dic['app_name'] == 'MC'):
             if (len(self.aggstr_dic_list) > 0):
-                task_result_dic = self.aggstr_dic_list[-1]
+                task_result_dic = self.aggstr_dic_list[-1].copy()
                 task_result_dic['size'] = task_result_dic.pop('mc')
                 task_result_dic['mc'] = []
                 for i in range(task_result_dic['count']):
@@ -367,7 +322,8 @@ class Slave:
 
         # post process data from GMiner
         self.post_process_func = {}
-        # self.post_process_func['GM'] = GraphMatchingPostProcess
+        self.post_process_func['GM'] = GraphMatchingPostProcess
+        self.post_process_func['TC'] = TriangleCountingPostProcess
 
 
     def ReadLog(self):

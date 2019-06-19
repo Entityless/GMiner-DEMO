@@ -382,7 +382,7 @@ public:
 				// if(context.edges.size() > 2000)
 				// 	to_demo = false;
 
-				if (resume_task || (cluster.size() >= sample_min_ && cluster.size() <= sample_max_))
+				if (resume_task_ || (cluster.size() >= sample_min_ && cluster.size() <= sample_max_))
 					to_demo = true;
 				
 				demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
@@ -399,7 +399,7 @@ public:
 					to_print += " " + to_string(cluster[i]);
 				}
 
-				if(to_demo || resume_task)
+				if(to_demo || resume_task_)
 				{
 					demo_str_ += "], \"conn_list\":[";
 

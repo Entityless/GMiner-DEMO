@@ -163,6 +163,8 @@ private:
 	void DecreaseComputingTaskCount();
 	void demo_resume_handle();
 
+	void WaitingForGlobalStealingFinished();
+
 	//PART 5 =======================================================
 	//members
 
@@ -244,11 +246,19 @@ private:
 	int last_task_finished_ = 0, last_task_recycle_ = 0, last_task_to_cmq_ = 0, last_task_to_cpq_ = 0;
 
 	// resume
-	mutex resume_signal_mx;
-	condition_variable resume_signal_cond;
-	map<string, vector<VertexID>> resume_info;
+	mutex resume_signal_mx_;
+	condition_variable resume_signal_cond_;
+	map<string, vector<VertexID>> resume_info_;
+
+	// status
+	SlaveStatus status_;
+	atomic<bool> stealing_finished_;
+	atomic<bool> global_stealing_finished_;
+
+	// debug
+	bool debug_ = false;
 protected:
-	bool resume_task = false;
+	bool resume_task_ = false;
 };
 
 

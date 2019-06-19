@@ -15,6 +15,7 @@
 #include <vector>
 #include <chrono>
 #include <fstream>
+#include <atomic>
 
 #include "util/aggregator.hpp"
 #include "util/communication.hpp"
@@ -68,9 +69,13 @@ private:
 	condition_variable end_cond_;
 
 	map<int, Progress> progress_map_;
-	bool resume_task;
+	bool resume_task_;
+	atomic<bool> resume_file_detected_;
+	atomic<bool> to_resume_;  // set to true in the sys_sync function; set back to false when resume finished
 
 	int sys_sync_time_ = 0;
+
+	bool debug_ = false;
 };
 
 

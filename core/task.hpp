@@ -39,7 +39,7 @@ public:
 	typedef typename NodeT::AdjIter AdjNodeIter;
 
 	KeyT seed_key;
-	bool resume_task;
+	bool resume_task_;
 	SubgraphT subG;
 	vector<int> to_request;  // vertex to pull from remote workers
 	AdjVtxList to_pull;  // vertices to be pulled for using in the next round

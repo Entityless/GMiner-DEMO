@@ -28,6 +28,7 @@ dev_debug = False
 
 def discardByKey(key):
     del app_table[key]
+    coordinator_table[key].kill()
     paused_key_set.discard(key)
 
 def get_timestamp():
