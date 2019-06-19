@@ -69,6 +69,8 @@ private:
 
 	map<int, Progress> progress_map_;
 	bool resume_task;
+
+	int sys_sync_time_ = 0;
 };
 
 

@@ -130,6 +130,7 @@ class Master:
         # the input path
         self.queue_file_path = '{}/master_5q.log'.format(self.log_path)
         self.resume_result_path = '{}/resume_result.json'.format(self.merged_path)
+        self.sys_sync_signal_path = '{}/start-sys-sync.log'.format(self.log_path)
 
         # the output path for different files
         self.slaves_final_path = '{}/slaves.json'.format(self.merged_path)
@@ -138,6 +139,7 @@ class Master:
         self.queue_final_path = '{}/master_5q.json'.format(self.merged_path)
         self.queue_writting_path = '{}/master_writting_5q.json'.format(self.merged_path)
         self.queue_append_path = '{}/master_5q_append.json'.format(self.merged_path)
+        self.hdfs_loaded_signal_path = '{}/hdfs_loaded.log'.format(self.merged_path)
 
         # queues related
         self.queue_dic_list = []
@@ -148,6 +150,17 @@ class Master:
         self.results_displayed = []
 
         self.GenerateDefaultDic()
+
+        self.regular_loop_count = 0
+        self.sys_sync_signal_detected = 0
+
+    def RegularProcess(self):
+        if (self.sys_sync_signal_detected == 0):
+            if (os.path.isfile(self.sys_sync_signal_path)):
+                self.sys_sync_signal_detected = 1
+                os.system('touch {}'.format(self.hdfs_loaded_signal_path))
+
+        self.regular_loop_count += 1
 
     def WaitForSignalFile(self):
         #
@@ -437,6 +450,7 @@ if __name__ == "__main__":
         while True:
             # comm.gather()
             app_dic_list = comm.gather({}, root = master_rank)
+            me.RegularProcess()
             me.AppendTaskResultDicList(app_dic_list)
             me.ReadQueueInfo()
             me.WriteFrontendFiles()

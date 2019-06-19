@@ -67,7 +67,6 @@ struct QueueMonitorT
 	unsigned long long cpq_finished;
 };
 
-
 static inline ibinstream& operator << (ibinstream& m, const QueueMonitorT& v)
 {
 	m << v.task_num_in_memory;
@@ -96,6 +95,39 @@ static inline obinstream& operator >> (obinstream& m, QueueMonitorT& v)
 	return m;
 }
 
+struct SlaveStatus
+{
+	bool stealing_finished;
+};
+
+static inline ibinstream& operator << (ibinstream& m, const SlaveStatus& v)
+{
+	m << v.stealing_finished;
+	return m;
+}
+
+static inline obinstream& operator >> (obinstream& m, SlaveStatus& v)
+{
+	m >> v.stealing_finished;
+	return m;
+}
+
+struct SysSyncInfoT {
+	QueueMonitorT queue;
+	SlaveStatus status;
+};
+
+static inline ibinstream& operator << (ibinstream& m, const SysSyncInfoT& v)
+{
+	m << v.queue << v.status;
+	return m;
+}
+
+static inline obinstream& operator >> (obinstream& m, SysSyncInfoT& v)
+{
+	m >> v.queue >> v.status;
+	return m;
+}
 
 #include "type.tpp"
 

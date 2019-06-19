@@ -435,10 +435,14 @@ void load_system_parameters(WorkerParams& param)
 	// [CONTEXT SYNC]
 	val = iniparser_getdouble(ini, "SYNC:AGG_SLEEP_TIME", val_not_found);
 	if(val!=val_not_found) AGG_SLEEP_TIME=val;
+	if (AGG_SLEEP_TIME < 0.0)
+		AGG_SLEEP_TIME = 0.0;
 
 	// [SYSTEM SYNC]
 	val = iniparser_getdouble(ini, "SYNC:SYS_SLEEP_TIME", val_not_found);
 	if(val!=val_not_found) SYS_SLEEP_TIME=val;
+	if (SYS_SLEEP_TIME <= 0.0)
+		SYS_SLEEP_TIME = 1.0;
 
 
 	iniparser_freedict(ini);

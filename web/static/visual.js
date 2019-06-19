@@ -326,6 +326,7 @@ function makeGmPattern(svg) {
 
 function renderGraphVisualize(taskRes) {
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
+
   if(taskRes.task_id === -1) return;
 
   $('#graphPanel .dimmer').removeClass('active');

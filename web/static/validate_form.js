@@ -67,6 +67,10 @@ function renderComponents(data){
   $('#qlabel3').text(String(data['task_transfer_3']));
   $('#qlabel4').text(String(data['task_transfer_4']));
 
+  if (data["hdfsLoaded"]) {
+    $('#graphPanel .text.loader').text('No sampled result...');
+  }
+
   renderGraphVisualize(data['taskRes']);
   return data['end'];  
 }

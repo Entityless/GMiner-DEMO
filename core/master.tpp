@@ -81,9 +81,15 @@ void Master<AggregatorT>::check_resume_file()
 template <class AggregatorT>
 void Master<AggregatorT>::sys_sync()
 {
-	vector<QueueMonitorT> parts(get_num_workers());
+	vector<SysSyncInfoT> parts(get_num_workers());
 
 	master_gather(parts);
+
+	if (sys_sync_time_ == 0)
+	{
+		string cmd = "touch " + DEMO_LOG_PATH + "start-sys-sync.log";
+		system(cmd.c_str());  // tell the coordinator that workers has begin sys_sync()
+	}
 
 	//write queue info to file
 	string file_name = DEMO_LOG_PATH + "master_5q.log";
@@ -102,8 +108,8 @@ void Master<AggregatorT>::sys_sync()
 			if(cnt == parts.size() - 1)
 				break;
 			fprintf(f, ", \"%d\" : [%ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld]", cnt, 
-					v.task_num_in_memory, v.task_num_in_disk, v.cmq_size, v.cpq_size, v.taskbuf_size,
-					v.task_store_to_cmq, v.cmq_to_cpq, v.cpq_to_task_store, v.cpq_finished);
+					v.queue.task_num_in_memory, v.queue.task_num_in_disk, v.queue.cmq_size, v.queue.cpq_size, v.queue.taskbuf_size,
+					v.queue.task_store_to_cmq, v.queue.cmq_to_cpq, v.queue.cpq_to_task_store, v.queue.cpq_finished);
 			cnt++;
 		}
 	}
@@ -141,6 +147,8 @@ void Master<AggregatorT>::sys_sync()
 	}
 
 	resume_task = all_bor(resume_task); // send resume task signal
+
+	sys_sync_time_++;
 }
 
 template <class AggregatorT>

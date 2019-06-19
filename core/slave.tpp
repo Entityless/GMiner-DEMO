@@ -818,25 +818,25 @@ void Slave<TaskT, AggregatorT>::end_report()
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::sys_sync()
 {
-	QueueMonitorT part;
+	SysSyncInfoT sys_sync_info;
 
 	//basic queue info
-	part.task_num_in_memory = get_task_num_in_memory();
-	part.task_num_in_disk = get_task_num_in_disk();
-	part.cmq_size = task_to_cmq_count_ - task_to_cpq_count_;
-	part.cpq_size = task_pipeline_.cpq_size() + computing_task_count_;
-	part.taskbuf_size = task_pipeline_.taskbuf_size();
-	part.task_store_to_cmq = task_to_cmq_count_ - last_task_to_cmq_;
-	part.cmq_to_cpq = task_to_cpq_count_ - last_task_to_cpq_;
-	part.cpq_to_task_store = task_recycle_count_ - last_task_recycle_;
-	part.cpq_finished = task_finished_count_ - last_task_finished_;
+	sys_sync_info.queue.task_num_in_memory = get_task_num_in_memory();
+	sys_sync_info.queue.task_num_in_disk = get_task_num_in_disk();
+	sys_sync_info.queue.cmq_size = task_to_cmq_count_ - task_to_cpq_count_;
+	sys_sync_info.queue.cpq_size = task_pipeline_.cpq_size() + computing_task_count_;
+	sys_sync_info.queue.taskbuf_size = task_pipeline_.taskbuf_size();
+	sys_sync_info.queue.task_store_to_cmq = task_to_cmq_count_ - last_task_to_cmq_;
+	sys_sync_info.queue.cmq_to_cpq = task_to_cpq_count_ - last_task_to_cpq_;
+	sys_sync_info.queue.cpq_to_task_store = task_recycle_count_ - last_task_recycle_;
+	sys_sync_info.queue.cpq_finished = task_finished_count_ - last_task_finished_;
 
 	last_task_finished_ = task_finished_count_;
 	last_task_recycle_ = task_recycle_count_;
 	last_task_to_cmq_ = task_to_cmq_count_;
 	last_task_to_cpq_ = task_to_cpq_count_;
 
-	slave_gather(part);
+	slave_gather(sys_sync_info);
 	
 	AggregatorT* agg = (AggregatorT*)get_aggregator();
 	if (agg != NULL)

@@ -217,6 +217,7 @@ def send_infos():
         res.update(q_dic)
 
     # 3. read system info
+
     # 4. read graph info
     resume_finished = False
     if key in paused_key_set:
@@ -226,20 +227,28 @@ def send_infos():
         fname = 'runtime-infos/{}/slaves.json'.format(key)
 
     if os.path.exists(fname):
-        with open(fname) as f:
-            try:
-                graph = json.load(f)
-                res['taskRes'] = graph
-                if key in paused_key_set and 'status' not in graph:
-                    res['taskRes']['status'] = "resume"
-                    # res["taskRes"] = correctSubgList(graph)
-            except json.decoder.JSONDecodeError:
-                res['taskRes'] = ""
-            if (resume_finished):
-                app_table[key].kill()
-                # os.kill(app_table[key].pid, 15)
+        try:
+            with open(fname) as f:
+                try:
+                    graph = json.load(f)
+                    res['taskRes'] = graph
+                    if key in paused_key_set and 'status' not in graph:
+                        res['taskRes']['status'] = "resume"
+                        # res["taskRes"] = correctSubgList(graph)
+                except json.decoder.JSONDecodeError:
+                    res['taskRes'] = ""
+                if (resume_finished):
+                    app_table[key].kill()
+                    # os.kill(app_table[key].pid, 15)
+        except Exception:
+            res['taskRes'] = ""
     else:
         res['taskRes']=""
+
+    if (os.path.isfile('runtime-infos/{}/hdfs_loaded.log'.format(key))):
+        res['hdfsLoaded'] = True
+    else:
+        res['hdfsLoaded'] = False
 
     global last_sub_graph
     if res['taskRes'] == last_sub_graph:
