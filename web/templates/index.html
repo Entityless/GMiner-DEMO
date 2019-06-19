@@ -364,6 +364,23 @@
               {% endfor %}
             </div>
           </div>
+          <div id="samplingRules">
+            <h4 class="ui dividing header"> Sampling Rules for Visualization </h4>
+            <div class="fields">
+              {% for item in apps %}
+                {% for k, v in item.items() %}
+                  {% if v['rules']: %}
+                    {% for rules in v['rules'] %}
+                    <div class="field rules {{ k }} popup" data-content="{{ rules['help'] }}">
+                      <label for="{{ rules['name'] }}">{{ rules['name'] }}</label>
+                      <input type="text" placeholder="{{ rules['default'] }}" id="{{ rules['name'] }}" name="{{ rules['name'] }}" data-type="{{ rules['type'] }}">
+                    </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+            </div>
+          </div>
           <div class="ui error message"></div>
         </form>
       </div>

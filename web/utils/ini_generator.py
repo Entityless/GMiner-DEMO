@@ -41,14 +41,14 @@ input_path['orkut']['fco'] = os.environ['ORKUT_FCO_GRAPH']
 input_path['dblp']['fco'] = os.environ['DBLP_FCO_GRAPH']
 
 threshold_sampling_dic = {'tc':{}, 'gm':{}, 'cd':{}, 'fco':{}}
-threshold_sampling_dic['tc']['tc-sample-min'] = 'TC_SAMPLING_MIN'
-threshold_sampling_dic['tc']['tc-sample-max'] = 'TC_SAMPLING_MAX'
-threshold_sampling_dic['gm']['gm-sample-min'] = 'GM_SAMPLING_MIN'
-threshold_sampling_dic['gm']['gm-sample-max'] = 'GM_SAMPLING_MAX'
-threshold_sampling_dic['cd']['cd-sample-min'] = 'CD_SAMPLING_MIN'
-threshold_sampling_dic['cd']['cd-sample-max'] = 'CD_SAMPLING_MAX'
-threshold_sampling_dic['fco']['gc-sample-min'] = 'GC_SAMPLING_MIN'
-threshold_sampling_dic['fco']['gc-sample-max'] = 'GC_SAMPLING_MAX'
+threshold_sampling_dic['tc']['tc-sampling-min'] = 'TC_SAMPLING_MIN'
+threshold_sampling_dic['tc']['tc-sampling-max'] = 'TC_SAMPLING_MAX'
+threshold_sampling_dic['gm']['gm-sampling-min'] = 'GM_SAMPLING_MIN'
+threshold_sampling_dic['gm']['gm-sampling-max'] = 'GM_SAMPLING_MAX'
+threshold_sampling_dic['cd']['cd-sampling-min'] = 'CD_SAMPLING_MIN'
+threshold_sampling_dic['cd']['cd-sampling-max'] = 'CD_SAMPLING_MAX'
+threshold_sampling_dic['fco']['gc-sampling-min'] = 'GC_SAMPLING_MIN'
+threshold_sampling_dic['fco']['gc-sampling-max'] = 'GC_SAMPLING_MAX'
 
 machine_file = {False : 'machines.cfg', 'ib' : 'ib_machines.cfg'}
 # machine_file = {False : os.path.join(gminer_root, 'machines.cfg'), 'ib' : 'ib_machines.cfg'}

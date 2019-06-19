@@ -953,6 +953,7 @@ void Slave<TaskT, AggregatorT>::context_sync()
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::end_sync()
 {
+	printf("slave %d calls end_sync\n", _my_rank);
 	if(AGG_SLEEP_TIME == 0.0)
 	{
 		end_lock_.lock();

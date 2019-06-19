@@ -136,36 +136,36 @@ var gc_cand_field = {
   identifier: 'cand-max-time',
   rules: [{type: 'integer[1..3000]'}]
 };
-var tc_sample_min = {
-  identifier: 'tc-sample-min',
+var tc_sampling_min = {
+  identifier: 'tc-sampling-min',
   rules: [{type: 'integer[4..200]'}]
 };
-var tc_sample_max = {
-  identifier: 'tc-sample-max',
+var tc_sampling_max = {
+  identifier: 'tc-sampling-max',
   rules: [{type: 'integer[4..200]'}]
 };
-var gm_sample_min = {
-  identifier: 'gm-sample-min',
+var gm_sampling_min = {
+  identifier: 'gm-sampling-min',
   rules: [{type: 'integer[4..200]'}]
 };
-var gm_sample_max = {
-  identifier: 'gm-sample-max',
+var gm_sampling_max = {
+  identifier: 'gm-sampling-max',
   rules: [{type: 'integer[4..200]'}]
 };
-var cd_sample_min = {
-  identifier: 'cd-sample-min',
+var cd_sampling_min = {
+  identifier: 'cd-sampling-min',
   rules: [{type: 'integer[4..100]'}]
 };
-var cd_sample_max = {
-  identifier: 'cd-sample-max',
+var cd_sampling_max = {
+  identifier: 'cd-sampling-max',
   rules: [{type: 'integer[4..100]'}]
 };
-var gc_sample_min = {
-  identifier: 'gc-sample-min',
+var gc_sampling_min = {
+  identifier: 'gc-sampling-min',
   rules: [{type: 'integer[4..100]'}]
 };
-var gc_sample_max = {
-  identifier: 'gc-sample-max',
+var gc_sampling_max = {
+  identifier: 'gc-sampling-max',
   rules: [{type: 'integer[4..100]'}]
 };
 var cd_thre_field = {
@@ -185,13 +185,13 @@ var has_default_fields = {
   mres: gc_mres_field,
   iter: gc_iter_field,
   cand: gc_cand_field,
-  tc_min: tc_sample_min,
-  tc_max: tc_sample_max,
-  gm_min: gm_sample_min,
-  gm_max: gm_sample_max,
-  cd_min: cd_sample_min,
-  cd_max: cd_sample_max,
-  gc_min: gc_sample_min,
-  gc_max: gc_sample_max
+  tc_min: tc_sampling_min,
+  tc_max: tc_sampling_max,
+  gm_min: gm_sampling_min,
+  gm_max: gm_sampling_max,
+  cd_min: cd_sampling_min,
+  cd_max: cd_sampling_max,
+  gc_min: gc_sampling_min,
+  gc_max: gc_sampling_max
 }
 

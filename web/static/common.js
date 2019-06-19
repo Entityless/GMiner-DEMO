@@ -2,6 +2,7 @@ $(document).ready(function(){
   /* init */
   $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
   $('#appParam').hide();
+  $('#samplingRules').hide();
   $('div[group=std],div[group=api]').hide();
   $('pre').hide().first().show();
   $('#main-grid').css('left', $('#side').width()+16); 
@@ -59,9 +60,7 @@ $(document).ready(function(){
     var data_value = opt.attr('value');
 
     // app param
-    if (data_value === "tc" ||
-        data_value === "gm" ||
-        data_value === "cd" ||
+    if (data_value === "cd" ||
         data_value === "fco") {
       var title = opt.text() + " Parameters";
       $('#appParam .header:first-of-type').text(title);
@@ -71,6 +70,19 @@ $(document).ready(function(){
       $('#appParam').fadeIn();
     } else {
       $('#appParam').fadeOut();
+    }
+
+    // sampling rules
+    if (data_value === "tc" ||
+        data_value === "gm" ||
+        data_value === "cd" ||
+        data_value === "fco") {
+      $('#samplingRules .field.rules').hide();
+      var selector_str = '#samplingRules .' + data_value;
+      $(selector_str).show();
+      $('#samplingRules').fadeIn();
+    } else {
+      $('#samplingRules').fadeOut();
     }
 
     // dataset

@@ -50,59 +50,59 @@ cand_max_time = {
 
 # visualization sampling
 
-tc_sample_min = {
-        'name': 'tc-sample-min',
+tc_sampling_min = {
+        'name': 'tc-sampling-min',
         'type': None,
-        'help': 'tc-sample-min',
+        'help': 'Minimum triangle count',
         'default': 4
         }
 
-tc_sample_max = {
-        'name': 'tc-sample-max',
+tc_sampling_max = {
+        'name': 'tc-sampling-max',
         'type': None,
-        'help': 'tc-sample-max',
+        'help': 'Maximum triangle count',
         'default': 100
         }
 
-gm_sample_min = {
-        'name': 'gm-sample-min',
+gm_sampling_min = {
+        'name': 'gm-sampling-min',
         'type': None,
-        'help': 'gm-sample-min',
+        'help': 'Minimum matched pattern count',
         'default': 4
         }
 
-gm_sample_max = {
-        'name': 'gm-sample-max',
+gm_sampling_max = {
+        'name': 'gm-sampling-max',
         'type': None,
-        'help': 'gm-sample-max',
+        'help': 'Maximum matched pattern count',
         'default': 100
         }
 
-cd_sample_min = {
-        'name': 'cd-sample-min',
+cd_sampling_min = {
+        'name': 'cd-sampling-min',
         'type': None,
-        'help': 'cd-sample-min',
+        'help': 'Minimum community size',
         'default': 4
         }
 
-cd_sample_max = {
-        'name': 'cd-sample-max',
+cd_sampling_max = {
+        'name': 'cd-sampling-max',
         'type': None,
-        'help': 'cd-sample-max',
+        'help': 'Maximum community size',
         'default': 50
         }
 
-gc_sample_min = {
-        'name': 'gc-sample-min',
+gc_sampling_min = {
+        'name': 'gc-sampling-min',
         'type': None,
-        'help': 'gc-sample-min',
+        'help': 'Minimum cluster size',
         'default': 8
         }
 
-gc_sample_max = {
-        'name': 'gc-sample-max',
+gc_sampling_max = {
+        'name': 'gc-sampling-max',
         'type': None,
-        'help': 'gc-sample-max',
+        'help': 'Maximum cluster size',
         'default': 50
         }
 
@@ -135,11 +135,11 @@ subg_size_t = {
 gminer_datasets = ['youtube', 'skitter', 'orkut', 'friendster', 'dblp', 'tencent']
 
 gminer_apps = [
-            {'tc': {'name':'Triangle Counting', 'param': [tc_sample_min, tc_sample_max]}} , 
-            {'mc': {'name':'Max Clique', 'param': None}} , 
-            {'gm': {'name':'Graph Matching', 'param': [gm_sample_min, gm_sample_max]}} , 
-            {'cd': {'name': 'Community Detection', 'param': [cd_param, cd_sample_min, cd_sample_max]}}, 
-            {'fco': {'name': 'Graph Clustering', 'param': [min_weight, min_core_size, min_result_size, diff_ratio, iter_round_max, cand_max_time, gc_sample_min, gc_sample_max]}}
+            {'tc': {'name':'Triangle Counting', 'param': None, 'rules': [tc_sampling_min, tc_sampling_max]}} , 
+            {'mc': {'name':'Max Clique', 'param': None, 'rules': None}} , 
+            {'gm': {'name':'Graph Matching', 'param': None, 'rules': [gm_sampling_min, gm_sampling_max]}} , 
+            {'cd': {'name': 'Community Detection', 'param': [cd_param], 'rules': [cd_sampling_min, cd_sampling_max]}}, 
+            {'fco': {'name': 'Graph Clustering', 'param': [min_weight, min_core_size, min_result_size, diff_ratio, iter_round_max, cand_max_time], 'rules': [gc_sampling_min, gc_sampling_max]}}
             ]
 
 gminer_supervisors = [
