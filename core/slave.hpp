@@ -164,6 +164,9 @@ private:
 	void demo_resume_handle();
 
 	void WaitingForGlobalStealingFinished();
+	bool CheckIfGlobalStealingFinished();
+	void WaitDuringPause();
+	void NotifyWhenPauseFinished();
 
 	//PART 5 =======================================================
 	//members
@@ -241,7 +244,7 @@ private:
 	int filename_part_ = 0;
 	int sys_sync_time_ = 0;
 
-	int task_finished_count_ = 0, task_recycle_count_ = 0, task_to_cmq_count_ = 0, task_to_cpq_count_ = 0;
+	atomic<int> task_finished_count_, task_recycle_count_, task_to_cmq_count_, task_to_cpq_count_;
 	atomic<int> computing_task_count_;
 	int last_task_finished_ = 0, last_task_recycle_ = 0, last_task_to_cmq_ = 0, last_task_to_cpq_ = 0;
 
@@ -254,11 +257,14 @@ private:
 	SlaveStatus status_;
 	atomic<bool> stealing_finished_;
 	atomic<bool> global_stealing_finished_;
+	atomic<bool> to_pause_;
+	mutex pause_mutex_;
+	condition_variable pause_condition_variable_;
 
 	// debug
 	bool debug_ = false;
 protected:
-	bool resume_task_ = false;
+	atomic<bool> resume_task_;
 };
 
 

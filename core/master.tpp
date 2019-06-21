@@ -9,14 +9,30 @@ Master<AggregatorT>::Master()
 	resume_task_ = false;
 	to_resume_ = false;
 	resume_file_detected_ = false;
+	paused_ = false;
+}
+
+template <class AggregatorT>
+bool Master<AggregatorT>::CheckIfFileReadable(string filename)
+{
+	bool ret;
+	ifstream in(filename);
+	if(in.is_open()) {
+		ret = true;
+		in.close();
+	} else {
+		ret = false;
+	}
+	
+	return ret;
 }
 
 template <class AggregatorT>
 void Master<AggregatorT>::check_resume_file()
 {
 	const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
-	const char* RESUME_PATH = getenv("GMINER_MERGE_LOG_PATH");
-	string filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt";  // must be a finished task
+	const char* MERGE_LOG_PATH = getenv("GMINER_MERGE_LOG_PATH");
+	string filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt";  // must be a finished task
 	VertexID seed_id;
 	map<string, vector<VertexID>> resume_info = {
 		{"nodes", vector<VertexID>()},
@@ -85,11 +101,11 @@ void Master<AggregatorT>::check_resume_file()
 	if (debug_)
 		cout << "[check_resume_file] demo_str :" << demo_str << " resumed req: "<< resumed_req<<endl;
 	if(!resumed_req) return;
-	filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result_tmp.json";
+	filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result_tmp.json";
 	ofstream out(filename);
 	out << demo_str << endl;
 	out.close();
-	string nfilename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result.json";
+	string nfilename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result.json";
 	rename(filename.c_str(), nfilename.c_str());
 }
 
@@ -161,7 +177,6 @@ void Master<AggregatorT>::sys_sync()
 		fclose(f);
 	}
 
-
 	SysSyncBcastInfoT bcast_info;
 	bcast_info.global_stealing_finished = true;
 	int cnt = 0;
@@ -178,22 +193,40 @@ void Master<AggregatorT>::sys_sync()
 	// won't close task_pipeline_ if to_resume_
 	bcast_info.global_stealing_finished = (bcast_info.global_stealing_finished && (!to_resume));
 
+	if (bcast_info.global_stealing_finished)
+	{
+		printf("master, bcast_info.global_stealing_finished\n");
+	}
+
+	const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
+	const char* MERGE_LOG_PATH = getenv("GMINER_MERGE_LOG_PATH");
+
+	bool paused = paused_;
+
+	string pause_filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/pause_signal.txt";
+	if(CheckIfFileReadable(pause_filename) && !bcast_info.global_stealing_finished) {
+		paused_ = true;
+	} else {
+		// pause finished
+		// if (paused_) {
+		// 	printf("stop pausing\n");
+		// 	fflush(stdout);
+		// }
+		paused_ = false;
+	}
+	bcast_info.to_pause = paused_;
+
 	// before bcasting, decide if to resume
 	bool resume_file_detected = resume_file_detected_;
 	if (!resume_file_detected) {
-		const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
-		const char* RESUME_PATH = getenv("GMINER_MERGE_LOG_PATH");
-		string filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt";  // must be a finished task
-		ifstream in(filename);
-		if(in.is_open()) {
-			// decide if to resume
+		string filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt";  // must be a finished task
+		if (CheckIfFileReadable(filename)) {
 			resume_file_detected_ = true;
 
 			if (!bcast_info.global_stealing_finished) {
 				to_resume_ = true;
 			}
 		}
-		in.close();
 	}
 
 	bcast_info.resume_task = resume_task_;

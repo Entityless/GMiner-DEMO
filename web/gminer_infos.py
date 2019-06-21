@@ -2,49 +2,49 @@ __all__ = ['gminer_datasets', 'gminer_apps', 'gminer_sysconfig']
 cd_param = {
         'name':'k-threshold',
         'type':None,
-        'help':'',
+        'help':'Threshold that only store the result communities with size >= K_THRESHOLD. Should be an integer within [2, 10000].',
         'default': 6,
         }
 
 min_weight = {
         'name': 'min-weight',
         'type': None,
-        'help': 'threshold that only add the new candidates into subgraph with weight >= MIN_WEIGHT',
+        'help': 'Threshold that only add the new candidates into subgraph with weight >= MIN_WEIGHT. Should be a number within [0.0, 1.0].',
         'default': 0.57,
         }
 
 min_core_size = {
         'name': 'min-core-size',
         'type': None,
-        'help': 'threshold that only compute the seedtask with its subgraph size >= MIN_CORE_SIZE',
+        'help': 'Threshold that only compute the seedtask with its subgraph size >= MIN_CORE_SIZE. Should be an integer within [1, 100].',
         'default': 3
         }
 
 min_result_size = {
         'name': 'min-result-size',
         'type': None,
-        'help':'threshold that only store the result cluster with size >= MIN_RESULT_SIZE',
+        'help':'Threshold that only store the result cluster with size >= MIN_RESULT_SIZE. Should be an integer within [1, 1000].',
         'default': 20
         }
 
 diff_ratio = {
         'name': 'diff-ratio',
         'type': None,
-        'help': 'threshold for judging two weight is similarity or not',
+        'help': 'Threshold for judging two weight is similarity or not. Should be a number within [0.0, 1.0].',
         'default': 0.05
         }
 
 iter_round_max = {
         'name': 'iter-round-max',
         'type': None,
-        'help': 'threshold that only compute number of iterations < ITER_ROUND_MAX with each task',
+        'help': 'Threshold that only compute number of iterations < ITER_ROUND_MAX with each task. Should be an integer within [1, 3000].',
         'default': 10
         }
 
 cand_max_time = {
         'name': 'cand-max-time',
         'type': None,
-        'help': 'threshold that only compute the top CAND_MAX_TIME*subgraph_size candidates in each round during computation',
+        'help': 'Threshold that only compute the top CAND_MAX_TIME*subgraph_size candidates in each round during computation. Should be an integer within [1, 3000].',
         'default': 3
         }
 
@@ -53,82 +53,82 @@ cand_max_time = {
 tc_sampling_min = {
         'name': 'tc-sampling-min',
         'type': None,
-        'help': 'Minimum triangle count',
+        'help': 'Minimum triangle count. Should be an integer within [4, 200].',
         'default': 4
         }
 
 tc_sampling_max = {
         'name': 'tc-sampling-max',
         'type': None,
-        'help': 'Maximum triangle count',
+        'help': 'Maximum triangle count. Should be an integer within [4, 200].',
         'default': 100
         }
 
 gm_sampling_min = {
         'name': 'gm-sampling-min',
         'type': None,
-        'help': 'Minimum matched pattern count',
+        'help': 'Minimum matched pattern count. Should be an integer within [4, 200].',
         'default': 4
         }
 
 gm_sampling_max = {
         'name': 'gm-sampling-max',
         'type': None,
-        'help': 'Maximum matched pattern count',
+        'help': 'Maximum matched pattern count. Should be an integer within [4, 200].',
         'default': 100
         }
 
 cd_sampling_min = {
         'name': 'cd-sampling-min',
         'type': None,
-        'help': 'Minimum community size',
+        'help': 'Minimum community size. Should be an integer within [4, 100].',
         'default': 4
         }
 
 cd_sampling_max = {
         'name': 'cd-sampling-max',
         'type': None,
-        'help': 'Maximum community size',
+        'help': 'Maximum community size. Should be an integer within [4, 100].',
         'default': 50
         }
 
 gc_sampling_min = {
         'name': 'gc-sampling-min',
         'type': None,
-        'help': 'Minimum cluster size',
+        'help': 'Minimum cluster size. Should be an integer within [4, 100].',
         'default': 8
         }
 
 gc_sampling_max = {
         'name': 'gc-sampling-max',
         'type': None,
-        'help': 'Maximum cluster size',
+        'help': 'Maximum cluster size. Should be an integer within [4, 100].',
         'default': 50
         }
 
 cache_size = {
         'name': 'cache-size',
-        'help': 'the size of cachetable in each worker',
+        'help': 'The size of cachetable in each worker. Should be an integer within [10000, 20000000].',
         'default': 1000000
         }
 num_comp_th = {
         'name': 'num-comp-thread',
-        'help': 'number of threads in threadpool for task computation',
+        'help': 'Number of threads in threadpool for task computation. Should be an integer within [1, 50].',
         'default': 24
         }
 pipe_pop_num = {
         'name': 'pipe-pop-num',
-        'help': 'number of tasks popped out each batch in the pipeline',
+        'help': 'Number of tasks popped out each batch in the pipeline. Should be an integer within [10, 5000].',
         'default': 100
         }
 pop_num = {
         'name': 'pop-num',
-        'help': 'number of tasks for pque pops tasks to remote worker during one stealing procedure',
+        'help': 'Number of tasks for pque pops tasks to remote worker during one stealing procedure. Should be an integer within [10, 5000].',
         'default': 100
         }
 subg_size_t = {
         'name': 'subg-size-t',
-        'help': 'threshold that task can be moved to other workers only if its current subgraph size <= SUBG_SIZE_T',
+        'help': 'Threshold that task can be moved to other workers only if its current subgraph size <= SUBG_SIZE_T. Should be an integer within [1, 1000].',
         'default': 30
         }
 

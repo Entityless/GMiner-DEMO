@@ -344,7 +344,7 @@ public:
 		}
 		else
 		{
-			if (g.get_nodes().size() >= MIN_RESULT_SIZE)
+			if (g.get_nodes().size() >= MIN_RESULT_SIZE || resume_task_)
 			{
 				//A expected cluster
 				cluster.clear();

@@ -17,6 +17,10 @@ var node_menu = function(){
          * i: index
          */
         if (d.id == ENV.seed_id) {
+          console.log("d.id == ENV.seed_id");
+          var x = document.getElementById("toast")
+          x.className = "show";
+          setTimeout(function(){ x.className = x.className.replace("show", ""); }, 2000);
           return;
         }
         console.log('delete node:',d);
@@ -92,7 +96,7 @@ var edge_menu = [{
 // FORM FIELDS //
 var cache_field = {
   identifier: 'cache-size',
-  rules: [{ type: 'integer[10000..10000000]'}]
+  rules: [{ type: 'integer[10000..20000000]'}]
 };
 var comp_th_field = {
   identifier: 'num-comp-thread',
@@ -100,11 +104,11 @@ var comp_th_field = {
 };
 var pipe_pop_field = {
   identifier: 'pipe-pop-num',
-  rules: [{type: 'integer[10..1000]'}]
+  rules: [{type: 'integer[10..5000]'}]
 };
 var pop_field = {
   identifier: 'pop-num',
-  rules: [{type: 'integer[10..1000]'}]
+  rules: [{type: 'integer[10..5000]'}]
 }
 var subg_field = {
   identifier: 'subg-size-t',
@@ -122,11 +126,11 @@ var gc_diff_ratio_field = {
 };
 var gc_mcore_field = {
   identifier: 'min-core-size',
-  rules: [{type: 'integer[1..]'}]
+  rules: [{type: 'integer[1..100]'}]
 };
 var gc_mres_field = {
   identifier: 'min-result-size',
-  rules: [{type: 'integer[1..]'}]
+  rules: [{type: 'integer[1..1000]'}]
 };
 var gc_iter_field = {
   identifier: 'iter-round-max',
@@ -170,7 +174,7 @@ var gc_sampling_max = {
 };
 var cd_thre_field = {
   identifier: 'k-threshold',
-  rules: [{type: 'integer[2..1000000]'}]
+  rules: [{type: 'integer[2..10000]'}]
 };
 var has_default_fields = {
   cache: cache_field,

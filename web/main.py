@@ -27,7 +27,7 @@ worker_log_path = os.environ['GMINER_LOG_PATH']
 dev_debug = False
 
 def discardByKey(key):
-    del app_table[key]
+    # del app_table[key]
     coordinator_table[key].kill()
     paused_key_set.discard(key)
 
@@ -126,28 +126,36 @@ def pause_by_timestamp():
     key = data['key']
     print('[pauserequest] key: ',key)
     paused_key_set.add(key)
-    app_table[key].send_signal(signal.SIGSTOP)
+    # app_table[key].send_signal(signal.SIGSTOP)
     
     data = {'key': key, 'status': "pause"}
     resp = flask.Response(json.dumps(data), mimetype='application/json')
+
+    pause_signal_filename = 'runtime-infos/{}/pause_signal.txt'.format(key)
+    os.system('touch {}'.format(pause_signal_filename))
+
     return resp
 
 @app.route('/resumerequest', methods=['POST'])
 def resume_by_timestamp():
     data = json.loads(request.data)
     key = data['key']
+
+    pause_signal_filename = 'runtime-infos/{}/pause_signal.txt'.format(key)
+    os.system('rm -f {}'.format(pause_signal_filename))
+
     # write seed and edges and nodes to a file
     # record this seed and control it when interact
     if data['seed_id'] == -1:
+        print("resume_by_timestamp, data['seed_id'] == -1")
         paused_key_set.discard(key)
-        app_table[key].send_signal(signal.SIGCONT)
+        # app_table[key].send_signal(signal.SIGCONT)
         data = {'key': key, 'status': "ok"}
     elif key in finished_key_set:
         finished_key_set.discard(key)
-        app_table[key].send_signal(signal.SIGCONT)
+        # app_table[key].send_signal(signal.SIGCONT)
         data = {"key": key, 'status': 'finished'}
     else:
-        # TODO: write to a signal file
         with open('runtime-infos/{}/resume_file.txt'.format(key),'w') as f:
             print("resume requested: {}".format(data))
             f.write(str(data['seed_id']))
@@ -161,7 +169,7 @@ def resume_by_timestamp():
                 for src, dst in data['removed_edges']:
                     f.write(str(src) + ' ' + str(dst) + '\n')
             f.write('-1')
-        app_table[key].send_signal(signal.SIGCONT)
+        # app_table[key].send_signal(signal.SIGCONT)
         data = {'key': key, 'status': "ok"}
 
     resp = flask.Response(json.dumps(data), mimetype='application/json')

@@ -158,7 +158,7 @@ function rendertcGraph(taskRes) {
   force.on('tick', tick);
 
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime TC Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time TC Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
@@ -183,7 +183,7 @@ function rendergmGraph(taskRes) {
   force.on('tick', tick);
  
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime GM Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time GM Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
@@ -204,7 +204,7 @@ function rendermcGraph(taskRes) {
   lineLinear.domain([0, size]).range([-0.7,-0.3]);
 
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime Max Clique</h4>');
+    $('#graphnote').append('<h4>Real-time Max Clique</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>max clique size: <span id="mcsize">', size,'</span></td></tr>'].join(''));
@@ -247,7 +247,7 @@ function rendercdGraph(taskRes) {
   force.on('tick', tick);
   
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime CD Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time CD Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
@@ -283,7 +283,7 @@ function renderfcoGraph(taskRes) {
   force.on('tick',tick); 
 
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime FCO Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time FCO Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
@@ -328,6 +328,11 @@ function renderGraphVisualize(taskRes) {
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
 
   if(taskRes.task_id === -1) return;
+
+  if (ENV.current_status == 2) {
+    ENV.current_status = 3;
+    $('#pauseButton').removeClass('disabled');
+  }
 
   $('#graphPanel .dimmer').removeClass('active');
 

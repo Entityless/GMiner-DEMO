@@ -9,6 +9,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dataVis.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='arrows.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='toast.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='images/CU_short_logo.png') }}">
     <title>GMiner Demo</title>
   </head>
@@ -120,6 +121,7 @@
                 <svg id="maingraph">
                 </svg>
               </div>
+            <div id="toast"><div id="desc">Cannot remove the seed vertex.</div></div>
             </div>
             <div group="api" id="apiConsole">
               <div group="api">

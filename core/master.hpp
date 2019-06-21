@@ -61,6 +61,8 @@ public:
 	void run(const WorkerParams& params);
 	void check_resume_file();
 
+	bool CheckIfFileReadable(string filename);
+
 private:
 	static const VertexID finish_tag_ = -1;
 	bool is_end_; // agg_sync
@@ -72,6 +74,7 @@ private:
 	bool resume_task_;
 	atomic<bool> resume_file_detected_;
 	atomic<bool> to_resume_;  // set to true in the sys_sync function; set back to false when resume finished
+	atomic<bool> paused_;
 
 	int sys_sync_time_ = 0;
 

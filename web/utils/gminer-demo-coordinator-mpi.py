@@ -185,7 +185,7 @@ class Master:
                 final_queue_dic['cpq_finished'] = 0
             
                 for i in range(ln_dic['nodes']):
-                    stri = str(i)          
+                    stri = str(i)
                     final_queue_dic['task_num_in_memory'] += ln_dic[stri][0]
                     final_queue_dic['task_num_in_disk'] += ln_dic[stri][1]
                     final_queue_dic['cmq_size'] += ln_dic[stri][2]
@@ -221,6 +221,7 @@ class Master:
     def AppendTaskResultDicList(self, dic_list):
         for dic in dic_list:
             if (not len(dic) == 0):
+                # PrintWithFlush('AppendTaskResultDicList dic["seed_id"] = {}'.format(dic["seed_id"]))
                 self.results_from_workers.append(dic)
 
     def GetTaskResultDic(self):
@@ -233,7 +234,7 @@ class Master:
                 self.results_displayed.insert(0, task_result_dic)
         else:
             task_result_dic = self.results_from_workers.pop()
-            self.results_from_workers.append(task_result_dic)
+            self.results_displayed.append(task_result_dic)
 
         # for mc tasks
         if (len(self.aggstr_dic_list) and self.signal_dic['app_name'] == 'MC'):
@@ -247,13 +248,12 @@ class Master:
 
         return task_result_dic
 
-
     def WriteFrontendFiles(self):
         # write normal task file
         task_result_dic = self.GetTaskResultDic()
         # PrintWithFlush('to write file {}'.format(self.slaves_writting_path))
         if (len(task_result_dic) != 0):
-            # PrintWithFlush('len(task_result_dic) != 0')
+            # PrintWithFlush('WriteFrontendFiles task_result_dic["seed_id"] = {}'.format(task_result_dic["seed_id"]))
             with open(self.slaves_writting_path, 'w') as f:
                 PrintWithFlush('written file {}'.format(self.slaves_writting_path))
                 f.write(json.dumps(task_result_dic) + '\n')
@@ -335,6 +335,8 @@ class Slave:
         finish_flag_filename = '{}/demo_node_{}_part_{}_finish.log'.format(self.log_path, my_rank, self.output_slice)
         if (os.path.isfile(finish_flag_filename)):
             self.output_slice += 1
+            if (my_rank == 0):
+                PrintWithFlush('self.output_slice += 1, {}'.format(self.output_slice))
             for tid in range(signal_dic['nthreads']):
                 self.log_line_count[tid] = 0
 
@@ -378,6 +380,7 @@ class Slave:
                     self.log_dic_list.append(ln_dic)
 
                     line_id_to_parse += 1
+                    self.log_line_count[tid] = line_id_to_parse
 
     def SetSignalDic(self, signal_dic):
         self.signal_dic = signal_dic
@@ -410,8 +413,6 @@ if __name__ == "__main__":
             me.AppendTaskResultDicList(app_dic_list)
             me.ReadQueueInfo()
             me.WriteFrontendFiles()
-
-            time.sleep
 
             comm.Barrier()
 

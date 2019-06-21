@@ -134,17 +134,18 @@ struct SysSyncBcastInfoT
 {
 	bool resume_task;
 	bool global_stealing_finished;
+	bool to_pause;
 };
 
 static inline ibinstream& operator << (ibinstream& m, const SysSyncBcastInfoT& v)
 {
-	m << v.global_stealing_finished << v.resume_task;
+	m << v.global_stealing_finished << v.resume_task << v.to_pause;
 	return m;
 }
 
 static inline obinstream& operator >> (obinstream& m, SysSyncBcastInfoT& v)
 {
-	m >> v.global_stealing_finished >> v.resume_task;
+	m >> v.global_stealing_finished >> v.resume_task >> v.to_pause;
 	return m;
 }
 
