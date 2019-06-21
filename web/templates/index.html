@@ -434,7 +434,7 @@
             {% for person in row %}
             <td valign="top">
               <div style="float:left; margin-right: 1rem">
-                <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128">
+                <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128" height="171">
               </div>
               <p>
                 <span class="personName">{{ person['name'] }}</span>
@@ -461,7 +461,7 @@
             {% for person in row %}
             <td valign="top" >
               <div style="float:left; margin-right: 1rem">
-                <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128">
+                <img src="{{ url_for('static',filename='./images/{}'.format(person['img'])) }}" width="128" height="171">
               </div>
               <p>
                 <span class="personName">{{ person['name'] }}</span>
