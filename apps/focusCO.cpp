@@ -6,6 +6,7 @@
 
 #include "core/subg-dev.hpp"
 #include <tuple>
+#include <unordered_set>
 
 using namespace std;
 
@@ -171,6 +172,7 @@ private:
 class FocusTask :public Task<VertexID, FocusContext, Attribute<AttrValueT> >
 {
 public:
+	static int sample_min_, sample_max_;
 
 	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
@@ -342,13 +344,18 @@ public:
 		}
 		else
 		{
-			if (g.get_nodes().size() >= MIN_RESULT_SIZE)
+			if (g.get_nodes().size() >= MIN_RESULT_SIZE || resume_task_)
 			{
 				//A expected cluster
 				cluster.clear();
 				list<NodeT>& nodes = g.get_nodes();
-				for (list<NodeT>::iterator iter = nodes.begin(); iter != nodes.end(); ++iter)
+
+				unordered_set<VertexID> cluster_nodes;
+
+				for (list<NodeT>::iterator iter = nodes.begin(); iter != nodes.end(); ++iter) {
 					cluster.push_back(iter->id);
+					cluster_nodes.insert(iter->id);
+				}
 
 				//insert edges at once
 				for(auto vtx_id : cluster)
@@ -371,9 +378,12 @@ public:
 						}
 					}
 				}
-				bool to_demo = true; // for GC, do not need to sample the output
-				if(context.edges.size() > 2000)
-					to_demo = false;
+				bool to_demo = false; // for GC, do not need to sample the output
+				// if(context.edges.size() > 2000)
+				// 	to_demo = false;
+
+				if (resume_task_ || (cluster.size() >= sample_min_ && cluster.size() <= sample_max_))
+					to_demo = true;
 				
 				demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
 				demo_str_ += ",\"subg_size\" : " + to_string(cluster.size()) + ", \"subg_list\" : [";
@@ -389,22 +399,28 @@ public:
 					to_print += " " + to_string(cluster[i]);
 				}
 
-				if(to_demo || resume_task)
+				if(to_demo || resume_task_)
 				{
 					demo_str_ += "], \"conn_list\":[";
 
 					string conn_weight_str;
 
+					int conn_size = 0;
 					for(int i = 0; i < context.edges.size(); i++)
 					{
 						auto edge_item = context.edges[i];
-						if(i != 0)
+
+						if (cluster_nodes.count(get<0>(edge_item)) == 0 || cluster_nodes.count(get<1>(edge_item)) == 0)
+							continue;
+
+						if(conn_size != 0)
 						{
 							conn_weight_str += ",";
 							demo_str_ += ",";
 						}
 
 						conn_weight_str += to_string(get<2>(edge_item));
+						conn_size++;
 						demo_str_ += "[" + to_string(get<0>(edge_item)) + "," + to_string(get<1>(edge_item)) +"]";
 					}
 
@@ -582,6 +598,9 @@ private:
 	}
 };
 
+int FocusTask::sample_min_ = 4;
+int FocusTask::sample_max_ = 20;
+
 //-----------------------------------------------------------------
 
 class FocusSlave :public Slave<FocusTask, CountAgg>
@@ -709,6 +728,17 @@ class FocusWorker :public Worker<FocusMaster, FocusSlave, CountAgg> {};
 
 int main(int argc, char* argv[])
 {
+	const char* GC_SAMPLING_MIN = getenv("GC_SAMPLING_MIN");
+	const char* GC_SAMPLING_MAX = getenv("GC_SAMPLING_MAX");
+	if (GC_SAMPLING_MIN != nullptr)
+	{
+		FocusTask::sample_min_ = atoi(GC_SAMPLING_MIN);
+	}
+	if (GC_SAMPLING_MAX != nullptr)
+	{
+		FocusTask::sample_max_ = atoi(GC_SAMPLING_MAX);
+	}
+
 	init_worker(&argc, &argv);
 
 	if (argc >= 2)

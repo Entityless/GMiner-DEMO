@@ -16,6 +16,13 @@ var node_menu = function(){
          * d: data bound to the elem
          * i: index
          */
+        if (d.id == ENV.seed_id) {
+          console.log("d.id == ENV.seed_id");
+          var x = document.getElementById("toast")
+          x.className = "show";
+          setTimeout(function(){ x.className = x.className.replace("show", ""); }, 2000);
+          return;
+        }
         console.log('delete node:',d);
         var svg = graphEnv.svg,
             force = graphEnv.force,
@@ -89,7 +96,7 @@ var edge_menu = [{
 // FORM FIELDS //
 var cache_field = {
   identifier: 'cache-size',
-  rules: [{ type: 'integer[10000..10000000]'}]
+  rules: [{ type: 'integer[10000..20000000]'}]
 };
 var comp_th_field = {
   identifier: 'num-comp-thread',
@@ -97,11 +104,11 @@ var comp_th_field = {
 };
 var pipe_pop_field = {
   identifier: 'pipe-pop-num',
-  rules: [{type: 'integer[10..1000]'}]
+  rules: [{type: 'integer[10..5000]'}]
 };
 var pop_field = {
   identifier: 'pop-num',
-  rules: [{type: 'integer[10..1000]'}]
+  rules: [{type: 'integer[10..5000]'}]
 }
 var subg_field = {
   identifier: 'subg-size-t',
@@ -119,11 +126,11 @@ var gc_diff_ratio_field = {
 };
 var gc_mcore_field = {
   identifier: 'min-core-size',
-  rules: [{type: 'integer[1..]'}]
+  rules: [{type: 'integer[1..100]'}]
 };
 var gc_mres_field = {
   identifier: 'min-result-size',
-  rules: [{type: 'integer[1..]'}]
+  rules: [{type: 'integer[1..1000]'}]
 };
 var gc_iter_field = {
   identifier: 'iter-round-max',
@@ -133,9 +140,41 @@ var gc_cand_field = {
   identifier: 'cand-max-time',
   rules: [{type: 'integer[1..3000]'}]
 };
+var tc_sampling_min = {
+  identifier: 'tc-sampling-min',
+  rules: [{type: 'integer[4..200]'}]
+};
+var tc_sampling_max = {
+  identifier: 'tc-sampling-max',
+  rules: [{type: 'integer[4..200]'}]
+};
+var gm_sampling_min = {
+  identifier: 'gm-sampling-min',
+  rules: [{type: 'integer[4..200]'}]
+};
+var gm_sampling_max = {
+  identifier: 'gm-sampling-max',
+  rules: [{type: 'integer[4..200]'}]
+};
+var cd_sampling_min = {
+  identifier: 'cd-sampling-min',
+  rules: [{type: 'integer[4..100]'}]
+};
+var cd_sampling_max = {
+  identifier: 'cd-sampling-max',
+  rules: [{type: 'integer[4..100]'}]
+};
+var gc_sampling_min = {
+  identifier: 'gc-sampling-min',
+  rules: [{type: 'integer[4..100]'}]
+};
+var gc_sampling_max = {
+  identifier: 'gc-sampling-max',
+  rules: [{type: 'integer[4..100]'}]
+};
 var cd_thre_field = {
   identifier: 'k-threshold',
-  rules: [{type: 'integer[2..1000000]'}]
+  rules: [{type: 'integer[2..10000]'}]
 };
 var has_default_fields = {
   cache: cache_field,
@@ -149,6 +188,14 @@ var has_default_fields = {
   mcore: gc_mcore_field,
   mres: gc_mres_field,
   iter: gc_iter_field,
-  cand: gc_cand_field
+  cand: gc_cand_field,
+  tc_min: tc_sampling_min,
+  tc_max: tc_sampling_max,
+  gm_min: gm_sampling_min,
+  gm_max: gm_sampling_max,
+  cd_min: cd_sampling_min,
+  cd_max: cd_sampling_max,
+  gc_min: gc_sampling_min,
+  gc_max: gc_sampling_max
 }
 

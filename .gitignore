@@ -14,3 +14,4 @@ web/runtime-infos
 machines.cfg
 tmp/
 /script/.*
+./web/machines.cfg

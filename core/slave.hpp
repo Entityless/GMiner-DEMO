@@ -98,7 +98,6 @@ public:
 	virtual VertexT* respond(const VertexT* v);
 
 private:
-    
 	//PART 3 =======================================================
 	//communication primitives
 
@@ -150,15 +149,24 @@ private:
 
 	void debug();
 
+	// init file pointers for demo usage
 	void thread_demo_str_init();
-	void thread_demo_str_period();//call in sys_sync, to switch file name
+	// called in sys_sync
+	// 1. Switch file name, avoiding the log file getting to large
+	// 2. flush demo log files
+	void thread_demo_str_period();
 	void thread_demo_str_compute(const string& demo_str, int tid);
 	void thread_demo_str_finalize();
 
 	int GetAndIncreaseCounter();
 	void IncreaseComputingTaskCount();
 	void DecreaseComputingTaskCount();
-  void demo_resume_handle();
+	void demo_resume_handle();
+
+	void WaitingForGlobalStealingFinished();
+	bool CheckIfGlobalStealingFinished();
+	void WaitDuringPause();
+	void NotifyWhenPauseFinished();
 
 	//PART 5 =======================================================
 	//members
@@ -170,7 +178,7 @@ private:
 	bool cache_overflow_;  	//record the status of cache
 
 	atomic_int merged_file_num_;
-    atomic_int task_count_;
+	atomic_int task_count_;
 	bool is_end_;
 	bool report_end_;
 
@@ -198,16 +206,17 @@ private:
 	condition_variable vtx_req_cond_;
 
 	pthread_spinlock_t task_counter_lock_;
-	volatile int task_counter_ = 0;//should not directly access this variable!
+	atomic<int> task_counter_;
 
 	struct ThreadDemoT
 	{
 		FILE* log_file = NULL;
 		pthread_spinlock_t file_lock, task_counter_lock;
-		volatile int task_counter = 0, fine_task_counter = 0;
-		bool force_output = false;
+		int task_counter, filtered_task_counter;
 		ThreadDemoT()
 		{
+			task_counter = 0;
+			filtered_task_counter = 0;
 			pthread_spin_init(&file_lock, 0);
 			pthread_spin_init(&task_counter_lock, 0);
 		}
@@ -220,14 +229,14 @@ private:
 			return task_counter_before;
 		}
 
-		int GetAndIncreaseFineCounter()
+		int GetAndIncreaseFilteredCounter()
 		{
 			pthread_spin_lock(&task_counter_lock);
-			int task_counter_before = fine_task_counter++;
+			int task_counter_before = filtered_task_counter++;
 			pthread_spin_unlock(&task_counter_lock);
 			return task_counter_before;
 		}
-	} __attribute__((aligned(128))); //act as pair<FILE*, pthread_spinlock_t>, in case of false sharing
+	} __attribute__((aligned(128)));
 
 	static_assert(sizeof(ThreadDemoT) == (128), "ThreadDemoT struct not aligned to 128B");
 
@@ -235,17 +244,27 @@ private:
 	int filename_part_ = 0;
 	int sys_sync_time_ = 0;
 
-	volatile int task_finished_count_ = 0, task_recycle_count_ = 0, task_to_cmq_count_ = 0, task_to_cpq_count_ = 0;
-	// volatile int demo_task_store_ = 0, demo_candidate_retriever_ = 0, demo_task_executor_ = 0;//dedicated for demo monitor
-	volatile int computing_task_count_ = 0;
+	atomic<int> task_finished_count_, task_recycle_count_, task_to_cmq_count_, task_to_cpq_count_;
+	atomic<int> computing_task_count_;
 	int last_task_finished_ = 0, last_task_recycle_ = 0, last_task_to_cmq_ = 0, last_task_to_cpq_ = 0;
 
 	// resume
-  mutex resume_signal_mx;
-	condition_variable resume_signal_cond;
-	map<string, vector<VertexID>> resume_info;
+	mutex resume_signal_mx_;
+	condition_variable resume_signal_cond_;
+	map<string, vector<VertexID>> resume_info_;
+
+	// status
+	SlaveStatus status_;
+	atomic<bool> stealing_finished_;
+	atomic<bool> global_stealing_finished_;
+	atomic<bool> to_pause_;
+	mutex pause_mutex_;
+	condition_variable pause_condition_variable_;
+
+	// debug
+	bool debug_ = false;
 protected:
-	bool resume_task = false;
+	atomic<bool> resume_task_;
 };
 
 

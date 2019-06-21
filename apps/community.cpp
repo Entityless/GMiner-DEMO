@@ -151,6 +151,8 @@ private:
 class CommunityTask :public Task<VertexID, CommunityContext, Attribute<string> >
 {
 public:
+	static int sample_min_, sample_max_;
+
 	typedef hash_map<VertexID, VertexT*> VertexIdxMap;
 
 	struct VtxDegree //VertexID with its degree
@@ -306,7 +308,7 @@ public:
 
 						bool case1 = (!has_common && (Q.size() >= K_THRESHOLD + 1));
 						bool case2 = (has_common && (Q.size() >= K_THRESHOLD));
-						if (case1 || case2 || resume_task)
+						if (case1 || case2 || resume_task_)
 						{
 							vector<VertexID> temp(Q);
 							if (!has_common)
@@ -374,7 +376,11 @@ public:
 			color_sort(tempG, listR, color);
 			community(tempG, listR, color, Q, max_size, attrQ, K_THRESHOLD, vertex_idx_map, com_attr_set); //pass the map
 
-			if(attrQ.size() > 0)
+			bool to_demo = false;
+			if (resume_task_ || (attrQ.size() >= sample_min_ && attrQ.size() <= sample_max_))
+				to_demo = true;
+
+			if(attrQ.size() > 0 && to_demo)
 			{
 				demo_str_ = "{\"seed_id\":" + to_string((int)seed_key);
 				demo_str_ += ",\"subg_size\" : " + to_string(attrQ.size()) + ", \"subg_list\" : [";
@@ -450,6 +456,9 @@ public:
 	}
 };
 
+int CommunityTask::sample_min_ = 4;
+int CommunityTask::sample_max_ = 20;
+
 //-----------------------------------------------------------------
 
 class CommunitySlave :public Slave<CommunityTask, CountAgg>
@@ -469,7 +478,7 @@ public:
 		candidates.insert(candidates.end(), v_iter, adjlist.end());
 
 		const vector<AttrValueT>& attr_vec = v->attr.get_attr_vec();
-		if ((candidates.size() >= K_THRESHOLD - 1 || resume_task) && (!attr_vec.empty()))
+		if ((candidates.size() >= K_THRESHOLD - 1 || resume_task_) && (!attr_vec.empty()))
 		{
 			AdjVertex seed_vtx(v->id, get_worker_id());
 			candidates.push_back(seed_vtx);
@@ -565,6 +574,17 @@ class CommunityWorker :public Worker<CommunityMaster, CommunitySlave, CountAgg> 
 
 int main(int argc, char* argv[])
 {
+	const char* CD_SAMPLING_MIN = getenv("CD_SAMPLING_MIN");
+	const char* CD_SAMPLING_MAX = getenv("CD_SAMPLING_MAX");
+	if (CD_SAMPLING_MIN != nullptr)
+	{
+		CommunityTask::sample_min_ = atoi(CD_SAMPLING_MIN);
+	}
+	if (CD_SAMPLING_MAX != nullptr)
+	{
+		CommunityTask::sample_max_ = atoi(CD_SAMPLING_MAX);
+	}
+
 	init_worker(&argc, &argv);
 
 	if (argc >= 2)

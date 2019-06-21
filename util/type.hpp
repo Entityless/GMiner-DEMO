@@ -67,7 +67,6 @@ struct QueueMonitorT
 	unsigned long long cpq_finished;
 };
 
-
 static inline ibinstream& operator << (ibinstream& m, const QueueMonitorT& v)
 {
 	m << v.task_num_in_memory;
@@ -93,6 +92,60 @@ static inline obinstream& operator >> (obinstream& m, QueueMonitorT& v)
 	m >> v.cmq_to_cpq;
 	m >> v.cpq_to_task_store;
 	m >> v.cpq_finished;
+	return m;
+}
+
+struct SlaveStatus
+{
+	bool stealing_finished = false;
+};
+
+static inline ibinstream& operator << (ibinstream& m, const SlaveStatus& v)
+{
+	m << v.stealing_finished;
+	return m;
+}
+
+static inline obinstream& operator >> (obinstream& m, SlaveStatus& v)
+{
+	m >> v.stealing_finished;
+	return m;
+}
+
+struct SysSyncGatherInfoT
+{
+	QueueMonitorT queue;
+	SlaveStatus status;
+};
+
+static inline ibinstream& operator << (ibinstream& m, const SysSyncGatherInfoT& v)
+{
+	m << v.queue << v.status;
+	return m;
+}
+
+static inline obinstream& operator >> (obinstream& m, SysSyncGatherInfoT& v)
+{
+	m >> v.queue >> v.status;
+	return m;
+}
+
+struct SysSyncBcastInfoT
+{
+	bool resume_task;
+	bool global_stealing_finished;
+	bool to_pause;
+};
+
+static inline ibinstream& operator << (ibinstream& m, const SysSyncBcastInfoT& v)
+{
+	m << v.global_stealing_finished << v.resume_task << v.to_pause;
+	return m;
+}
+
+static inline obinstream& operator >> (obinstream& m, SysSyncBcastInfoT& v)
+{
+	m >> v.global_stealing_finished >> v.resume_task >> v.to_pause;
 	return m;
 }
 

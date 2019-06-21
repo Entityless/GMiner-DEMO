@@ -15,6 +15,7 @@
 #include <vector>
 #include <chrono>
 #include <fstream>
+#include <atomic>
 
 #include "util/aggregator.hpp"
 #include "util/communication.hpp"
@@ -58,17 +59,26 @@ public:
 
 	void WriteSignalFile();
 	void run(const WorkerParams& params);
-  	void check_resume_file();
+	void check_resume_file();
+
+	bool CheckIfFileReadable(string filename);
 
 private:
-	static const VertexID finish_tag = -1;
+	static const VertexID finish_tag_ = -1;
 	bool is_end_; // agg_sync
 
 	mutex end_lock_;
 	condition_variable end_cond_;
 
 	map<int, Progress> progress_map_;
-	bool resume_task;
+	bool resume_task_;
+	atomic<bool> resume_file_detected_;
+	atomic<bool> to_resume_;  // set to true in the sys_sync function; set back to false when resume finished
+	atomic<bool> paused_;
+
+	int sys_sync_time_ = 0;
+
+	bool debug_ = false;
 };
 
 

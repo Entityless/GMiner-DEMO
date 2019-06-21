@@ -20,7 +20,7 @@ struct MaxCliquePartialT
 	int mc = 0;
 	// vector<int> counts;
 	int mcount = 0;
-	vector<vector<int>> track;
+	vector<vector<int>> mc_cluster;
 };
 
 typedef MaxCliquePartialT maxCliqueContext;
@@ -31,7 +31,7 @@ ibinstream& operator << (ibinstream& m, const MaxCliquePartialT& v)
 	m << v.mcount;
 	if(v.mcount > 0)
 	{
-		m << v.track;
+		m << v.mc_cluster;
 	}
 	return m;
 }
@@ -42,7 +42,7 @@ obinstream& operator >> (obinstream& m, MaxCliquePartialT& v)
 	m >> v.mcount;
 	if(v.mcount > 0)
 	{
-		m >> v.track;
+		m >> v.mc_cluster;
 	}
 	return m;
 }
@@ -53,7 +53,7 @@ ifbinstream& operator << (ifbinstream& m, const MaxCliquePartialT& v)
 	m << v.mcount;
 	if(v.mcount > 0)
 	{
-		m << v.track;
+		m << v.mc_cluster;
 	}
 	return m;
 }
@@ -64,7 +64,7 @@ ofbinstream& operator >> (ofbinstream& m, MaxCliquePartialT & v)
 	m >> v.mcount;
 	if(v.mcount > 0)
 	{
-		m >> v.track;
+		m >> v.mc_cluster;
 	}
 	return m;
 }
@@ -88,14 +88,14 @@ public:
 			// mc_ = v;
 			partial_.mc = v.mc;
 			partial_.mcount = v.mcount;
-			partial_.track = v.track;//move?
+			partial_.mc_cluster = v.mc_cluster;//move?
 		}
 		else if(v.mc == partial_.mc)
 		{
 			partial_.mcount += v.mcount;
-			for(auto single_track : v.track)
+			for(auto single_node : v.mc_cluster)
 			{
-				partial_.track.push_back(single_track);
+				partial_.mc_cluster.push_back(single_node);
 			}
 		}
 	}
@@ -106,15 +106,15 @@ public:
 		{
 			partial_.mc = part->mc;
 			partial_.mcount = part->mcount;
-			partial_.track = part->track;
+			partial_.mc_cluster = part->mc_cluster;
 		}
 		else if(part->mc == partial_.mc)
 		{
 			partial_.mcount += part->mcount;
 
-			for(auto single_track : part->track)
+			for(auto single_node : part->mc_cluster)
 			{
-				partial_.track.push_back(single_track);
+				partial_.mc_cluster.push_back(single_node);
 			}
 		}
 	}
@@ -134,23 +134,23 @@ public:
 	{
 		int max_parts = 0;
 		int max_part_cnt = 0;
-		vector<vector<int>> track;
+		vector<vector<int>> mc_cluster;
 
 		for(auto v : parts)
 		{
-			assert(v.track.size() == v.mcount);
+			assert(v.mc_cluster.size() == v.mcount);
 			if(v.mc > max_parts)
 			{
 				max_parts = v.mc;
 				max_part_cnt = 0;
-				track.resize(0);
+				mc_cluster.resize(0);
 			}
 			if(v.mc == max_parts && max_parts != 0)
 			{
 				max_part_cnt += v.mcount;
-				for(auto Q : v.track)
+				for(auto Q : v.mc_cluster)
 				{
-					track.push_back(Q);
+					mc_cluster.push_back(Q);
 				}
 			}
 		}
@@ -161,7 +161,7 @@ public:
 		string ret_str;
 		if(max_parts != 0)
 		{
-			for(auto Q : track)
+			for(auto Q : mc_cluster)
 			{
 				list += ", \"" + to_string(tmp_counter) + "\" : [";
 				for(int i = 0; i < Q.size(); i++)
@@ -197,7 +197,7 @@ public:
 
 	string sys_print_header() override
 	{
-		return "Current max clique size: ";
+		return "Current max clique: ";
 	}
 
 private:
@@ -327,19 +327,19 @@ public:
 				}
 				else if (Q.size() >= max_size)
 				{
-					//by doing this, both MC size and these MC can be retrived
+					//by doing this, both sizes of MCs and MCs can be retrived
 					if(Q.size() > max_size)
 					{
 						//clear the context
 						context.mc = Q.size();
 						context.mcount = 1;
-						context.track.resize(0);
-						context.track.push_back(Q);
+						context.mc_cluster.resize(0);
+						context.mc_cluster.push_back(Q);
 					}
 					else//==
 					{
 						context.mcount++;
-						context.track.push_back(Q);
+						context.mc_cluster.push_back(Q);
 					}
 
 					max_size = Q.size();
@@ -355,11 +355,6 @@ public:
 
 	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
-		// // DEBUG
-		// this_thread::sleep_for(chrono::minutes(1));
-		// printf("WARNING: this_thread::sleep_for(chrono::minutes(1)) finished\n");
-		// fflush(stdout);
-
 		int  max_size = *(int*)get_agg();
 		vector<VertexID> Q;
 		Q.push_back(g.get_nodes().front().id);
@@ -394,7 +389,7 @@ public:
 			max_size = Q.size();
 		}
 
-		assert(context.track.size() == context.mcount);
+		assert(context.mc_cluster.size() == context.mcount);
 
 		return false;
 	}
@@ -425,7 +420,7 @@ public:
 			task->subG.add_node(node);
 			task->context.mc = 0;
 			task->context.mcount = 0;
-			task->context.track.resize(0);
+			task->context.mc_cluster.resize(0);
 			task->seed_key = v->id;
 
 			return task;

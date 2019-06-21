@@ -26,7 +26,7 @@ public:
 
 	bool empty();
 
-    void clear();
+	void clear();
 
 private:
 	vector<T> vector1_;

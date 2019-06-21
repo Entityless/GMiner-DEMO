@@ -48,7 +48,7 @@ public:
 
 	void close();
 
-    void clear();
+	void clear();
 
 	void pop_front_to_remote(vector<TaskT *> & remote_tasks);
 

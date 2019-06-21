@@ -14,12 +14,12 @@
 
 // change from MASTER_RANK to 0
 #define PrintTimer(str, i) \
-    if (get_worker_id() == 0) \
-        printf("%s : %f seconds\n", (str), get_timer((i)));
+	if (get_worker_id() == 0) \
+		printf("%s : %f seconds\n", (str), get_timer((i)));
 
 #define MasterPrintTimer(str, i) \
-    if (get_worker_id() == MASTER_RANK) \
-        printf("%s : %f seconds\n", (str), get_timer((i)));
+	if (get_worker_id() == MASTER_RANK) \
+		printf("%s : %f seconds\n", (str), get_timer((i)));
 
 extern const int N_Timers; //currently, 10 timers are available
 

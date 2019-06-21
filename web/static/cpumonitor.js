@@ -1,6 +1,6 @@
 $(document).ready(function(){
     var jsonPath = "load_json/runtime-infos/monitor-data.json";
-    const refreshInterval = 500; //In ms
+    const refreshInterval = 1000; //In ms
     const numOfType = 4;         //Number of type to display
     const maxItem   = 120;        //Maximun number of item in each json file
     const chartColors = ['#70ad47', '#ed7d31', '#5b9bd5', '#c93939'];
@@ -61,6 +61,8 @@ $(document).ready(function(){
 
     var updateChart = function(){
         $.getJSON(jsonPath, function(data){
+            if (data.length == 0)
+                return;
             index = 0;
             for(let i = 0; i < data.length / numOfType; i++){
                 for(let j = 0; j < numOfType; j++){

@@ -30,7 +30,7 @@ public:
 	bool empty();
 	void close();
 	void clear();
-  void open();
+	void open();
 private:
 	deque<T> m_queue_;
 	mutex m_mutex_;

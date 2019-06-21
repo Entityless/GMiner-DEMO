@@ -2,6 +2,7 @@ $(document).ready(function(){
   /* init */
   $('body').css('height', window.innerHeight - 20).css('width', window.innerWidth - 20);
   $('#appParam').hide();
+  $('#samplingRules').hide();
   $('div[group=std],div[group=api]').hide();
   $('pre').hide().first().show();
   $('#main-grid').css('left', $('#side').width()+16); 
@@ -57,13 +58,35 @@ $(document).ready(function(){
   $('#apps').change(function(){
     var opt = $('#apps option:selected');
     var data_value = opt.attr('value');
-    if(data_value === "cd" || data_value=="fco"){
+
+    // app param
+    if (data_value === "cd" ||
+        data_value === "fco") {
       var title = opt.text() + " Parameters";
       $('#appParam .header:first-of-type').text(title);
       $('#appParam .field.param').hide();
       var selector_str = '#appParam .' + data_value;
       $(selector_str).show();
       $('#appParam').fadeIn();
+    } else {
+      $('#appParam').fadeOut();
+    }
+
+    // sampling rules
+    if (data_value === "tc" ||
+        data_value === "gm" ||
+        data_value === "cd" ||
+        data_value === "fco") {
+      $('#samplingRules .field.rules').hide();
+      var selector_str = '#samplingRules .' + data_value;
+      $(selector_str).show();
+      $('#samplingRules').fadeIn();
+    } else {
+      $('#samplingRules').fadeOut();
+    }
+
+    // dataset
+    if(data_value === "cd" || data_value=="fco"){
       $('#dataset option[value="friendster"]').hide();
       if(data_value === "fco"){
         $('#dataset option[value="tencent"]').hide();
@@ -75,7 +98,6 @@ $(document).ready(function(){
       }
     }
     else{
-      $('#appParam').fadeOut();
       $('#dataset option[value="friendster"]').show();
       if (data_value === ""){
         $('#dataset option[value="dblp"]').show();

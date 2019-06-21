@@ -6,41 +6,81 @@ template <class AggregatorT>
 Master<AggregatorT>::Master()
 {
 	is_end_ = false;
-	resume_task = false;
+	resume_task_ = false;
+	to_resume_ = false;
+	resume_file_detected_ = false;
+	paused_ = false;
 }
+
 template <class AggregatorT>
-void Master<AggregatorT>::check_resume_file(){
+bool Master<AggregatorT>::CheckIfFileReadable(string filename)
+{
+	bool ret;
+	ifstream in(filename);
+	if(in.is_open()) {
+		ret = true;
+		in.close();
+	} else {
+		ret = false;
+	}
+	
+	return ret;
+}
+
+template <class AggregatorT>
+void Master<AggregatorT>::check_resume_file()
+{
 	const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
-	const char* RESUME_PATH = getenv("GMINER_MERGE_LOG_PATH");
-	string filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt"; // must be a finished file
+	const char* MERGE_LOG_PATH = getenv("GMINER_MERGE_LOG_PATH");
+	string filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt";  // must be a finished task
 	VertexID seed_id;
 	map<string, vector<VertexID>> resume_info = {
 		{"nodes", vector<VertexID>()},
 		{"src", vector<VertexID>()},
 		{"dst", vector<VertexID>()}
 	};
-    string demo_str;
-    bool resumed_req = false;
-	while(!is_end_){
+	string demo_str;
+	bool resumed_req = false;
+	while(!is_end_)
+	{
+		bool resume_file_detected = resume_file_detected_;
+		if (!resume_file_detected) {
+			this_thread::sleep_for(chrono::milliseconds(100));
+			continue;
+		}
+		bool to_resume = to_resume_;
+		if (!to_resume) {
+			// tell the frontend
+			demo_str = RESUME_DEMO_STR_EMPTY;
+			resumed_req = true;
+			break;
+		}
 		ifstream in(filename);
-		if(in.is_open()){
-            resumed_req = true;
-			resume_task = true;
+		if(in.is_open())
+		{
+			resumed_req = true;
+			resume_task_ = true;
 
 			VertexID src, dst;
 			in >> seed_id;
-      		cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
+			// cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
 			// read nodes
-			while(!in.eof()){
+			while(!in.eof())
+			{
 				in >> src;
-				if(src == finish_tag) break;
-        		cout << "[check_resume_file] delete node "<<src<<endl;
+				if(src == finish_tag_)
+					break;
+				cout << "[check_resume_file] delete node "<<src<<endl;
 				resume_info["nodes"].push_back(src);
 			}
 			// read edges
-			while(!in.eof()){
-				in >> src >> dst;
-            cout << "[check_resume_file] delete edge " << src << " " << dst << endl;
+			while(!in.eof())
+			{
+				in >> src;
+				if(src == finish_tag_)
+					break;
+				in >> dst;
+				cout << "[check_resume_file] delete edge " << src << " " << dst << endl;
 				resume_info["src"].push_back(src);
 				resume_info["dst"].push_back(dst);
 			}
@@ -48,32 +88,39 @@ void Master<AggregatorT>::check_resume_file(){
 
 			master_bcast_point(seed_id, DEMO_RESUME_CHANNEL);
 			int slave_id = recv_data<int>(MPI_ANY_SOURCE, DEMO_RESUME_CHANNEL);
-            cout << "[check_resume_file] confirm slave id: "<<slave_id<<endl;
+			cout << "[check_resume_file] confirm slave id: " << slave_id << endl;
 			send_data<map<string, vector<VertexID>>>(resume_info, slave_id, DEMO_RESUME_CHANNEL);
-			
+
 			demo_str = recv_data<string>(slave_id, DEMO_RESUME_CHANNEL);
-            
-            break;
+			
+			break;
 		}
-		this_thread::sleep_for(chrono::milliseconds(500));
 	}
 
-    cout << "[check_resume_file] demo_str :" << demo_str << " resumed req: "<< resumed_req<<endl;
-    if(!resumed_req) return;
-    filename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result_tmp.json";
-    ofstream out(filename);
-    out << demo_str << endl;
-    out.close();
-    string nfilename = string(RESUME_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result.json";
-    rename(filename.c_str(), nfilename.c_str());
+	to_resume_ = false;
+	if (debug_)
+		cout << "[check_resume_file] demo_str :" << demo_str << " resumed req: "<< resumed_req<<endl;
+	if(!resumed_req) return;
+	filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result_tmp.json";
+	ofstream out(filename);
+	out << demo_str << endl;
+	out.close();
+	string nfilename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_result.json";
+	rename(filename.c_str(), nfilename.c_str());
 }
+
 template <class AggregatorT>
 void Master<AggregatorT>::sys_sync()
 {
-	vector<QueueMonitorT> parts(get_num_workers());
+	vector<SysSyncGatherInfoT> parts(get_num_workers());
 
-	// MPI_Barrier(MPI_COMM_WORLD);
 	master_gather(parts);
+
+	if (sys_sync_time_ == 0)
+	{
+		string cmd = "touch " + DEMO_LOG_PATH + "start-sys-sync.log";
+		system(cmd.c_str());  // tell the coordinator that workers has begin sys_sync()
+	}
 
 	//write queue info to file
 	string file_name = DEMO_LOG_PATH + "master_5q.log";
@@ -90,10 +137,10 @@ void Master<AggregatorT>::sys_sync()
 		for(auto v : parts)
 		{
 			if(cnt == parts.size() - 1)
-				break;//the last one is always empty
+				break;
 			fprintf(f, ", \"%d\" : [%ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld]", cnt, 
-					v.task_num_in_memory, v.task_num_in_disk, v.cmq_size, v.cpq_size, v.taskbuf_size,
-					v.task_store_to_cmq, v.cmq_to_cpq, v.cpq_to_task_store, v.cpq_finished);
+					v.queue.task_num_in_memory, v.queue.task_num_in_disk, v.queue.cmq_size, v.queue.cpq_size, v.queue.taskbuf_size,
+					v.queue.task_store_to_cmq, v.queue.cmq_to_cpq, v.queue.cpq_to_task_store, v.queue.cpq_finished);
 			cnt++;
 		}
 	}
@@ -105,20 +152,15 @@ void Master<AggregatorT>::sys_sync()
 		if(!agg->sys_agg_disabled())
 		{
 			vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
-			// printf("before master gather\n");
 			fflush(stdout);
 			MPI_Barrier(MPI_COMM_WORLD);
-			_global_dbg_flag = true;
 			master_gather(parts);
-			_global_dbg_flag = false;
 			MPI_Barrier(MPI_COMM_WORLD);
-			// printf("after master gather\n");
 			fflush(stdout);
 
 			string agg_str = agg->get_agg_str(parts);
 			if(agg_str.size() != 0)
 			{
-				// printf("void Master<AggregatorT>::sys_sync(), %s\n", agg_str.c_str());
 				if(f)
 				{
 					fprintf(f, ", \"agg_str\" : %s", agg_str.c_str());
@@ -135,7 +177,52 @@ void Master<AggregatorT>::sys_sync()
 		fclose(f);
 	}
 
-	resume_task = all_bor(resume_task); // send resume task signal
+	SysSyncBcastInfoT bcast_info;
+	bcast_info.global_stealing_finished = true;
+	int cnt = 0;
+	for(auto v : parts)
+	{
+		if(cnt == parts.size() - 1)
+			break;
+		cnt++;
+		bcast_info.global_stealing_finished = (bcast_info.global_stealing_finished && v.status.stealing_finished);
+	}
+
+	bool to_resume = to_resume_;
+
+	// won't close task_pipeline_ if to_resume_
+	bcast_info.global_stealing_finished = (bcast_info.global_stealing_finished && (!to_resume));
+
+	const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
+	const char* MERGE_LOG_PATH = getenv("GMINER_MERGE_LOG_PATH");
+
+	bool paused = paused_;
+
+	string pause_filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/pause_signal.txt";
+	if(CheckIfFileReadable(pause_filename) && !bcast_info.global_stealing_finished) {
+		paused_ = true;
+	} else {
+		paused_ = false;
+	}
+	bcast_info.to_pause = paused_;
+
+	// before bcasting, decide if to resume
+	bool resume_file_detected = resume_file_detected_;
+	if (!resume_file_detected) {
+		string filename = string(MERGE_LOG_PATH) + "/" + string(GMINER_START_TIMESTAMP) + "/resume_file.txt";  // must be a finished task
+		if (CheckIfFileReadable(filename)) {
+			resume_file_detected_ = true;
+
+			if (!bcast_info.global_stealing_finished) {
+				to_resume_ = true;
+			}
+		}
+	}
+
+	bcast_info.resume_task = resume_task_;
+	master_bcast(bcast_info);
+
+	sys_sync_time_++;
 }
 
 template <class AggregatorT>
@@ -146,7 +233,6 @@ void Master<AggregatorT>::agg_sync()
 	{
 		vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
 
-		// MPI_Barrier(MPI_COMM_WORLD);
 		master_gather(parts);
 		for (int i = 0; i < get_num_workers(); i++)
 		{
@@ -411,11 +497,11 @@ void Master<AggregatorT>::run(const WorkerParams& params)
 {
 	WriteSignalFile();
 
-	// if (dir_check(params.input_path.c_str(), params.output_path.c_str(), true, params.force_write) == -1)
-	// {
-	// 	terminate();
-	// 	return;
-	// }
+	if (dir_check(params.input_path.c_str(), params.output_path.c_str(), true, params.force_write) == -1)
+	{
+		terminate();
+		return;
+	}
 	printf("Loading data from HDFS...\n");
 	fflush(stdout);
 	start_to_work();

@@ -5,6 +5,7 @@ function stopAll() {
   $('#resumeButton').hide();
   $('#graphPanel .dimmer').removeClass('active');
 
+  clearQueue();
   $('#queues .progress').addClass('disabled');
   $('.arrows i').removeClass('move');
 
@@ -12,6 +13,30 @@ function stopAll() {
     clearTimeout(ENV.timeid);
     ENV.timeid = undefined;
   }
+
+  ENV.current_status = undefined;
+
+  console.log("function stopAll()");
+}
+
+function clearQueue(){
+  $('#pq').progress({
+    text: {percent: String(0) },
+    percent: Number(0) * 100
+  });
+  $('#pq .arrow-label').text(String(0));
+  $('#cmq').progress({
+    text: {percent: String(0)},
+    percent: Number(0) * 100
+  });
+  $('#cpq').progress({
+    text: {percent: String(0)},
+    percent: Number(0) * 100
+  });
+  $('#qlabel1').text(String(0));
+  $('#qlabel2').text(String(0));
+  $('#qlabel3').text(String(0));
+  $('#qlabel4').text(String(0));
 }
 
 function renderComponents(data){
@@ -46,7 +71,12 @@ function renderComponents(data){
   $('#qlabel3').text(String(data['task_transfer_3']));
   $('#qlabel4').text(String(data['task_transfer_4']));
 
-  renderGraphVisualize(data['taskRes']);
+  if (data["hdfsLoaded"]) {
+    $('#graphPanel .text.loader').text('No sampled result...');
+  }
+
+  if (ENV.paused != "undefined")
+    renderGraphVisualize(data['taskRes']);
   return data['end'];  
 }
 
@@ -60,6 +90,7 @@ function confirmContinue(is_end){
 }
 
 function manageInteraction(){
+  // console.log('[manageInteraction]');
   let request = {"key": ENV.key, "stdpt": ENV.stdpt};
   let url = '/interaction';
   fetch(url, {
@@ -75,7 +106,8 @@ function manageInteraction(){
 
 function changeComponents(data){
   if(data.status === "ok"){
-    $('#stopButton,#pauseButton').removeClass('disabled');
+    $('#stopButton').removeClass('disabled');
+    // $('#pauseButton').removeClass('disabled');
     $('#queues .progress').removeClass('disabled');
     $('#graphPanel .text.loader').text('Loading graph from HDFS...');
     $('.arrows i').addClass('move');
@@ -132,6 +164,7 @@ function submitRunForm(fields){
   })
   .then(resp => resp.json())
   .then(changeComponents)
+  .then(ENV.current_status = 2)
   .catch(function(e) {
     submitStopRequest();
     stopAll();
@@ -140,6 +173,7 @@ function submitRunForm(fields){
 }
 
 function submitResumeRequest() {
+  ENV.paused = undefined;
   let url = '/resumerequest';
   let resume_req = {'key': ENV.key };
   if(typeof ENV.removed_nodes == "undefined"
@@ -272,7 +306,7 @@ $(document).ready(function(){
       $('#resumeButton').show();
       $('#runButton').addClass('disabled');
       
-      $('#queues .progress').addClass('disabled');
+      // $('#queues .progress').addClass('disabled');
       $('.arrows i').removeClass('move');
 
       let pause_req = {"key": ENV.key };
@@ -283,11 +317,12 @@ $(document).ready(function(){
         headers: new Headers({'Content-Type': 'application/json'})
       })
       .catch(error => {console.log('pause failed'); throw error;});
-      
-      if(typeof(ENV.timeid) != "undefined"){
-        clearTimeout(ENV.timeid);
-        ENV.timeid = undefined;
-      }
+
+      ENV.paused = 1;
+      // if(typeof(ENV.timeid) != "undefined"){
+      //   clearTimeout(ENV.timeid);
+      //   ENV.timeid = undefined;
+      // }
     }
   });
 

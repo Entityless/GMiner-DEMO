@@ -75,7 +75,7 @@ struct Vertex
 #endif
 
 	void set_node(NodeT & node);
-    void del_neighbor(KeyT id);
+	void del_neighbor(KeyT id);
 
 	AdjList &  get_adjlist();
 };

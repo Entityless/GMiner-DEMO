@@ -53,6 +53,16 @@ function bindAndAlign(circles, nodes, lines, edges) {
   circles.enter().append('circle').append('title');
   circles.exit().remove();
 }
+function bindAndAlignFco(circles, nodes, lines, edges) {
+  lines = lines.data(edges);
+  lines.exit().remove();
+  lines.enter().append('line').append('title');
+  
+  circles = circles.data(nodes);
+  circles.enter().append('circle').append('title');
+  circles.exit().remove();
+}
+
 
 function stylizeNormalGraph() {
   var lines = graphEnv.svg.selectAll('line'),
@@ -138,7 +148,7 @@ function resumeTaskGraphNote(state) {
 }
 /* ---------------------------- render functions --------------------- */
 function rendertcGraph(taskRes) {
-  var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_list, count, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = graphEnv.svg = d3.select('#maingraph');
   var force = graphEnv.force = makeNormalForce(nodes, edges);
@@ -148,20 +158,23 @@ function rendertcGraph(taskRes) {
   force.on('tick', tick);
 
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime TC Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time TC Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
       ['<tr><td>task triangle count: <span id="tccount">', count,'</span></td></tr>'].join(''));
   }else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#tccount').text(count);
   }
   $('#graphnote').show();
 }
 function rendergmGraph(taskRes) {
-  var {subg_list, label_list, conn_list, count, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_list, count, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = graphEnv.svg = d3.select('#maingraph');
   var force = graphEnv.force = makeNormalForce(nodes, edges);
@@ -170,14 +183,17 @@ function rendergmGraph(taskRes) {
   force.on('tick', tick);
  
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime GM Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time GM Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
       ['<tr><td>task matched pattern count: <span id="gmcount">', count,'</span></td></tr>'].join(''));
   }else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#gmcount').text(count);
   }
   $('#graphnote').show();
@@ -188,7 +204,7 @@ function rendermcGraph(taskRes) {
   lineLinear.domain([0, size]).range([-0.7,-0.3]);
 
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime Max Clique</h4>');
+    $('#graphnote').append('<h4>Real-time Max Clique</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>max clique size: <span id="mcsize">', size,'</span></td></tr>'].join(''));
@@ -220,7 +236,7 @@ function rendermcGraph(taskRes) {
   force.on('tick',tick); 
 }
 function rendercdGraph(taskRes) {
-  var {subg_list, label_list, conn_list, subg_size, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_list, subg_size, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   var svg = graphEnv.svg = d3.select('#maingraph');
   var force = graphEnv.force = makeNormalForce(nodes, edges);
@@ -231,15 +247,18 @@ function rendercdGraph(taskRes) {
   force.on('tick', tick);
   
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime CD Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time CD Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
       ['<tr><td>community size: <span id="cdsize">', subg_size,'</span></td></tr>'].join(''));
   }
   else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#cdsize').text(subg_size);
   }
   $('#graphnote').show();
@@ -247,7 +266,7 @@ function rendercdGraph(taskRes) {
 function renderfcoGraph(taskRes) {
   var lineLinear = graphEnv.lineLinear = d3.scaleLinear();
   
-  var {subg_list, label_list, conn_weight, conn_list, subg_size, task_id="0"} = taskRes;
+  var {subg_list, label_list, conn_weight, conn_list, subg_size, task_id="0", seed_id="0"} = taskRes;
   var [nodes, edges] = makeNodeLine(subg_list, label_list, conn_list);
   for(let i = 0; i < conn_weight.length; ++ i){
     edges[i].weight = conn_weight[i];
@@ -258,21 +277,24 @@ function renderfcoGraph(taskRes) {
   var min_weight = Math.min(...conn_weight), max_weight = Math.max(...conn_weight);
   lineLinear.domain([min_weight, max_weight + 0.0001]).range([0.3,0.7]);
 
-  bindAndAlign(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
+  bindAndAlignFco(svg.selectAll("circle"), nodes, svg.selectAll('line'), edges);
   stylizeFcoGraph();
 
   force.on('tick',tick); 
 
   if($('#graphnote>h4').length === 0){
-    $('#graphnote').append('<h4>Realtime FCO Task Sample</h4>');
+    $('#graphnote').append('<h4>Real-time FCO Task Sample</h4>');
     $('#graphnote').append('<table></table>');
     $('#graphnote table').append(
       ['<tr><td>task id: <span id="taskId">', task_id,'</span></td></tr>'].join(''));
+    $('#graphnote table').append(
+      ['<tr><td>seed id: <span id="seedId">', seed_id,'</span></td></tr>'].join(''));
     $('#graphnote table').append(
       ['<tr><td>cluster size: <span id="fcosize">', subg_size,'</span></td></tr>'].join(''));
   }
   else{
     $('#taskId').text(task_id);
+    $('#seedId').text(seed_id);
     $('#fcosize').text(subg_size);
   }
   $('#graphnote').show();
@@ -304,7 +326,13 @@ function makeGmPattern(svg) {
 
 function renderGraphVisualize(taskRes) {
   if(typeof(taskRes) == "undefined" || taskRes.length === 0) return;
+
   if(taskRes.task_id === -1) return;
+
+  if (ENV.current_status == 2) {
+    ENV.current_status = 3;
+    $('#pauseButton').removeClass('disabled');
+  }
 
   $('#graphPanel .dimmer').removeClass('active');
 

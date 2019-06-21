@@ -13,7 +13,6 @@ add_library(util-objs OBJECT
     minhash.cpp
     threadpool.cpp
     timer.cpp
-    tid_mapper.cpp
     )
 
 add_library(gminer-util STATIC $<TARGET_OBJECTS:util-objs> $<TARGET_OBJECTS:iniparser-objs>)

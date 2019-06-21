@@ -6,7 +6,6 @@
 
 using namespace std;
 
-
 struct TriangleContext
 {
 	int count;
@@ -123,6 +122,7 @@ private:
 class TriangleTask :public Task<VertexID, TriangleContext>
 {
 public:
+	static int sample_min_, sample_max_;
 
 	virtual bool compute(SubgraphT & g, ContextType & context, vector<VertexT *> & frontier)
 	{
@@ -154,7 +154,7 @@ public:
 			}
 		}
 
-		if(check_status())
+		if(if_filtered_for_demo())
 		{
 			frontier_to_dump_ = &frontier;
 		}
@@ -164,26 +164,25 @@ public:
 
 	vector<VertexT *>* frontier_to_dump_;
 
-	bool check_status() override
+	bool if_filtered_for_demo() override
 	{
-                if(resume_task)
-                        return true;
-		if(context.count > 4 && context.count < 8)
+        if(resume_task_)
+            return true;
+		if(context.count >= sample_min_ && context.count <= sample_max_)
 		{
 			return true;
 		}
 		return false;
 	}
 
-	void dump_context() override
+	void dump_context_for_demo() override
 	{
 		//filter
-		if(!resume_task && fine_task_counter_ % 20 != 0)
+		if(!resume_task_ && filtered_task_counter_ % 20 != 0)
 		{
 			return;
 		}
 
-		//one hop here, stateless
 		vector<VertexT *> & frontier = *frontier_to_dump_;
 		SubgraphT & g = subG;
 
@@ -246,6 +245,12 @@ public:
 		}
 
 		demo_str_ += "], \"count\" : " + to_string(count);
+		context.count = count;
+		if (!if_filtered_for_demo())
+		{
+			demo_str_ = "";
+			return;
+		}
 
 		list<NodeT> & nodes = subG.get_nodes();
 
@@ -288,6 +293,8 @@ public:
 
 };
 
+int TriangleTask::sample_min_ = 4;
+int TriangleTask::sample_max_ = 10;
 
 class TriangleSlave :public Slave<TriangleTask, CountAgg>
 {
@@ -373,6 +380,17 @@ class TriangleWorker :public Worker<TriangleMaster, TriangleSlave, CountAgg> {};
 
 int main(int argc, char* argv[])
 {
+	const char* TC_SAMPLING_MIN = getenv("TC_SAMPLING_MIN");
+	const char* TC_SAMPLING_MAX = getenv("TC_SAMPLING_MAX");
+	if (TC_SAMPLING_MIN != nullptr)
+	{
+		TriangleTask::sample_min_ = atoi(TC_SAMPLING_MIN);
+	}
+	if (TC_SAMPLING_MAX != nullptr)
+	{
+		TriangleTask::sample_max_ = atoi(TC_SAMPLING_MAX);
+	}
+
 	init_worker(&argc, &argv);
 
 	WorkerParams param;

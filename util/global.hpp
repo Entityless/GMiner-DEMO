@@ -250,9 +250,6 @@ void load_system_parameters(WorkerParams& param);
 extern double get_running_wtime();
 extern string _given_timestamp_str;
 
-//for debug
-extern volatile bool _global_dbg_flag;
-
 //=====================================================================
 
 
