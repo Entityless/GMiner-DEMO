@@ -96,23 +96,23 @@ var edge_menu = [{
 // FORM FIELDS //
 var cache_field = {
   identifier: 'cache-size',
-  rules: [{ type: 'integer[10000..20000000]'}]
+  rules: [{ type: 'integer[10000..2147483647]'}]
 };
 var comp_th_field = {
   identifier: 'num-comp-thread',
-  rules: [{type: 'integer[1..50]'}]
+  rules: [{type: 'integer[1..22]'}]
 };
 var pipe_pop_field = {
   identifier: 'pipe-pop-num',
-  rules: [{type: 'integer[10..5000]'}]
+  rules: [{type: 'integer[100..5000]'}]
 };
 var pop_field = {
   identifier: 'pop-num',
-  rules: [{type: 'integer[10..5000]'}]
+  rules: [{type: 'integer[50..5000]'}]
 }
 var subg_field = {
   identifier: 'subg-size-t',
-  rules: [{type: 'integer[1..1000]'}]
+  rules: [{type: 'integer[10..100]'}]
 };
 var gc_mweight_field = {
   identifier: 'min-weight',

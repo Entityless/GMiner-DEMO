@@ -108,27 +108,27 @@ gc_sampling_max = {
 
 cache_size = {
         'name': 'cache-size',
-        'help': 'The size of cachetable in each worker. Should be an integer within [10000, 20000000].',
-        'default': 1000000
+        'help': 'The size of cachetable in each worker. Should be an integer within [10000, INT_MAX].',
+        'default': 1000000000
         }
 num_comp_th = {
         'name': 'num-comp-thread',
-        'help': 'Number of threads in threadpool for task computation. Should be an integer within [1, 50].',
-        'default': 24
+        'help': 'Number of threads in threadpool for task computation. Should be an integer within [1, 22].',
+        'default': 22
         }
 pipe_pop_num = {
         'name': 'pipe-pop-num',
-        'help': 'Number of tasks popped out each batch in the pipeline. Should be an integer within [10, 5000].',
-        'default': 100
+        'help': 'Number of tasks popped out each batch in the pipeline. Should be an integer within [100, 5000].',
+        'default': 500
         }
 pop_num = {
         'name': 'pop-num',
-        'help': 'Number of tasks for pque pops tasks to remote worker during one stealing procedure. Should be an integer within [10, 5000].',
+        'help': 'Number of tasks for pque pops tasks to remote worker during one stealing procedure. Should be an integer within [50, 5000].',
         'default': 100
         }
 subg_size_t = {
         'name': 'subg-size-t',
-        'help': 'Threshold that task can be moved to other workers only if its current subgraph size <= SUBG_SIZE_T. Should be an integer within [1, 1000].',
+        'help': 'Threshold that task can be moved to other workers only if its current subgraph size <= SUBG_SIZE_T. Should be an integer within [10, 100].',
         'default': 30
         }
 
