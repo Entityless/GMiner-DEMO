@@ -31,19 +31,20 @@ $ ./auto-build.sh
 ```
 
 * [**Tutorials**](docs/TUTORIALS.md)
-### Web Demo
-#### prerequisites
+
+## Web Demo
+### Prerequisites
   * python 3.6
   * flask==0.12.2, argparse, mpi4py, psutil, numpy : `$> pip install -r $GMINER_HOME/python-requirements.txt`
   * all G-Miner dependencies described above
 
-#### configuration
-* `$GMINER_HOME/script/demo-env.sh`: The port of web server, the output path and etc.
-* `$GMINER_HOME/web/machines.cfg`: The machinefile using ethernet devices. Note that the last node in the machinefile will be the Master node of GMiner, and it should be the same node that the web server is running on.
-* `$GMINER_HOME/web/ib_machines.cfg`: The machinefile using infiniband devices.
+### Configuration
+* `$GMINER_HOME/script/demo-env.sh`: to define the environment variables, e.g. the port of web server, the output path, etc.
+* `$GMINER_HOME/web/machines.cfg`: to specify the machine configuration. Note that the last node in the machine.cfg will be the master node of GMiner. The master node is also where the web server is running.
+* `$GMINER_HOME/web/ib_machines.cfg`: The machine configuration using infiniband devices, it should keep consistency with the machines.cfg, which means if you want to enable infiniband for G-Miner, the deployed machines should install IB.
 
-#### Start and stop web server
-  We suppose you have built and run G-Miner successfully now ( if not, please refer to **Build** and **Tutorial** previous to this step). Then just run following commands :
+### Start and stop web server
+  We suppose you have built and run G-Miner successfully now (if not, please refer to **Build** and **Tutorial** steps). Then just run following commands :
   ```bash
   $> cd $GMINER_HOME
   $> ./script/start_demo_server.sh
@@ -57,9 +58,8 @@ $ ./auto-build.sh
 
 [**Eurosys 2018**] [G-Miner: An Efficient Task-Oriented Graph Mining System](docs/G-Miner-Eurosys18.pdf). Hongzhi Chen, Miao Liu, Yunjian Zhao, Xiao Yan, Da Yan, James Cheng.
 
-## Acknowledgement
-The subgraph-centric vertex-pulling API is attributed to our prior work [G-thinker](https://arxiv.org/abs/1709.03110).
+[**SIGMOD 2019**] [Large Scale Graph Mining with G-Miner](docs/GMiner\_SIGMOD19.pdf). Hongzhi Chen, Xiaoxi Wang, Chenghuan Huang, Juncheng Fang, Yifan Hou, Changji Li, James Cheng.
 
 ## License
 
-Copyright 2018 Husky Data Lab, CUHK
+Copyright 2019 Husky Data Lab, CUHK

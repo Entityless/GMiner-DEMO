@@ -5,7 +5,7 @@ export FLASK_PORT=5080
 # cluster
 export NUM_WORKER=11
 
-# gminer
+# gminer_output path
 export GMINER_LOG_PATH=/tmp/${USER}-gminer-demo-log/
 export GMINER_MERGE_LOG_PATH=/dev/shm/${USER}-gminer-demo-output-merged/
 
@@ -35,3 +35,4 @@ export YOUTUBE_FCO_GRAPH=/GMiner_input/youtube_focus_10/
 export SKITTER_FCO_GRAPH=/GMiner_input/skitter_focus_10/
 export ORKUT_FCO_GRAPH=/GMiner_input/orkut_focus_10/
 export DBLP_FCO_GRAPH=/GMiner_input/dblp_focus_10/
+
