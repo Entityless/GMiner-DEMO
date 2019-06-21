@@ -34,7 +34,7 @@ $ ./auto-build.sh
 ### Web Demo
 #### prerequisites
   * python 3.6
-  * flask 0.12.2 : `$> pip install flask==0.12.2`
+  * flask==0.12.2, argparse, mpi4py, psutil, numpy : `$> pip install -r $GMINER_HOME/python-requirements.txt`
   * all G-Miner dependencies described above
 
 #### configuration

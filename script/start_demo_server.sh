@@ -24,6 +24,10 @@ fi
 rm -rf /tmp/${USER}-gminer-dump
 mkdir -p /tmp/${USER}-gminer-dump
 
+# clean remaining processes
+
+python $GMINER_HOME/script/python/kill-remaining-gminer-processes.py
+
 # cluster monitor
 mpirun -n $NUM_WORKER -ppn 1 -f web/machines.cfg python $GMINER_HOME/script/python/cluster-monitor.py \
                                             -d $GMINER_MERGE_LOG_PATH \
@@ -33,5 +37,5 @@ mpirun -n $NUM_WORKER -ppn 1 -f web/machines.cfg python $GMINER_HOME/script/pyth
 
 # web server
 cd web/
-ls main.py
+
 flask run --port $FLASK_PORT

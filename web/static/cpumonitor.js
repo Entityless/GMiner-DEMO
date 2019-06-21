@@ -61,6 +61,8 @@ $(document).ready(function(){
 
     var updateChart = function(){
         $.getJSON(jsonPath, function(data){
+            if (data.length == 0)
+                return;
             index = 0;
             for(let i = 0; i < data.length / numOfType; i++){
                 for(let j = 0; j < numOfType; j++){

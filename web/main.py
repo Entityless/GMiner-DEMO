@@ -63,8 +63,12 @@ def main():
 @app.route('/load_json/<folder>/<path>')
 def return_cpu_info(folder, path):
     path = os.path.join(folder, path)
-    with open(path) as f:
-        res = json.load(f)
+    try:
+        with open(path) as f:
+            res = json.load(f)
+    except Exception:
+        res = {}
+
     resp = flask.Response(json.dumps(res), mimetype='application/json')
     return resp
 
