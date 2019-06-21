@@ -63,7 +63,7 @@ void Master<AggregatorT>::check_resume_file()
 
 			VertexID src, dst;
 			in >> seed_id;
-			cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
+			// cout << "[check_resume_file] " << filename << " seed_id:" << seed_id << endl;
 			// read nodes
 			while(!in.eof())
 			{
@@ -193,11 +193,6 @@ void Master<AggregatorT>::sys_sync()
 	// won't close task_pipeline_ if to_resume_
 	bcast_info.global_stealing_finished = (bcast_info.global_stealing_finished && (!to_resume));
 
-	if (bcast_info.global_stealing_finished)
-	{
-		printf("master, bcast_info.global_stealing_finished\n");
-	}
-
 	const char* GMINER_START_TIMESTAMP = getenv("GMINER_START_TIMESTAMP");
 	const char* MERGE_LOG_PATH = getenv("GMINER_MERGE_LOG_PATH");
 
@@ -207,11 +202,6 @@ void Master<AggregatorT>::sys_sync()
 	if(CheckIfFileReadable(pause_filename) && !bcast_info.global_stealing_finished) {
 		paused_ = true;
 	} else {
-		// pause finished
-		// if (paused_) {
-		// 	printf("stop pausing\n");
-		// 	fflush(stdout);
-		// }
 		paused_ = false;
 	}
 	bcast_info.to_pause = paused_;
@@ -243,7 +233,6 @@ void Master<AggregatorT>::agg_sync()
 	{
 		vector<Master<AggregatorT>::PartialT> parts(get_num_workers());
 
-		// MPI_Barrier(MPI_COMM_WORLD);
 		master_gather(parts);
 		for (int i = 0; i < get_num_workers(); i++)
 		{

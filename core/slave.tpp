@@ -211,25 +211,15 @@ void Slave<TaskT, AggregatorT>::demo_resume_handle()
 				t->task_counter_ = GetAndIncreaseCounter();
 				IncreaseComputingTaskCount();
 				t = recursive_compute(t, 0);
-				cout << "[demo_resume_handle] seed id: " << seed_id << " recursive_compute." << endl;
 				DecreaseComputingTaskCount();
 			}
 			if(t != NULL)
 			{
-				// compute_lock_.lock();
-				// inc_task_num_in_memory(1);
-				// task_pipeline_.taskbuf_push_back(t);
-				// task_recycle_count_++;
-				// compute_lock_.unlock();
-				// compute_cond_.notify_one();
-				// cout << "[demo_resume_handle] seed id: " << seed_id << " to taskbuf." << endl;
-
 				TaskVec tasks;
 				tasks.push_back(t);
 				vector<KTpair> signed_tasks;
 				task_sorter_.sign_and_sort_tasks(tasks, signed_tasks);
 				task_pipeline_.pq_push_back(signed_tasks);
-				cout << "[demo_resume_handle] seed id: " << seed_id << " pq_push_back(t)." << endl;
 			}
 		}
 	}
@@ -406,11 +396,6 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 		delete task;
 		return NULL;
 	}
-	// if (resume_task_ && task->resume_task_)
-	// {
-	// 	printf("[recursive_compute] begin resume recursive_compute\n");
-	// 	fflush(stdout);
-	// }
 	//set frontier for UDF compute
 	vector<VertexT *> frontier;
 	for(int i = 0 ; i < task->to_pull.size(); i++)
@@ -445,11 +430,6 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 		}
 		frontier.push_back(pvtx);
 	}
-	// if (resume_task_ && task->resume_task_)
-	// {
-	// 	printf("[recursive_compute] frontier resume recursive_compute\n");
-	// 	fflush(stdout);
-	// }
 	// delete resume nodes and edges in subgraph
 	if(resume_task_ && task->resume_task_)
 	{
@@ -462,20 +442,10 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 			if (dst != nullptr)
 				dst->del_neighbor_by_id(resume_info_["src"][i]);
 		}
-		// printf("[recursive_compute] subG delete edges finished\n");
-		// fflush(stdout);
 		for(int i = 0; i < resume_info_["nodes"].size(); ++ i){
 			task->subG.del_node_fully(resume_info_["nodes"][i]);
 		}
-		// printf("[recursive_compute] subG delete nodes finished\n");
-		// fflush(stdout);
 	}
-
-	// if (resume_task_ && task->resume_task_)
-	// {
-	// 	printf("[recursive_compute] fully resume recursive_compute\n");  // won't be printed when del node & del edge
-	// 	fflush(stdout);
-	// }
 
 	if(task->compute(task->subG, task->context, frontier))
 	{
@@ -486,23 +456,10 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 			//continue to compute until find remote vertexes needed to pull
 			return recursive_compute(task, tid);
 		}
-
-		if (task->resume_task_)
-		{
-			printf("resumed task requires comm, not task->to_request.empty()!!!!!!\n");
-			fflush(stdout);
-		}
-
 		return task;
 	}
 	else
 	{
-		if (task->resume_task_)
-		{
-			printf("resumed task is done!!!!!!\n");
-			fflush(stdout);
-		}
-
 		//The current task is done, delete it after storing the result of it through aggregator
 		AggregatorT* agg = (AggregatorT*)get_aggregator();
 		if (agg != NULL)
@@ -530,8 +487,6 @@ TaskT* Slave<TaskT, AggregatorT>::recursive_compute(TaskT* task, int tid)
 		}
 
 		if(task->resume_task_){
-			printf("sending back demo_str_!!!!!!\n");
-			fflush(stdout);
 			task->dump_context_for_demo();
 			if(task->demo_str_.size())
 				send_data<string>(task->demo_str_, MASTER_RANK, DEMO_RESUME_CHANNEL);
@@ -565,23 +520,6 @@ void Slave<TaskT, AggregatorT>::pull_PQ_to_CMQ()
 		for(int i = 0; i < tasks.size(); i++)
 		{
 			TaskT * t = tasks[i];
-			if (t->resume_task_)
-			{
-				printf("Slave<TaskT, AggregatorT>::pull_PQ_to_CMQ(), t->resume_task_\n");
-			}
-			// if(resume_task_)
-			// {
-			// 	if(t->resume_task_)
-			// 	{
-			// 		filtered_tasks.push_back(t);
-			// 	}
-			// 	else
-			// 	{
-			// 		delete t;
-			// 		t = NULL;
-			// 		continue;
-			// 	}
-			// }
 			vector<int> & reqs = t->to_request;
 			AdjVtxList & nbs = t->to_pull;
 			for(int j=0; j< reqs.size(); j++)
@@ -599,15 +537,6 @@ void Slave<TaskT, AggregatorT>::pull_PQ_to_CMQ()
 				}
 			}
 		}
-		// if(resume_task_)
-		// {
-		// 	compute_lock_.lock();
-		// 	dec_task_num_in_memory(tasks.size() - filtered_tasks.size());
-		// 	swap(filtered_tasks, tasks);
-		// 	compute_lock_.unlock();
-		// 	compute_cond_.notify_one();
-		// 	if(tasks.size() == 0) continue;
-		// }
 		for(CountMapIter mIter = ref_count.begin(); mIter != ref_count.end(); mIter++)
 		{
 			if(!cache_table_.try_to_get(mIter->first, mIter->second))
@@ -682,17 +611,12 @@ void Slave<TaskT, AggregatorT>::pull_PQ_to_CMQ()
 			vtx_req_cond_.wait(lck);
 	}
 
-	printf("%d break from while loop in pull_PQ_to_CMQ 1\n", _my_rank);
-	fflush(stdout);
-
 	// wait for all send finish in order to avoid stream destroy
 	while(mpi_requests.size() > 0){
 		MPI_Wait(&(mpi_requests.front()), MPI_STATUS_IGNORE);
 		mpi_requests.pop();
 		streams.pop();
 	}
-	printf("%d break from while loop in pull_PQ_to_CMQ 2\n", _my_rank);
-	fflush(stdout);
 }
 
 template <class TaskT,  class AggregatorT>
@@ -705,17 +629,6 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 		bool status = task_pipeline_.cmq_pop_front(pkg);
 		if(!status)
 			break;
-
-		if (resume_task_)
-		{
-			for (auto* t : pkg.tasks)
-			{
-				if (t->resume_task_)
-				{
-					printf("Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ(), t->resume_task_\n");
-				}
-			}
-		}
 
 		vector<int>& dsts = pkg.dsts;
 		for(int i = 0; i < dsts.size(); i++)
@@ -741,8 +654,6 @@ void Slave<TaskT, AggregatorT>::pull_CMQ_to_CPQ()
 			vtx_req_cond_.notify_one();
 		}
 	}
-	printf("%d break from while loop in pull_CMQ_to_CPQ\n", _my_rank);
-	fflush(stdout);
 }
 
 template <class TaskT,  class AggregatorT>
@@ -790,8 +701,6 @@ void Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(int tid)
 		if(t != NULL)
 		{
 			if (t->resume_task_) {
-				printf("Slave<TaskT, AggregatorT>::pull_CPQ_to_taskbuf(), t->resume_task_\n");
-				fflush(stdout);
 				TaskVec tasks;
 				tasks.push_back(t);
 				vector<KTpair> signed_tasks;
@@ -1093,10 +1002,6 @@ void Slave<TaskT, AggregatorT>::debug()
 	}
 }
 
-//PART 1 =======================================================
-//public run
-
-
 // Send information to the Master,
 // and the Master will write the signal file.
 template <class TaskT,  class AggregatorT>
@@ -1136,9 +1041,10 @@ void Slave<TaskT, AggregatorT>::WaitingForGlobalStealingFinished()
 
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
-
-	printf("rank = %d, Slave<TaskT, AggregatorT>::WaitingForGlobalStealingFinished()\n", _my_rank);
 }
+
+//PART 1 =======================================================
+//public run
 
 template <class TaskT,  class AggregatorT>
 void Slave<TaskT, AggregatorT>::run(const WorkerParams& params)
